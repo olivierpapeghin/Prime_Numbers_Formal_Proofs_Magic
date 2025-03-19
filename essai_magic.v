@@ -3,21 +3,22 @@ From Coq Require Import Lists.List.
 Require Import Coq.Bool.Bool.
 Require Import Coq.Arith.Peano_dec.
 Require Import Coq.Program.Equality.
+Require Import List String.
+
 Import ListNotations.
 
-
-
-
 (* Inductive for types in Records *)
-Inductive CardTypes := permanent | instant | sorcery | land.
+Inductive CardTypes := permanent | instant | sorcery .
 
-Inductive PermanentTypes := creature | enchantment | artifact | token | legendary .
+Inductive PermanentTypes := creature | enchantment | artifact | token | legendary | land.
 
 Inductive EnchantmentTypes := aura | room.
 
-Inductive ManaColor := White | Blue  | Black  | Red  | Green | Generic.
+Inductive ManaColor := White | Blue | Black | Red | Green | Generic.
 
-(*Record for each object*)
+Inductive Events := OnDeath | OnCast | OnPhase.
+
+(* Record for each object *)
 Record Mana := {
   color : ManaColor;
   quantity : nat
@@ -31,72 +32,105 @@ Record Card := {
 
 Definition ManaPool := list Mana.
 
-(*not use for now, but could be after *)
+(* Not used for now, but could be after *)
 Record Land := {
   produce_mana : ManaColor;
   tapped : bool
 }.
 
+
 Record GameState := {
-  battlefield : list Card; 
-  mana_pool : ManaPool;   
-  opponent : nat;   
+  battlefield : list Card;
+  mana_pool : ManaPool;
+  opponent : nat;
   hand : list Card;
   library : list Card;
   graveyard : list Card;
   exile : list Card;
   stack : list (Card * nat); (* nat correspond au fait de prendre la carte ou son Ability *)
 }.
+
 Record Ability := {
   ability : GameState -> GameState;
-  activation_condition : GameState -> bool;  (* Condition d'activation *)
+  activation_condition : GameState -> bool; (* Condition d'activation *)
+}.
+
+Record TriggeredAbility := {
+  trigger_ability : Ability;
+  trigger_event : Events;
 }.
 
 Record Permanent := {
   permanent_card : Card;
   permanent_type : list PermanentTypes;
   tapped_permanent : bool;
-  permanent_abilities : list Ability
+  permanent_abilities : list Ability;
+  perm_triggered_abilities : list TriggeredAbility; 
 }.
+(* On enregistre tous les permanents joués *)
+Definition PermanentRegistry := list Permanent.
 
-Record Instant := { 
+(* Fonction eqb_card qui compare deux cartes *)
+Definition eqb_card (x y : Card) : bool :=
+  if string_dec x.(name) y.(name) then
+    match x.(type), y.(type) with
+    | permanent, permanent => true
+    | instant, instant => true
+    | sorcery, sorcery => true
+    | _, _ => false
+    end
+  else
+    false.
+
+(* Fonction qui recherche un permanent dans le champ de bataille *)
+Fixpoint Find_permanent (card : Card) (battlefield : list Permanent) : option Permanent :=
+  match battlefield with
+  | [] => None
+  | p :: ps =>
+      if eqb_card p.(permanent_card) card then Some p
+      else Find_permanent card ps
+  end.
+
+Definition Save_Permanent (p : Permanent) (registry : PermanentRegistry) : PermanentRegistry :=
+  p :: registry.
+
+
+Record Instant := {
   instant_card : Card;
-  instant_abilities : list Ability
+  instant_abilities : list Ability;
+  instant_triggered_abilities : list TriggeredAbility; 
 }.
-
-
 
 Definition GameHistory := list GameState.
 
 Definition Save_Game_State (gs : GameState) (history : GameHistory) : GameHistory :=
   history ++ [gs]. (* On ajoute le nouvel état à la fin *)
 
-(*Default GameState*)
+(* Default GameState *)
 Definition GameState_0 := {|
-  battlefield := []; 
-  mana_pool := []; 
-  opponent := 20; 
-  hand := []; 
-  library := []; 
-  graveyard := []; 
-  exile := []; 
-  stack := []
+  battlefield := [];
+  mana_pool := [];
+  opponent := 20;
+  hand := [];
+  library := [];
+  graveyard := [];
+  exile := [];
+  stack := [];
 |}.
-
 
 (* To get the last version of the GameState *)
 Definition Get_Current_State (history : GameHistory) : option GameState :=
   match history with
-  | [] => None 
+  | [] => None
   | _ => Some (last history GameState_0)
   end.
-
 
 Definition tap (P : Permanent) : Permanent := {|
   permanent_card := P.(permanent_card);
   permanent_type := P.(permanent_type);
   tapped_permanent := true;
   permanent_abilities := P.(permanent_abilities);
+  perm_triggered_abilities := P.(perm_triggered_abilities); (* Conserver les triggered abilities *)
 |}.
 
 Definition untap (P : Permanent) : Permanent := {|
@@ -104,6 +138,7 @@ Definition untap (P : Permanent) : Permanent := {|
   permanent_type := P.(permanent_type);
   tapped_permanent := false;
   permanent_abilities := P.(permanent_abilities);
+  perm_triggered_abilities := P.(perm_triggered_abilities); (* Conserver les triggered abilities *)
 |}.
 
 Definition ManaColor_eq (mc1 mc2 : ManaColor) : bool :=
@@ -120,26 +155,13 @@ Definition ManaColor_eq (mc1 mc2 : ManaColor) : bool :=
 
 
 
-(* Fonction eqb_card qui compare deux cartes *)
-Definition eqb_card (x y : Card) : bool :=
-  if string_dec x.(name) y.(name) then
-    match x.(type), y.(type) with
-    | permanent, permanent => true
-    | instant, instant => true
-    | sorcery, sorcery => true
-    | land, land => true
-    | _, _ => false
-    end
-  else
-    false.
-
-
 (* Fonction count_occ qui compte le nombre d'occurrences d'un élément dans une liste *)
 Fixpoint count_occ (A : Type) (eqb : A -> A -> bool) (l : list A) (x : A) : nat :=
   match l with
   | [] => 0
   | h :: t => if eqb x h then 1 + count_occ A eqb t x else count_occ A eqb t x
   end.
+
 Fixpoint remove_mana (pool : list Mana) (cost : Mana) : list Mana :=
   match pool with
   | [] => [] (* Si le pool est vide, rien à retirer *)
@@ -185,13 +207,6 @@ Fixpoint Can_Pay (cost : list Mana) (pool : list Mana) : bool :=
         end
   end.
 
-
-
-
-
-
-
-
 Definition Activate_Ability (ab : Ability) (gs : GameState) : GameState :=
   (* Vérifier si la condition d'activation est remplie *)
   if ab.(activation_condition) gs then
@@ -210,67 +225,14 @@ Fixpoint remove_card (l : list Card) (c : Card) : list Card :=
   end.
 
 
-
-
-
-Definition Cast_Permanent (p : Permanent) (history : GameHistory) : GameHistory :=
-  match Get_Current_State history with
-  | None => history (* Si l'historique est vide, on ne fait rien. *)
-  | Some gs =>
-      let cost := p.(permanent_card).(mana_cost) in
-      let pool := gs.(mana_pool) in
-      if Can_Pay cost pool then
-        let new_pool := fold_left remove_mana cost pool in
-        let new_battlefield := p.(permanent_card) :: gs.(battlefield) in
-        let new_hand := remove_card gs.(hand) p.(permanent_card) in
-        let new_gs := {|
-          battlefield := new_battlefield;
-          mana_pool := new_pool;
-          opponent := gs.(opponent);
-          hand := new_hand;
-          library := gs.(library);
-          graveyard := gs.(graveyard);
-          exile := gs.(exile);
-          stack := gs.(stack)
-        |} in
-        Save_Game_State new_gs history
-      else
-        history (* Si le coût ne peut pas être payé, l'historique reste inchangé. *)
-  end.
-
-
-
-Definition Cast_Instant (i : Instant) (history : GameHistory) : GameHistory := 
-  match Get_Current_State history with 
-  | None => history (* Si l'historique est vide, on ne fait rien. *) 
-  | Some gs => 
-      let cost := i.(instant_card).(mana_cost) in 
-      let pool := gs.(mana_pool) in 
-      if Can_Pay cost pool then 
-        let new_pool := fold_left remove_mana cost pool in 
-        (* Appliquer les abilities *)
-        let gs_after_ability := fold_left (fun acc_gs ability =>
-          Activate_Ability ability acc_gs
-        ) i.(instant_abilities) gs in
-        (* Ajouter les cartes activées sur le champ de bataille *)
-        let new_battlefield := gs_after_ability.(battlefield) in
-        let new_hand := remove_card gs_after_ability.(hand) i.(instant_card) in
-        let new_graveyard := i.(instant_card) :: gs_after_ability.(graveyard) in
-        let new_gs := {| 
-          battlefield := new_battlefield; 
-          mana_pool := new_pool; 
-          opponent := gs_after_ability.(opponent); 
-          hand := new_hand; 
-          library := gs_after_ability.(library); 
-          graveyard := new_graveyard; 
-          exile := gs_after_ability.(exile); 
-          stack := gs_after_ability.(stack) 
-        |} in 
-        Save_Game_State new_gs history 
-      else 
-        history (* Si le coût ne peut pas être payé, l'historique reste inchangé. *) 
-  end.
-
+Definition eqb_event : Events -> Events -> bool :=
+  (* Fonction pour comparer les événements *)
+  fun e1 e2 => match e1, e2 with
+    | OnDeath, OnDeath => true
+    | OnCast, OnCast => true
+    | OnPhase, OnPhase => true
+    | _, _ => false
+    end.
 
 (* Fonction qui vérifie si une carte est sur le battlefield *)
 Fixpoint is_on_battlefield (bf : list Card) (c : Card) : bool :=
@@ -279,9 +241,112 @@ Fixpoint is_on_battlefield (bf : list Card) (c : Card) : bool :=
   | h :: t => if eqb_card h c then true else is_on_battlefield t c
   end.
 
+(* Fonction pour récupérer toutes les triggered abilities des permanents sur le champ de bataille *)
+Fixpoint Get_Triggered_Abilities (permanents : list Permanent) : list TriggeredAbility :=
+  match permanents with
+  | [] => []
+  | p :: ps => p.(perm_triggered_abilities) ++ Get_Triggered_Abilities ps
+  end.
+
+Fixpoint Check_Triggered_Abilities (event : Events) (registry : PermanentRegistry) (gs : GameState) : GameState :=
+  let triggered_abilities :=
+    fold_left (fun acc card =>
+      match Find_permanent card registry with
+      | Some p =>
+          fold_left (fun acc_ab ta =>
+            if eqb_event ta.(trigger_event) event then
+              ta.(trigger_ability) :: acc_ab
+            else
+              acc_ab
+          ) acc p.(perm_triggered_abilities)
+      | None => acc
+      end
+    ) [] gs.(battlefield) in
+  fold_left (fun acc_gs ab =>
+    if ab.(activation_condition) acc_gs then
+      ab.(ability) acc_gs
+    else
+      acc_gs
+  ) gs triggered_abilities.
 
 
-(* exemples of how to use*)
+
+
+
+
+Definition Cast_Permanent (p : Permanent) (history : GameHistory) (registry : PermanentRegistry) : (GameHistory * PermanentRegistry) :=
+  match Get_Current_State history with
+  | None => (history, registry) (* Si l'historique est vide, on ne fait rien. *)
+  | Some gs =>
+      let cost := p.(permanent_card).(mana_cost) in
+      let pool := gs.(mana_pool) in
+      if Can_Pay cost pool then
+        let new_pool := fold_left remove_mana cost pool in
+        let new_battlefield := p.(permanent_card) :: gs.(battlefield) in
+        let new_hand := remove_card gs.(hand) p.(permanent_card) in
+        let new_gs := {| 
+          battlefield := new_battlefield;
+          mana_pool := new_pool;
+          opponent := gs.(opponent);
+          hand := new_hand;
+          library := gs.(library);
+          graveyard := gs.(graveyard);
+          exile := gs.(exile);
+          stack := gs.(stack);
+        |} in
+        (* Sauvegarde du permanent dans le registre *)
+        let updated_registry := Save_Permanent p registry in
+        (* Lister les triggered abilities des permanents sur le battlefield *)
+        let triggered_abilities := Get_Triggered_Abilities gs.(battlefield) in
+        (* Activer les triggered abilities en vérifiant si elles réagissent à OnCast *)
+        let filtered_abilities := filter (fun ab => eqb_event ab.(trigger_event) OnCast) triggered_abilities in
+        let final_gs := Check_Triggered_Abilities filtered_abilities new_gs in
+        (Save_Game_State final_gs history, updated_registry)
+      else
+        (history, registry) (* Si le coût ne peut pas être payé, l'historique reste inchangé. *)
+  end.
+
+
+
+
+
+
+Definition Cast_Instant (i : Instant) (history : GameHistory) : GameHistory :=
+  match Get_Current_State history with
+  | None => history (* Si l'historique est vide, on ne fait rien. *)
+  | Some gs =>
+      let cost := i.(instant_card).(mana_cost) in
+      let pool := gs.(mana_pool) in
+      if Can_Pay cost pool then
+        let new_pool := fold_left remove_mana cost pool in
+        (* Appliquer les abilities *)
+        let gs_after_ability := fold_left (fun acc_gs ability =>
+          Activate_Ability ability acc_gs
+        ) i.(instant_abilities) gs in
+        (* Ajouter les cartes activées sur le champ de bataille *)
+        let new_battlefield := gs_after_ability.(battlefield) in
+        let new_hand := remove_card gs_after_ability.(hand) i.(instant_card) in
+        let new_graveyard := i.(instant_card) :: gs_after_ability.(graveyard) in
+        let new_gs := {|
+          battlefield := new_battlefield;
+          mana_pool := new_pool;
+          opponent := gs_after_ability.(opponent);
+          hand := new_hand;
+          library := gs_after_ability.(library);
+          graveyard := new_graveyard;
+          exile := gs_after_ability.(exile);
+          stack := gs_after_ability.(stack);
+          
+        |} in
+        let triggered_abilities := Check_Triggered_Abilities new_gs [i] in
+        (* Ici, vous pouvez ajouter un traitement pour les triggered abilities si nécessaire *)
+        Save_Game_State new_gs history
+      else
+        history (* Si le coût ne peut pas être payé, l'historique reste inchangé. *)
+  end.
+
+
+(* Exemples d'utilisation *)
 Definition Zimone : Permanent := {|
   permanent_card := {|
     type := permanent;
@@ -289,72 +354,69 @@ Definition Zimone : Permanent := {|
     mana_cost := [{| color := White; quantity := 2 |};{| color := Blue; quantity := 1 |}];
   |};
   tapped_permanent := false;
-  permanent_type := [creature;legendary];
-  permanent_abilities := []
+  permanent_type := [creature; legendary];
+  permanent_abilities := [];
+  triggered_abilities := [] (* Ajout des triggered abilities *)
 |}.
 
-Definition Snoopy : Permanent :={|
+Definition Snoopy : Permanent := {|
   permanent_card := {|
     type := permanent;
     name := "Snoopy le merveilleux";
     mana_cost := [{| color := White; quantity := 3 |};{| color := Black; quantity := 2 |}];
   |};
   tapped_permanent := false;
-  permanent_type := [creature;token];
-  permanent_abilities := []
+  permanent_type := [creature; token];
+  permanent_abilities := [];
+  triggered_abilities := [] (* Ajout des triggered abilities *)
 |}.
 
-Definition Create_Snoopy : Ability := {| 
+Definition Create_Snoopy : Ability := {|
   ability := fun gs =>
     let new_battlefield := Snoopy.(permanent_card) :: gs.(battlefield) in
-    {| battlefield := new_battlefield; 
-       mana_pool := gs.(mana_pool); 
-       opponent := gs.(opponent); 
-       hand := gs.(hand); 
-       library := gs.(library); 
-       graveyard := gs.(graveyard); 
-       exile := gs.(exile); 
-       stack := gs.(stack) |};
-  activation_condition := fun gs => true (* Condition d'activation*)
+    {| battlefield := new_battlefield;
+       mana_pool := gs.(mana_pool);
+       opponent := gs.(opponent);
+       hand := gs.(hand);
+       library := gs.(library);
+       graveyard := gs.(graveyard);
+       exile := gs.(exile);
+       stack := gs.(stack);
+       events := gs.(events) (* Conserver les événements *)
+    |};
+  activation_condition := fun gs => true (* Condition d'activation *)
 |}.
 
-
 Definition Invasion_doggesque : Instant := {|
-  instant_card := {|  
+  instant_card := {|
     type := instant;
-    name:= "Envahir la populace";
-    mana_cost :=[{| color := White; quantity := 3 |};{| color := Black; quantity := 2 |}; {|color := Generic; quantity := 2|} ];
+    name := "Envahir la populace";
+    mana_cost := [{| color := White; quantity := 3 |};{| color := Black; quantity := 2 |}; {| color := Generic; quantity := 2 |}];
   |};
-  instant_abilities := [Create_Snoopy]
+  instant_abilities := [Create_Snoopy];
+  triggered_abilities := [] (* Ajout des triggered abilities *)
 |}.
 
 Definition My_mana : ManaPool := [
 {| color := Red; quantity := 20 |};
-{| color := Black; quantity :=20|};
-{| color := White; quantity := 20|};
-{| color := Blue; quantity :=20|}].
-(* Un état de jeu minimal pour tester la fonction Cast_Card *)
+{| color := Black; quantity := 20 |};
+{| color := White; quantity := 20 |};
+{| color := Blue; quantity := 20 |}].
 
-Definition initial_game_state : GameState := {| 
-  battlefield := []; 
-  mana_pool := My_mana; 
-  opponent := 20; 
-  hand := [Zimone.(permanent_card); Invasion_doggesque.(instant_card)]; 
-  library := []; 
-  graveyard := []; 
-  exile := []; 
-  stack := [] 
+(* Un état de jeu minimal pour tester la fonction Cast_Card *)
+Definition initial_game_state : GameState := {|
+  battlefield := [];
+  mana_pool := My_mana;
+  opponent := 20;
+  hand := [Zimone.(permanent_card); Invasion_doggesque.(instant_card)];
+  library := [];
+  graveyard := [];
+  exile := [];
+  stack := [];
+  events := [] (* Initialisation de la liste des événements *)
 |}.
 
 Definition initial_history : GameHistory := [initial_game_state].
 Definition test_hist := Cast_Instant Invasion_doggesque initial_history.
 
 Compute test_hist.
-
-
-
-
-
-
-
-
