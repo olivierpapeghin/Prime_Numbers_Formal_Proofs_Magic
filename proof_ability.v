@@ -29,12 +29,6 @@ Record Card := mkCard {
 (* Définition de ManaPool *)
 Definition ManaPool := list Mana.
 
-(* Définition de Land *)
-Record Land := mkLand {
-  produce_mana : ManaColor;
-  tapped : bool
-}.
-
 (* Définition de GameState *)
 Record GameState := mkGameState {
   battlefield : list Card;
