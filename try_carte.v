@@ -7,6 +7,7 @@ Require Import List String.
 
 Import ListNotations.
 
+Inductive Lands := Plain | Ocean | Swamp | Mountain | Forest.
 Inductive ManaColor := White | Blue | Black | Red | Green | Generic.
 
 Record Mana := mkMana {
@@ -28,9 +29,18 @@ Record Artifact := mkArtifact {
 }.
 
 Record Land := mkLand {
-  producing : ManaColor
+  producing : Lands;
 }.
 
+(* Fonction pour mapper un Lands à un ManaColor *)
+Definition land_to_mana_color (land : Lands) : ManaColor :=
+  match land with
+  | Plain => White
+  | Ocean => Blue
+  | Swamp => Black
+  | Mountain => Red
+  | Forest => Green
+  end.
 
 (* Définition d'une carte permanente *)
 Record Permanent := mkPermanent {
@@ -43,6 +53,7 @@ Record Permanent := mkPermanent {
   artifact : option Artifact;
   token : bool;
   legendary : bool;
+  tapped : bool
 }.
 
 Record Sorcery := mkSorcery {
@@ -60,6 +71,7 @@ Record Card := mkCard {
   instant : option Instant;
   sorcery : option Sorcery;
   manacost : list Mana;
+
   name : string
 }.
 
@@ -113,12 +125,11 @@ Definition get_token_default (c : Card) (default : bool) : bool :=
   | Some token_value => token_value
   end.
 
-(* Exemple d'utilisation avec if *)
 Definition check_token (c : Card) : bool :=
   let token_value := get_token_default c true in
   if token_value then true else false.
 
-(* Fonction pour retrouver une capacité par sa clé *)
+(* Fonction pour retrouver une capacité par sa clef *)
 Fixpoint find_ability_by_key (dict : AbilityDict) (key : nat) : option Ability :=
   match dict with
   | nil => None
@@ -137,10 +148,12 @@ Fixpoint find_abilities_from_list (dict : AbilityDict) (keys : list nat) : list 
     end
   end.
 
+Definition ex_land : Land := mkLand Plain.
+
 Definition exemple_crea : Creature := mkCreature 2 2.
 
 (* Exemple de création d'une carte permanente *)
-Definition exemple_perm : Permanent := mkPermanent [1] nil nil (Some exemple_crea) None None None false false.
+Definition exemple_perm : Permanent := mkPermanent [1] nil nil None None (Some ex_land) None false false false.
 
 Definition example_ability : Ability :=
   mkAbility (fun gs => gs) (fun gs => true).
@@ -154,11 +167,95 @@ Definition exemple_card : Card := mkCard (Some exemple_perm) None None [mkMana W
 
 Definition ex_cardstack : CardOrPair := CardItem exemple_card.
 
+Definition initial_GS : GameState := mkGameState [exemple_perm] nil nil nil nil 0 [] nil.
+
+
+Definition GameHistory := list GameState.
+
+
+Definition Save_Game_State (gs : GameState) (history : GameHistory) : GameHistory :=
+  history ++ [gs]. (* On ajoute le nouvel état à la fin *)
+
+Definition Get_Current_State (history : GameHistory) : option GameState :=
+  match history with
+  | [] => None
+  | _ => Some (last history initial_GS)
+  end.
+
+(* Fonction pour comparer deux ManaColor *)
+Definition eq_mana_color (c1 c2 : ManaColor) : bool :=
+  match c1, c2 with
+  | White, White => true
+  | Blue, Blue => true
+  | Black, Black => true
+  | Red, Red => true
+  | Green, Green => true
+  | Generic, Generic => true
+  | _, _ => false
+  end.
+
+(* Fonction pour vérifier si un Land est dans le battlefield *)
+Fixpoint is_land_in_battlefield (target_land : Land) (battlefield : list Permanent) : bool :=
+  match battlefield with
+  | nil => false
+  | p :: rest =>
+    match p.(land) with
+    | None => is_land_in_battlefield target_land rest
+    | Some land_in_perm =>
+      if eq_mana_color (land_to_mana_color target_land.(producing)) (land_to_mana_color land_in_perm.(producing)) then
+        true
+      else
+        is_land_in_battlefield target_land rest
+    end
+  end.
+
+(* Fonction pour mettre à jour le champ tapped d'un Land dans le battlefield *)
+Fixpoint update_tapped_land (target_land : Land) (battlefield : list Permanent) : list Permanent :=
+  match battlefield with
+  | nil => nil
+  | p :: rest =>
+    match p.(land) with
+    | None => p :: update_tapped_land target_land rest
+    | Some land_in_perm =>
+      if eq_mana_color (land_to_mana_color target_land.(producing)) (land_to_mana_color land_in_perm.(producing)) then
+        mkPermanent p.(ListOnCast) p.(ListOnDeath) p.(ListOnPhase) p.(creature) p.(enchantement) (Some land_in_perm) p.(artifact) true p.(legendary) true :: update_tapped_land target_land rest
+      else
+        p :: update_tapped_land target_land rest
+    end
+  end.
+
+(* Fonction pour "tap" un Land et produire du mana, en mettant à jour l'historique *)
+Definition tap_land (target_land : Land) (history : GameHistory) : GameHistory :=
+  match Get_Current_State history with
+  | None => history (* Si l'historique est vide, retourner l'historique inchangé *)
+  | Some current_gs =>
+    if is_land_in_battlefield target_land current_gs.(battlefield) then
+      let new_mana := mkMana (land_to_mana_color target_land.(producing)) 1 in
+      let new_battlefield := update_tapped_land target_land current_gs.(battlefield) in
+      let new_gs := mkGameState new_battlefield current_gs.(hand) current_gs.(library)
+                      current_gs.(graveyard) current_gs.(exile) current_gs.(opponent)
+                      (new_mana :: current_gs.(manapool)) current_gs.(stack) in
+      Save_Game_State new_gs history
+    else
+      history (* Si la Land n'est pas dans le battlefield, ne rien faire *)
+  end.
+
 
 Definition abilities :=
   match get_list_on_cast_from_stack ex_cardstack with
   | None => nil
   | Some keys => find_abilities_from_list example_dict keys
   end.
-Compute abilities.
+
+Definition forest_land : Land := mkLand Forest.
+Definition forest_perm : Permanent := mkPermanent nil nil nil None None (Some forest_land) None false false false.
+Definition card_forest : Card := mkCard (Some forest_perm) None None [] "Forest".
+Definition Test_GS : GameState := mkGameState [forest_perm] nil nil nil nil 0 [] nil.
+
+Definition history : GameHistory := [Test_GS].
+
+Compute tap_land forest_land history.
+
+
+
 
