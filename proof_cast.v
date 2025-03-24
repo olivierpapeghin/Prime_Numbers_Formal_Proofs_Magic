@@ -245,10 +245,32 @@ Definition Cast (c:Card) (gs:GameState) : (GameState) :=
     (gs)
   .
 
-(* Enfin pour vérifier notre théorème on doit pouvoir vérifier qu'un permanent est sur le champ de bataille *)
-Fixpoint is_on_battlefield (bf : list Card) (c : Card) : bool :=
-  match bf with
-  | [] => false
-  | h :: t => if eq_card h c then true else is_on_battlefield t c
-  end.
+(* On peut déjà vérifer que toutes les étapes marchent bien en testant si un cast est bien fonctionnel *)
+
+(* Instanciation de la carte *)
+Definition colossal_dreadmaw : Card := 
+  mkCard 
+  (Some (mkPermanent (* Est un permanent *)
+    (Some (mkCreature 6 6)) (* Est une créature 6/6*)
+    None (* N'est pas un enchantement *)
+    None (* N'est pas un artifact *)
+    None (* N'est pas une land *)
+    false (* N'est pas tapped *)
+    false)) (* N'est pas légendaire *)
+  None (* N'est pas un instant *)
+  None (* N'est pas un sorcery *)
+  [mkMana Green 1; mkMana Generic 5] (* Coûte 5 mana générique et 1 mana vert *)
+  "Colossal Dreadmaw". (* Nom de la carte *)
+
+(* Instanciation du GameState initial *)
+Definition initial_gamestate : GameState := 
+  mkGameState
+  nil (* Le champ de bataille est vide *)
+  []
+  nil (* La bibliothèque est vide *)
+  nil (* Le cimetière est vide *)
+  nil (* L'exil est vide *)
+  20 (* L'opposant est à 20 PV *)
+  []
+  nil (* La pile est vide *).
 
