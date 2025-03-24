@@ -44,12 +44,12 @@ Record Permanent := mkPermanent {
 }.
 
 Record Sorcery := mkSorcery {
-  Spell : list nat;
+  sorcery_spell : list nat;
 }.
 
 (* Définition d'une carte éphémère *)
 Record Instant := mkInstant {
-  spell : list nat;
+  instant_spell : list nat;
 }.
 
 (* Définition d'une carte *)
@@ -67,7 +67,7 @@ Inductive CardOrPair :=
 
 
 Record GameState := mkGameState {
-  battlefield : list Permanent;
+  battlefield : list Card;
   hand : list Card;
   library : list Card;
   graveyard : list Card;
@@ -140,11 +140,11 @@ Definition eq_permanent (p1 p2 : Permanent) : bool :=
 
 (* Fonction de comparaison pour Instant *)
 Definition eq_instant (i1 i2 : Instant) : bool :=
-  eq_list_nat i1.(spell) i2.(spell).
+  eq_list_nat i1.(instant_spell) i2.(instant_spell).
 
 (* Fonction de comparaison pour Sorcery *)
 Definition eq_sorcery (s1 s2 : Sorcery) : bool :=
-  eq_list_nat s1.(Spell) s2.(Spell).
+  eq_list_nat s1.(sorcery_spell) s2.(sorcery_spell).
 
 (* Fonction principale de comparaison de deux cartes *)
 Definition eq_card (c1 c2 : Card) : bool :=
@@ -168,8 +168,6 @@ Definition ManaColor_eq (mc1 mc2 : ManaColor) : bool :=
   | Green, Green => true
   | _, _ => false
   end.
-
-
 
 (* Fonction count_occ qui compte le nombre d'occurrences d'un élément dans une liste *)
 Fixpoint count_occ (A : Type) (eqb : A -> A -> bool) (l : list A) (x : A) : nat :=
@@ -266,11 +264,105 @@ Definition colossal_dreadmaw : Card :=
 Definition initial_gamestate : GameState := 
   mkGameState
   nil (* Le champ de bataille est vide *)
-  []
+  [colossal_dreadmaw]
   nil (* La bibliothèque est vide *)
   nil (* Le cimetière est vide *)
   nil (* L'exil est vide *)
   20 (* L'opposant est à 20 PV *)
-  []
+  [mkMana White 20; mkMana Blue 20; mkMana Black 20; mkMana Red 20; mkMana Green 20] (* On se donne assez de mana pour pouvoir lancer le sort *)
   nil (* La pile est vide *).
 
+Definition gamestate_proof1 : GameState := Cast colossal_dreadmaw initial_gamestate.
+
+
+(* Lemme : Si une carte est dans la stack et qu'il n'y a aucune carte dans la main, alors cette carte existe bien dans la stack et la main est vide. *)
+Lemma card_on_stack_no_hand :
+  forall (c : CardOrPair) (gs : GameState),
+    In c (stack gs) ->
+    gs.(hand) = [] ->
+    exists c', In c' (stack gs) /\ gs.(hand) = [].
+Proof.
+  (* Introduction des variables et des hypothèses *)
+  intros c gs Hstack Hhand.
+
+  (* On affirme que la carte c satisfait la propriété *)
+  exists c.
+
+  (* Démonstration des deux conditions : *)
+  split.
+  - (* Première condition : la carte est sur le champ de bataille *)
+    exact Hstack.
+  - (* Deuxième condition : la main est vide *)
+    exact Hhand.
+Qed.
+
+(* On va maintenant resolve la pile pour que notre carte arrive sur le champ de bataille *)
+
+(* Fonction qui retourne le dernier élément d'une liste *)
+Fixpoint last_option {A : Type} (l : list A) : option A :=
+  match l with
+  | [] => None                 (* Si la liste est vide, retourne None *)
+  | [x] => Some x              (* Si un seul élément, retourne Some x *)
+  | _ :: xs => last_option xs  (* Sinon, continue sur le reste de la liste *)
+  end.
+
+(* Fonction qui vérifie si un élément est une carte *)
+Definition is_card (x : CardOrPair) : bool :=
+  match x with
+  | CardItem _ => true
+  | PairItem _ _ => false
+  end.
+
+(* Fonction pour enlever le dernier élément d'une liste *)
+Fixpoint remove_last {A : Type} (l : list A) : list A :=
+  match l with
+  | [] => []                  (* Si la liste est vide, on retourne une liste vide *)
+  | [x] => []                 (* Si un seul élément, on l'enlève en retournant [] *)
+  | x :: xs => x :: remove_last xs (* Sinon, on reconstruit la liste sans le dernier élément *)
+  end.
+
+(* Fonction qui vérifie si le dernier élément du stack est une carte *)
+Definition last_is_card (l : list CardOrPair) : option bool :=
+  match last_option l with
+  | Some x => Some (is_card x)
+  | None => None
+  end.
+
+(* Fonction qui gère la résolution des permanents *)
+Definition Resolve_permanent (gs : GameState) : GameState :=
+  let c : Card := (last_option gs.(stack)).CardCase in (* On récupère la carte en question *)
+  let new_stack : list Card := remove_last gs.(stack) in
+  let new_battlefield := CardItem c :: gs.(battlefield) in
+  (mkGameState new_battlefield new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack)
+  .
+
+(* Fonction principale de résolution, qui prend aussi en comtpe les abilités*)
+Definition Resolve (gs : GameState) : GameState :=
+  let last_on_stack : CardOrPair := last_option gs.(stack) in
+  match last_is_card last_on_stack with
+  | None => gs (* Si la stack est vide il n'y a rien à faire *)
+  | false => gs (* C'est une abilité, ici ce cas n'est pas encore pris en charge *)
+  | true => Resolve_permanent gs(* C'est une carte, on peut donc appliquer son effet *)
+  end.
+
+Definition gamestate_proof2 : GameState := Resolve gamestate_proof2
+
+Lemma card_on_battlefield_no_stack :
+  forall (c : Card) (gs : GameState),
+    In c (battlefield gs) ->
+    gs.(stack) = [] ->
+    exists c', In c' (battlefield gs) /\ gs.(stack) = [].
+Proof.
+  (* Introduction des variables et des hypothèses *)
+  intros c gs Hbattle Hstack.
+
+  (* On affirme que la carte c satisfait la propriété *)
+  exists c.
+
+  (* Démonstration des deux conditions : *)
+  split.
+  - (* Première condition : la carte est sur le champ de bataille *)
+    exact Hbattle.
+  - (* Deuxième condition : la stack est vide *)
+    exact Hstack.
+Qed.
