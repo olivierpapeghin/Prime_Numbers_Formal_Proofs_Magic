@@ -360,12 +360,8 @@ Fixpoint remove_card_from_hand (l : list Card) (c : Card) : list Card :=
 
 
 
-Definition forest_land : Land := mkLand Forest.
-Definition forest_perm : Permanent := mkPermanent nil nil nil None None (Some forest_land) None false false false.
-Definition card_forest : Card := mkCard (Some forest_perm) None None [] "Forest".
-Definition Test_GS : GameState := mkGameState nil [card_forest] nil nil nil 0 [] nil.
 
-Definition history : GameHistory := [Test_GS].
+
 
 (* Fonction pour sacrifier des cartes et les déplacer vers le cimetière *)
 Definition sacrifice_cards_ability_function (targets : option (list Card)) (gs : GameState) : GameState :=
@@ -422,6 +418,10 @@ Definition find_ability_in_triggered_abilities (triggered_abilities : list (nat 
   | Some sub_dict => find_ability_in_sub_dict sub_dict key2
   end.
 
+Definition forest_land : Land := mkLand Forest.
+Definition forest_perm : Permanent := mkPermanent nil nil nil None None (Some forest_land) None false false false.
+Definition card_forest : Card := mkCard (Some forest_perm) None None [] "Forest".
+
 (* Exemple de création d'une autre carte permanente *)
 Definition creature_perm : Permanent := mkPermanent [1] nil nil (Some (mkCreature 2 2)) None None None false false false.
 Definition card_creature : Card := mkCard (Some creature_perm) None None [] "Creature".
@@ -430,40 +430,73 @@ Definition card_creature : Card := mkCard (Some creature_perm) None None [] "Cre
 Definition Test_gs : GameState := mkGameState [card_forest; card_creature] nil nil nil nil 0 [] nil.
 
 (* Liste de cartes cibles à sacrifier *)
-Definition target_cards : list Card := [card_forest; card_creature].
+Definition target_cards : list Card := [card_forest].
 
 
-(* Fonction pour activer les abilities depuis ListOnCast *)
-Fixpoint activate_on_cast_abilities (triggered_abilities : list (nat * Dict)) (l : list nat) (gs : GameState) : GameState :=
-  match l with
+
+(* Fonction pour activer les capacités à partir d'une liste de clés *)
+Fixpoint activate_abilities_from_list (triggered_abilities : list (nat * Dict)) (event_type : nat) (keys : list nat) (gs : GameState) : GameState :=
+  match keys with
   | [] => gs
   | key :: rest =>
-    match find_ability_in_triggered_abilities triggered_abilities (1, key) with
-    | None => activate_on_cast_abilities triggered_abilities rest gs
+    match find_ability_in_triggered_abilities triggered_abilities (event_type, key) with
+    | None => activate_abilities_from_list triggered_abilities event_type rest gs
     | Some ability =>
       let new_gs := ability (Some []) gs in
-      activate_on_cast_abilities triggered_abilities rest new_gs
+      activate_abilities_from_list triggered_abilities event_type rest new_gs
+    end
+  end.
+(* Fonction générique pour activer une capacité à partir d'une carte *)
+Definition activate_ability_from_card (triggered_abilities : list (nat * Dict)) (card : Card) (event_type : nat) (gs : GameState) : GameState :=
+  match card.(permanent) with
+  | None => gs (* Si la carte n'est pas un permanent, retourner l'état du jeu inchangé *)
+  | Some perm =>
+    let ability_keys :=
+      match event_type with
+      | 1 => perm.(ListOnCast)
+      | 2 => perm.(ListOnPhase)
+      | 3 => perm.(ListOnDeath)
+      | _ => [] (* Par défaut, aucune capacité *)
+      end
+    in
+    activate_abilities_from_list triggered_abilities event_type ability_keys gs
+  end.
+(* Fonction pour activer les capacités à partir d'une liste de clés avec des cibles *)
+Fixpoint activate_abilities_from_list_with_targets (triggered_abilities : list (nat * Dict)) (event_type : nat) (keys : list nat) (targets : option (list Card)) (gs : GameState) : GameState :=
+  match keys with
+  | [] => gs
+  | key :: rest =>
+    match find_ability_in_triggered_abilities triggered_abilities (event_type, key) with
+    | None => activate_abilities_from_list_with_targets triggered_abilities event_type rest targets gs
+    | Some ability =>
+      let new_gs := ability targets gs in
+      activate_abilities_from_list_with_targets triggered_abilities event_type rest targets new_gs
     end
   end.
 
-(* Fonction Cast qui active les abilities depuis ListOnCast *)
-Definition Cast (c: Card) (gs: GameState) : GameState :=
-  let cost := c.(manacost) in
-  let pool := gs.(manapool) in
-  if Can_Pay cost pool then
-    let new_pool := fold_left remove_mana cost pool in
-    let new_hand := remove_card_from_hand gs.(hand) c in
-    let new_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool gs.(stack) in
-    (* Activer les abilities depuis ListOnCast *)
-    match c.(permanent) with
-    | None => new_gs
-    | Some perm =>
-      activate_on_cast_abilities Triggered_Abilities perm.(ListOnCast) new_gs
-    end
-  else
-    gs.
+(* Fonction générique pour activer une capacité à partir d'une carte avec des cibles *)
+Definition activate_ability_from_card_with_targets (triggered_abilities : list (nat * Dict)) (card : Card) (event_type : nat) (targets : option (list Card)) (gs : GameState) : GameState :=
+  match card.(permanent) with
+  | None => gs (* Si la carte n'est pas un permanent, retourner l'état du jeu inchangé *)
+  | Some perm =>
+    let ability_keys :=
+      match event_type with
+      | 1 => perm.(ListOnCast)
+      | 2 => perm.(ListOnPhase)
+      | 3 => perm.(ListOnDeath)
+      | _ => [] (* Par défaut, aucune capacité *)
+      end
+    in
+    activate_abilities_from_list_with_targets triggered_abilities event_type ability_keys targets gs
+  end.
 
+
+
+
+Compute Test_gs.
+Compute activate_ability_from_card_with_targets Triggered_Abilities card_creature 1 (Some target_cards) Test_gs.
 
 End Try_card.
+Export Try_card.
 
 
