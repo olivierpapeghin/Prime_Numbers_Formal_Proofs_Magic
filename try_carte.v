@@ -15,67 +15,6 @@ Import utility_function.
 Module Try_card.
 
 
-Definition initial_GS : GameState := mkGameState nil nil nil nil nil 0 [] nil.
-
-
-Definition GameHistory := list GameState.
-
-
-Definition Save_Game_State (gs : GameState) (history : GameHistory) : GameHistory :=
-  history ++ [gs]. (* On ajoute le nouvel état à la fin *)
-
-Definition Get_Current_State (history : GameHistory) : option GameState :=
-  match history with
-  | [] => None
-  | _ => Some (last history initial_GS)
-  end.
-
-(* Fonction pour mettre à jour le champ tapped d'un Land dans le battlefield *)
-Fixpoint update_tapped_land (target_land : Land) (battlefield : list Card) : list Card :=
-  match battlefield with
-  | nil => nil
-  | c :: rest =>
-    match c.(permanent) with
-    | None => c :: update_tapped_land target_land rest
-    | Some perm =>
-      match perm.(land) with
-      | None => c :: update_tapped_land target_land rest
-      | Some land_in_perm =>
-        if eq_land target_land land_in_perm then
-          let updated_perm := mkPermanent perm.(ListOnCast) perm.(ListOnDeath) perm.(ListOnPhase) perm.(ListActivated) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
-          (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name)) :: update_tapped_land target_land rest
-        else
-          c :: update_tapped_land target_land rest
-      end
-    end
-  end.
-
-(* Fonction pour tap une Land et produire du mana, en mettant à jour l'historique *)
-Definition tap_land (target_card : Card) (history : GameHistory) : GameHistory :=
-  match Get_Current_State history with
-  | None => history (* Si l'historique est vide, retourner l'historique inchangé *)
-  | Some current_gs =>
-    match target_card.(permanent) with
-    | None => history (* Si la carte n'est pas un permanent, ne rien faire *)
-    | Some perm =>
-      match perm.(land) with
-      | None => history (* Si la carte n'est pas un Land, ne rien faire *)
-      | Some target_land =>
-        if mem_card target_card current_gs.(battlefield) then
-          let new_mana := mkMana (land_to_mana_color target_land.(producing)) 1 in
-          let new_battlefield := update_tapped_land target_land current_gs.(battlefield) in
-          let new_gs := mkGameState new_battlefield current_gs.(hand) current_gs.(library)
-                          current_gs.(graveyard) current_gs.(exile) current_gs.(opponent)
-                          (new_mana :: current_gs.(manapool)) current_gs.(stack) in
-          Save_Game_State new_gs history
-        else
-          history (* Si la Land n'est pas dans le battlefield, ne rien faire *)
-      end
-    end
-  end.
-
-
-
 (* Fonction pour sacrifier des cartes et les déplacer vers le cimetière *)
 Definition sacrifice_cards_ability_function (targets : option (list Card)) (gs : GameState) : GameState :=
   match targets with
@@ -160,7 +99,7 @@ Definition activate_ability_from_card_with_targets (triggered_abilities : list (
     in
     activate_abilities_from_list_with_targets triggered_abilities event_type ability_keys targets gs
   end.
-Definition forest_land : Land := mkLand Forest.
+Definition forest_land : Land := mkLand (mkMana Green 1).
 Definition forest_perm : Permanent := mkPermanent nil nil nil nil None None (Some forest_land) None false false false.
 Definition card_forest : Card := mkCard (Some forest_perm) None None [] "Forest".
 
@@ -177,7 +116,7 @@ Definition target_cards : list Card := [card_forest].
 
 
 Compute Test_gs.
-Compute activate_ability_from_card_with_targets Triggered_Abilities card_creature 1 (Some target_cards) Test_gs.
+Compute tap_land card_forest Test_gs. 
 
 End Try_card.
 Export Try_card.

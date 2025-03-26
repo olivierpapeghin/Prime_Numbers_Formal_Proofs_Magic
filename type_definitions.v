@@ -34,7 +34,7 @@ Record Artifact := mkArtifact {
 }.
 
 Record Land := mkLand {
-  producing : Lands;
+  producing : Mana;
 }.
 
 Record Permanent := mkPermanent {
@@ -96,9 +96,6 @@ Record ActivatedAbility := mkActivatedAbility {
 
 (* Définition d'une liste de paires clé-valeur pour un dictionnaire *)
 Definition Dict := list (nat * Ability).
-
-Definition initial_GS : GameState := mkGameState nil nil nil nil nil 0 [] nil.
-Definition GameHistory := list GameState.
 
 End type_definition.
 Export type_definition.

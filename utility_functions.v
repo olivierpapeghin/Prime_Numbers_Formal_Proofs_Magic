@@ -22,8 +22,6 @@ Definition land_to_mana_color (land : Lands) : ManaColor :=
   | Forest => Green
   end.
 
-
-
 (* Fonction pour obtenir le champ token d'une carte *)
 Definition get_token (c : Card) : option bool :=
   match c.(permanent) with
@@ -74,17 +72,10 @@ Definition eq_option {A : Type} (eqA : A -> A -> bool) (o1 o2 : option A) : bool
 Definition eq_creature (c1 c2 : Creature) : bool :=
   (c1.(power) =? c2.(power)) && (c1.(toughness) =? c2.(toughness)).
 
+(* Fonction pour comparer deux Lands en comparant leur production de mana *)
 Definition eq_land (l1 l2 : Land) : bool :=
-  let color1 := land_to_mana_color l1.(producing) in
-  let color2 := land_to_mana_color l2.(producing) in
-  match color1, color2 with
-  | White, White => true
-  | Blue, Blue => true
-  | Black, Black => true
-  | Red, Red => true
-  | Green, Green => true
-  | _, _ => false
-  end.
+  eq_mana l1.(producing) l2.(producing).
+
 (* Fonction de comparaison pour Permanent *)
 Definition eq_permanent (p1 p2 : Permanent) : bool :=
   eq_option eq_creature p1.(creature) p2.(creature) &&
@@ -184,6 +175,47 @@ Fixpoint remove_card_from_hand (l : list Card) (c : Card) : list Card :=
   | [] => [] (* Si la liste est vide, retourne une liste vide *)
   | h :: t => if eq_card h c then t (* Si on trouve la carte, on la retire *)
               else h :: remove_card_from_hand t c (* Sinon, on continue à chercher *)
+  end.
+
+
+(* Fonction pour mettre à jour le champ tapped d'un Land dans le battlefield *)
+Fixpoint update_tapped_land (target_land : Land) (battlefield : list Card) : list Card :=
+  match battlefield with
+  | nil => nil
+  | c :: rest =>
+    match c.(permanent) with
+    | None => c :: update_tapped_land target_land rest
+    | Some perm =>
+      match perm.(land) with
+      | None => c :: update_tapped_land target_land rest
+      | Some land_in_perm =>
+        if eq_mana target_land.(producing) land_in_perm.(producing) then
+          let updated_perm := mkPermanent perm.(ListOnCast) perm.(ListOnDeath) perm.(ListOnPhase) perm.(ListActivated) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
+          (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name)) :: update_tapped_land target_land rest
+        else
+          c :: update_tapped_land target_land rest
+      end
+    end
+  end.
+
+
+(* Fonction pour tap une Land et produire du mana, en mettant à jour le GameState *)
+Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
+  match target_card.(permanent) with
+  | None => gs (* Si la carte n'est pas un permanent, retourner l'état du jeu inchangé *)
+  | Some perm =>
+    match perm.(land) with
+    | None => gs (* Si la carte n'est pas un Land, ne rien faire *)
+    | Some target_land =>
+      if mem_card target_card gs.(battlefield) then
+        let new_mana := target_land.(producing) in
+        let new_battlefield := update_tapped_land target_land gs.(battlefield) in
+        mkGameState new_battlefield gs.(hand) gs.(library)
+                    gs.(graveyard) gs.(exile) gs.(opponent)
+                    (new_mana :: gs.(manapool)) gs.(stack)
+      else
+        gs (* Si la Land n'est pas dans le battlefield, ne rien faire *)
+    end
   end.
 
 
