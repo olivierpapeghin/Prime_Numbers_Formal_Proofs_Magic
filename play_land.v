@@ -8,8 +8,10 @@ Require Import List String.
 Require Import String.
 Require Import List.
 Import ListNotations.
-Require Import try_carte.
-Import Try_card. (* Assurez-vous que votre module est bien nommé TryCarte *)
+Require Import type_definitions.
+Import type_definition.
+Require Import utility_functions.
+Import utility_function.
 Require Import Land_cards_def.
 Import Land_cards.
 
