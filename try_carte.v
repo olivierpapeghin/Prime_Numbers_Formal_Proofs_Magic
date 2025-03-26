@@ -12,6 +12,8 @@ Require Import type_definitions.
 Import type_definition.
 Require Import utility_functions.
 Import utility_function.
+Require Import card_instances.
+Import card_instance.
 Module Try_card.
 
 
@@ -99,19 +101,19 @@ Definition activate_ability_from_card_with_targets (triggered_abilities : list (
     in
     activate_abilities_from_list_with_targets triggered_abilities event_type ability_keys targets gs
   end.
-Definition forest_land : Land := mkLand (mkMana Green 1).
-Definition forest_perm : Permanent := mkPermanent nil nil nil nil None None (Some forest_land) None false false false.
-Definition card_forest : Card := mkCard (Some forest_perm) None None [] "Forest".
 
-(* Exemple de création d'une autre carte permanente *)
-Definition creature_perm : Permanent := mkPermanent [1] nil nil nil (Some (mkCreature 2 2)) None None None false false false.
-Definition card_creature : Card := mkCard (Some creature_perm) None None [] "Creature".
-
-(* État de jeu initial avec des cartes dans le battlefield *)
-Definition Test_gs : GameState := mkGameState [card_forest; card_creature] nil nil nil nil 0 [] nil.
-
-(* Liste de cartes cibles à sacrifier *)
-Definition target_cards : list Card := [card_forest].
+Definition Cast (c:Card) (gs:GameState) : (GameState) :=
+  let cost := c.(manacost) in
+  let pool := gs.(manapool) in
+  if Can_Pay cost pool then
+    let new_pool := fold_left remove_mana cost pool in
+    let new_hand := remove_card gs.(hand) c in
+    let new_stack := CardItem c :: gs.(stack) in
+    let new_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack in
+    (new_gs)
+  else
+    (gs)
+  .
 
 
 

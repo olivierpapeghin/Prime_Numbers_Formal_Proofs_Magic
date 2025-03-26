@@ -8,8 +8,10 @@ Require Import List String.
 Require Import String.
 Require Import List.
 Import ListNotations.
-Require Import try_carte.
-Import Try_card. (* Assurez-vous que votre module est bien nommé TryCarte *)
+Require Import type_definitions.
+Import type_definition.
+Require Import utility_functions.
+Import utility_function.
 
 Module Land_cards.
 
@@ -19,9 +21,10 @@ Definition plains_land : Card :=
     nil
     nil
     nil
+    nil
     None
     None
-    (Some (mkLand Plain))
+    (Some (mkLand (mkMana White 1)))
     None
     false
     false
@@ -37,9 +40,10 @@ Definition island_land : Card :=
     nil
     nil
     nil
+    nil
     None
     None
-    (Some (mkLand Ocean))
+    (Some (mkLand (mkMana Blue 1)))
     None
     false
     false
@@ -55,9 +59,10 @@ Definition forest_land : Card :=
     nil
     nil
     nil
+    nil
     None
     None
-    (Some (mkLand Forest))
+    (Some (mkLand (mkMana Green 1)))
     None
     false
     false
@@ -73,9 +78,10 @@ Definition Mountain_land : Card :=
     nil
     nil
     nil
+    nil
     None
     None
-    (Some (mkLand Mountain))
+    (Some (mkLand (mkMana Red 1)))
     None
     false
     false
@@ -91,9 +97,10 @@ Definition Swamp_land : Card :=
     nil
     nil
     nil
+    nil
     None
     None
-    (Some (mkLand Swamp))
+    (Some (mkLand (mkMana Black 1)))
     None
     false
     false

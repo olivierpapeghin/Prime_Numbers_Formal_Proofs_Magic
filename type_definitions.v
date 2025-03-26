@@ -12,7 +12,6 @@ Import ListNotations.
 Module type_definition.
 
 (* Définitions essentielles *)
-Inductive Lands := Plains | Island | Swamp | Mountain | Forest.
 Inductive ManaColor := White | Blue | Black | Red | Green | Generic.
 
 Record Mana := mkMana {
