@@ -177,6 +177,14 @@ Fixpoint remove_card_from_hand (l : list Card) (c : Card) : list Card :=
               else h :: remove_card_from_hand t c (* Sinon, on continue à chercher *)
   end.
 
+(* On doit ensuite manipuler les zones dans lesquels les cartes vont passer *)
+(* Fonction remove_card qui retire la première occurrence de c dans la liste l *)
+Fixpoint remove_card (l : list Card) (c : Card) : list Card :=
+  match l with
+  | [] => [] (* Si la liste est vide, retourne une liste vide *)
+  | h :: t => if eq_card h c then t (* Si on trouve la carte, on la retire *)
+              else h :: remove_card t c (* Sinon, on continue à chercher *)
+  end.
 
 (* Fonction pour mettre à jour le champ tapped d'un Land dans le battlefield *)
 Fixpoint update_tapped_land (target_land : Land) (battlefield : list Card) : list Card :=
