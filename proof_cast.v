@@ -7,6 +7,7 @@ Require Import Coq.Program.Equality.
 Require Import List String.
 
 Import ListNotations.
+Open Scope list_scope.
 
 Inductive ManaColor := White | Blue | Black | Red | Green | Generic.
 
@@ -83,7 +84,6 @@ Record GameState := mkGameState {
   manapool : list Mana;
   stack : list CardOrPair;
 }.
-
 
 (* Définition des différentes fonctions pour jouer un sort*)
 
@@ -183,6 +183,13 @@ Fixpoint count_occ (A : Type) (eqb : A -> A -> bool) (l : list A) (x : A) : nat 
   | h :: t => if eqb x h then 1 + count_occ A eqb t x else count_occ A eqb t x
   end.
 
+(* Définition d'une fonction pour vérifier la présence d'un élément dans une liste *)
+Fixpoint mem_card (c : Card) (l : list Card) : bool :=
+  match l with
+  | [] => false
+  | h :: t => if eq_card c h then true else mem_card c t
+  end.
+
 Fixpoint remove_mana (pool : list Mana) (cost : Mana) : list Mana :=
   match pool with
   | [] => [] (* Si le pool est vide, rien à retirer *)
@@ -240,7 +247,7 @@ Fixpoint remove_card (l : list Card) (c : Card) : list Card :=
 Definition Cast (c:Card) (gs:GameState) : (GameState) :=
   let cost := c.(manacost) in
   let pool := gs.(manapool) in
-  if Can_Pay cost pool then
+  if Can_Pay cost pool && mem_card c gs.(hand) then
     let new_pool := fold_left remove_mana cost pool in
     let new_hand := remove_card gs.(hand) c in
     let new_stack := CardItem c :: gs.(stack) in
@@ -281,26 +288,22 @@ Definition initial_gamestate : GameState :=
 
 Definition gamestate_proof1 : GameState := Cast colossal_dreadmaw initial_gamestate.
 
+Compute gamestate_proof1. (* On peut vérifier à la main que l'effet attendu est bien là *)
 
-(* Lemme : Si une carte est dans la stack et qu'il n'y a aucune carte dans la main, alors cette carte existe bien dans la stack et la main est vide. *)
-Lemma card_on_stack_no_hand :
-  forall (c : CardOrPair) (gs : GameState),
-    In c (stack gs) ->
-    gs.(hand) = [] ->
-    exists c', In c' (stack gs) /\ gs.(hand) = [].
+Definition list_length := Coq.Lists.List.length.
+
+(* On va vérifier via un théorème qu'on n'a plus de Colossal Dreadmaw en main et un dans la stack*)
+Theorem proof1 :
+  list_length Card gamestate_proof1.(hand) = 0 /\
+  list_length CardOrPair gamestate_proof1.(stack) = 1.
 Proof.
-  (* Introduction des variables et des hypothèses *)
-  intros c gs Hstack Hhand.
-
-  (* On affirme que la carte c satisfait la propriété *)
-  exists c.
-
-  (* Démonstration des deux conditions : *)
-  split.
-  - (* Première condition : la carte est sur le champ de bataille *)
-    exact Hstack.
-  - (* Deuxième condition : la main est vide *)
-    exact Hhand.
+  split.  (* Sépare l'objectif en deux sous-objectifs *)
+  - (* Première partie : la main est vide *)
+    simpl. (* Simplifie l'expression si possible *)
+    reflexivity. (* Si l'égalité est triviale, utilise reflexivity *)
+  - (* Deuxième partie : la pile contient un élément *)
+    simpl.
+    reflexivity.
 Qed.
 
 (* On va maintenant resolve la pile pour que notre carte arrive sur le champ de bataille *)
@@ -311,13 +314,6 @@ Fixpoint last_option {A : Type} (l : list A) : option A :=
   | [] => None                 (* Si la liste est vide, retourne None *)
   | [x] => Some x              (* Si un seul élément, retourne Some x *)
   | _ :: xs => last_option xs  (* Sinon, continue sur le reste de la liste *)
-  end.
-
-(* Fonction qui vérifie si un élément est une carte *)
-Definition is_card (x : CardOrPair) : bool :=
-  match x with
-  | CardItem _ => true
-  | PairItem _ _ => false
   end.
 
 (* Fonction pour enlever le dernier élément d'une liste *)
@@ -337,12 +333,6 @@ Definition card_type (c : Card) : CardType :=
   | _ => UnknownType
   end.
 
-(* Fonction qui extrait une Card si présente dans un CardOrPair *)
-Definition extract_card (cop : CardOrPair) : option Card :=
-  match cop with
-  | CardItem c => Some c
-  | PairItem _ _ => None
-  end.
 
 (* Fonction qui gère la résolution de la stack *)
 Definition Resolve (gs : GameState) : GameState :=
@@ -351,7 +341,7 @@ Definition Resolve (gs : GameState) : GameState :=
       match card_type c with
       | PermanentType => (* Si c'est un permanent *)
         let new_stack : list CardOrPair:= remove_last gs.(stack) in
-        let new_battlefield : list Card := gs.(battlefield) in
+        let new_battlefield : list Card := c :: gs.(battlefield) in
         mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack
       | InstantType => gs (* On ne gère pas encore cette éventualité *)
       | SorceryType => gs (* On ne gère pas encore cette éventualité *)
@@ -363,22 +353,16 @@ Definition Resolve (gs : GameState) : GameState :=
 
 Definition gamestate_proof2 : GameState := Resolve gamestate_proof1.
 
-Lemma card_on_battlefield_no_stack :
-  forall (c : Card) (gs : GameState),
-    In c (battlefield gs) ->
-    gs.(stack) = [] ->
-    exists c', In c' (battlefield gs) /\ gs.(stack) = [].
+(* On va vérifier via un théorème qu'on n'a plus de Colossal Dreadmaw en main et un dans la stack*)
+Theorem proof2 :
+  list_length CardOrPair gamestate_proof2.(stack) = 0 /\
+  list_length Card gamestate_proof2.(battlefield) = 1.
 Proof.
-  (* Introduction des variables et des hypothèses *)
-  intros c gs Hbattle Hstack.
-
-  (* On affirme que la carte c satisfait la propriété *)
-  exists c.
-
-  (* Démonstration des deux conditions : *)
-  split.
-  - (* Première condition : la carte est sur le champ de bataille *)
-    exact Hbattle.
-  - (* Deuxième condition : la stack est vide *)
-    exact Hstack.
+  split.  (* Sépare l'objectif en deux sous-objectifs *)
+  - (* Première partie : la main est vide *)
+    simpl. (* Simplifie l'expression si possible *)
+    reflexivity. (* Si l'égalité est triviale, utilise reflexivity *)
+  - (* Deuxième partie : la pile contient un élément *)
+    simpl.
+    reflexivity.
 Qed.

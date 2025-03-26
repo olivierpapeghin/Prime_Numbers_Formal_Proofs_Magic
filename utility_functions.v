@@ -39,6 +39,7 @@ Definition get_token_default (c : Card) (default : bool) : bool :=
 Definition check_token (c : Card) : bool :=
   let token_value := get_token_default c true in
   if token_value then true else false.
+
 Definition eq_mana_color (c1 c2 : ManaColor) : bool :=
   match c1, c2 with
   | White, White => true
