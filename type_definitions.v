@@ -2,76 +2,103 @@ From Coq Require Import Strings.String.
 From Coq Require Import Lists.List.
 Require Import Coq.Bool.Bool.
 Require Import Coq.Arith.Peano_dec.
+Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Program.Equality.
 Require Import List String.
-
+Require Import String.
+Require Import List.
 Import ListNotations.
 
-(* Inductive for types in Records *)
-Inductive CardTypes := permanent | instant | sorcery .
+Module type_definition.
 
-Inductive PermanentTypes := creature | enchantment | artifact | token | legendary | land.
-
-Inductive PermanentSubTypes := aura | room.
-
+(* Définitions essentielles *)
+Inductive Lands := Plains | Island | Swamp | Mountain | Forest.
 Inductive ManaColor := White | Blue | Black | Red | Green | Generic.
 
-Inductive Events := OnDeath | OnCast | OnPhase.
-
-(* Record for each object *)
-Record Mana := {
+Record Mana := mkMana {
   color : ManaColor;
   quantity : nat
 }.
 
-Record Card := {
-  type : CardTypes;
-  name : string;
-  mana_cost : list Mana;
+Record Creature := mkCreature {
+  power : nat;
+  toughness : nat
 }.
 
-Definition ManaPool := list Mana.
+Record Enchantement := mkEnchantement {
+  
+}.
 
-Record GameState := {
+Record Artifact := mkArtifact {
+
+}.
+
+Record Land := mkLand {
+  producing : Lands;
+}.
+
+Record Permanent := mkPermanent {
+  ListOnCast : list nat;
+  ListOnDeath : list nat;
+  ListOnPhase : list nat;
+  ListActivated : list nat;
+  creature : option Creature;
+  enchantement : option Enchantement;
+  land : option Land;
+  artifact : option Artifact;
+  token : bool;
+  legendary : bool;
+  tapped : bool
+}.
+
+Record Sorcery := mkSorcery {
+  Spell : list nat;
+}.
+
+Record Instant := mkInstant {
+  spell : list nat;
+}.
+
+Record Card := mkCard {
+  permanent : option Permanent;
+  instant : option Instant;
+  sorcery : option Sorcery;
+  manacost : list Mana;
+  name : string
+}.
+
+(*Définition d'un type spécial stack *)
+Inductive CardOrPair :=
+| CardItem : Card -> CardOrPair
+| PairItem : string -> nat -> CardOrPair.
+
+(* Définition de l'état du jeu *)
+Record GameState := mkGameState {
   battlefield : list Card;
-  mana_pool : ManaPool;
-  opponent : nat;
   hand : list Card;
   library : list Card;
   graveyard : list Card;
   exile : list Card;
-  stack : list (Card * nat); (* nat correspond au fait de prendre la carte ou son Ability *)
+  opponent : nat;
+  manapool : list Mana;
+  stack : list CardOrPair;
 }.
 
-Record Ability := {
-  ability : GameState -> GameState;
-  activation_condition : GameState -> bool; (* Condition d'activation *)
+(* Définition générale d'une capacité *)
+Definition Ability := option (list Card) -> GameState -> GameState.
+
+(* Définition d'une capacité à activer *)
+Record ActivatedAbility := mkActivatedAbility {
+  cost_mana : option (list Mana);
+  cost_cards : option (list Card);
+  effect : option (list Card) -> GameState -> GameState (* Effet de la capacité *)
 }.
 
-Record TriggeredAbility := {
-  trigger_ability : Ability;
-  trigger_event : Events;
-}.
+(* Définition d'une liste de paires clé-valeur pour un dictionnaire *)
+Definition Dict := list (nat * Ability).
 
-Record Permanent := {
-  permanent_card : Card;
-  permanent_type : list PermanentTypes;
-  permanent_subtype : list PermanentSubTypes;
-  tapped_permanent : bool;
-  perm_triggered_abilities : list TriggeredAbility; 
-}.
-
-Record Instant := {
-  instant_card : Card;
-  instant_abilities : list Ability
-}.
-
-Record Sorcery := {
-  sorcery_card : Card;
-  sorcery_abilities : list Ability
-}.
-
-(* On enregistre tous les permanents joués *)
-Definition PermanentRegistry := list Permanent.
-
+Definition initial_GS : GameState := mkGameState nil nil nil nil nil 0 [] nil.
 Definition GameHistory := list GameState.
+
+End type_definition.
+Export type_definition.
