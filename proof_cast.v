@@ -15,6 +15,13 @@ Record Mana := mkMana {
   quantity : nat
 }.
 
+(* Définition du type de carte *)
+Inductive CardType :=
+  | PermanentType
+  | InstantType
+  | SorceryType
+  | UnknownType. (* Si aucun type n'est défini *)
+
 Record Creature := mkCreature {
   power : nat;
   toughness : nat
@@ -321,31 +328,40 @@ Fixpoint remove_last {A : Type} (l : list A) : list A :=
   | x :: xs => x :: remove_last xs (* Sinon, on reconstruit la liste sans le dernier élément *)
   end.
 
-(* Fonction qui vérifie si le dernier élément du stack est une carte *)
-Definition last_is_card (l : list CardOrPair) : option bool :=
-  match last_option l with
-  | Some x => Some (is_card x)
-  | None => None
+(* Fonction qui détermine le type d'une carte *)
+Definition card_type (c : Card) : CardType :=
+  match c with
+  | mkCard (Some _) None None _ _ => PermanentType
+  | mkCard None (Some _) None _ _ => InstantType
+  | mkCard None None (Some _) _ _ => SorceryType
+  | _ => UnknownType
   end.
 
-(* Fonction qui gère la résolution des permanents *)
-Definition Resolve_permanent (gs : GameState) : GameState :=
-  let c : Card := (last_option gs.(stack)).CardCase in (* On récupère la carte en question *)
-  let new_stack : list Card := remove_last gs.(stack) in
-  let new_battlefield := CardItem c :: gs.(battlefield) in
-  (mkGameState new_battlefield new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack)
-  .
+(* Fonction qui extrait une Card si présente dans un CardOrPair *)
+Definition extract_card (cop : CardOrPair) : option Card :=
+  match cop with
+  | CardItem c => Some c
+  | PairItem _ _ => None
+  end.
 
-(* Fonction principale de résolution, qui prend aussi en comtpe les abilités*)
+(* Fonction qui gère la résolution de la stack *)
 Definition Resolve (gs : GameState) : GameState :=
-  let last_on_stack : CardOrPair := last_option gs.(stack) in
-  match last_is_card last_on_stack with
-  | None => gs (* Si la stack est vide il n'y a rien à faire *)
-  | false => gs (* C'est une abilité, ici ce cas n'est pas encore pris en charge *)
-  | true => Resolve_permanent gs(* C'est une carte, on peut donc appliquer son effet *)
+  match last_option gs.(stack) with
+  | Some (CardItem c) => (* Si c'est une carte *)
+      match card_type c with
+      | PermanentType => (* Si c'est un permanent *)
+        let new_stack : list CardOrPair:= remove_last gs.(stack) in
+        let new_battlefield : list Card := gs.(battlefield) in
+        mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack
+      | InstantType => gs (* On ne gère pas encore cette éventualité *)
+      | SorceryType => gs (* On ne gère pas encore cette éventualité *)
+      | UnknownType => gs (* Si on ne reconnait pas le type de la carte on ne fait rien *)
+      end
+  | Some (PairItem i d) => gs (* Si le dernier élément est une capacité, on ne la traite pas encore *)
+  | None => gs (* Si la stack est vide, on ne fait rien *)
   end.
 
-Definition gamestate_proof2 : GameState := Resolve gamestate_proof2
+Definition gamestate_proof2 : GameState := Resolve gamestate_proof1.
 
 Lemma card_on_battlefield_no_stack :
   forall (c : Card) (gs : GameState),
