@@ -169,16 +169,7 @@ Fixpoint Can_Pay (cost : list Mana) (pool : list Mana) : bool :=
         end
   end.
 
-(* On doit ensuite manipuler les zones dans lesquels les cartes vont passer *)
-(* Fonction remove_card qui retire la première occurrence de c dans la liste l *)
-Fixpoint remove_card_from_hand (l : list Card) (c : Card) : list Card :=
-  match l with
-  | [] => [] (* Si la liste est vide, retourne une liste vide *)
-  | h :: t => if eq_card h c then t (* Si on trouve la carte, on la retire *)
-              else h :: remove_card_from_hand t c (* Sinon, on continue à chercher *)
-  end.
-
-(* On doit ensuite manipuler les zones dans lesquels les cartes vont passer *)
+(* On doit ensuite manipuler les zones dans lesquelles les cartes vont passer *)
 (* Fonction remove_card qui retire la première occurrence de c dans la liste l *)
 Fixpoint remove_card (l : list Card) (c : Card) : list Card :=
   match l with
@@ -227,6 +218,30 @@ Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
     end
   end.
 
+(* Fonction qui retourne le dernier élément d'une liste *)
+Fixpoint last_option {A : Type} (l : list A) : option A :=
+  match l with
+  | [] => None                 (* Si la liste est vide, retourne None *)
+  | [x] => Some x              (* Si un seul élément, retourne Some x *)
+  | _ :: xs => last_option xs  (* Sinon, continue sur le reste de la liste *)
+  end.
+
+(* Fonction pour enlever le dernier élément d'une liste *)
+Fixpoint remove_last {A : Type} (l : list A) : list A :=
+  match l with
+  | [] => []                  (* Si la liste est vide, on retourne une liste vide *)
+  | [x] => []                 (* Si un seul élément, on l'enlève en retournant [] *)
+  | x :: xs => x :: remove_last xs (* Sinon, on reconstruit la liste sans le dernier élément *)
+  end.
+
+(* Fonction qui détermine le type d'une carte *)
+Definition card_type (c : Card) : CardType :=
+  match c with
+  | mkCard (Some _) None None _ _ => PermanentType
+  | mkCard None (Some _) None _ _ => InstantType
+  | mkCard None None (Some _) _ _ => SorceryType
+  | _ => UnknownType
+  end.
 
 End utility_function.
 Export utility_function.
