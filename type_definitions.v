@@ -19,6 +19,13 @@ Record Mana := mkMana {
   quantity : nat
 }.
 
+(* Définition du type de carte *)
+Inductive CardType :=
+  | PermanentType
+  | InstantType
+  | SorceryType
+  | UnknownType. (* Si aucun type n'est défini *)
+
 Record Creature := mkCreature {
   power : nat;
   toughness : nat

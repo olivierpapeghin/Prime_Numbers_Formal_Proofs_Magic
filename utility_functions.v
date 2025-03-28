@@ -12,16 +12,6 @@ Require Import type_definitions.
 Import type_definition.
 Module utility_function.
 
-(* Fonction pour mapper un Lands à un ManaColor *)
-Definition land_to_mana_color (land : Lands) : ManaColor :=
-  match land with
-  | Plains => White
-  | Island => Blue
-  | Swamp => Black
-  | Mountain => Red
-  | Forest => Green
-  end.
-
 (* Fonction pour obtenir le champ token d'une carte *)
 Definition get_token (c : Card) : option bool :=
   match c.(permanent) with
@@ -242,18 +232,6 @@ Definition card_type (c : Card) : CardType :=
   | mkCard None None (Some _) _ _ => SorceryType
   | _ => UnknownType
   end.
-Fixpoint add_mana (pool : list Mana) (new_mana : Mana) : list Mana :=
-  match pool with
-  | [] => [new_mana] (* Si le pool est vide, on ajoute simplement le nouveau mana *)
-  | h :: t =>
-      if eq_mana_color h.(color) new_mana.(color) then
-        (* Si c'est le même type de mana, on additionne les quantités *)
-        {| color := h.(color); quantity := h.(quantity) + new_mana.(quantity) |} :: t
-      else
-        (* Sinon, on garde l'élément et on continue *)
-        h :: add_mana t new_mana
-  end.
-
 
 End utility_function.
 Export utility_function.
