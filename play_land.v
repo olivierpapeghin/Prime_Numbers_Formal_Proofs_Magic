@@ -52,7 +52,7 @@ Definition initial_gamestate : GameState :=
 Definition gamestate_proof1 : GameState := Play_land Swamp initial_gamestate.
 Definition gamestate_proof2 : GameState := Play_land Swamp gamestate_proof1.
 
-Compute tap_land Swamp gamestate_proof1.
+Compute tap_land Swamp gamestate_proof2.
 
 End Proof_play_land.
 
