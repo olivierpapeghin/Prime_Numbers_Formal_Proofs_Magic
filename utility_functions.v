@@ -226,6 +226,18 @@ Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
     end
   end.
 
+Fixpoint add_mana (pool : list Mana) (new_mana : Mana) : list Mana :=
+  match pool with
+  | [] => [new_mana] (* Si le pool est vide, on ajoute simplement le nouveau mana *)
+  | h :: t =>
+      if eq_mana_color h.(color) new_mana.(color) then
+        (* Si c'est le même type de mana, on additionne les quantités *)
+        {| color := h.(color); quantity := h.(quantity) + new_mana.(quantity) |} :: t
+      else
+        (* Sinon, on garde l'élément et on continue *)
+        h :: add_mana t new_mana
+  end.
+
 
 End utility_function.
 Export utility_function.

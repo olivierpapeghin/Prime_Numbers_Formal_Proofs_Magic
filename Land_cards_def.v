@@ -15,7 +15,7 @@ Import utility_function.
 
 Module Land_cards.
 
-Definition plains_land : Card :=
+Definition Plains : Card :=
   mkCard 
   (Some (mkPermanent
     nil
@@ -34,7 +34,7 @@ Definition plains_land : Card :=
   nil
   "Plains".
 
-Definition island_land : Card :=
+Definition Island : Card :=
   mkCard 
   (Some (mkPermanent
     nil
@@ -53,7 +53,7 @@ Definition island_land : Card :=
   nil
   "Island".
 
-Definition forest_land : Card :=
+Definition Forest : Card :=
   mkCard 
   (Some (mkPermanent
     nil
@@ -72,7 +72,7 @@ Definition forest_land : Card :=
   nil
   "Forest".
 
-Definition Mountain_land : Card :=
+Definition Mountain : Card :=
   mkCard 
   (Some (mkPermanent
     nil
@@ -91,7 +91,7 @@ Definition Mountain_land : Card :=
   nil
   "Mountain".
 
-Definition Swamp_land : Card :=
+Definition Swamp : Card :=
   mkCard 
   (Some (mkPermanent
     nil

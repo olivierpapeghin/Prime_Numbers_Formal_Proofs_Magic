@@ -19,18 +19,6 @@ Import Land_cards.
 
 Module Play_land.
 
-Fixpoint add_mana (pool : list Mana) (new_mana : Mana) : list Mana :=
-  match pool with
-  | [] => [new_mana] (* Si le pool est vide, on ajoute simplement le nouveau mana *)
-  | h :: t =>
-      if eq_mana_color h.(color) new_mana.(color) then
-        (* Si c'est le même type de mana, on additionne les quantités *)
-        {| color := h.(color); quantity := h.(quantity) + new_mana.(quantity) |} :: t
-      else
-        (* Sinon, on garde l'élément et on continue *)
-        h :: add_mana t new_mana
-  end.
-
 Definition Play_land (c : Card) (gs : GameState) : GameState :=
   if mem_card c gs.(hand) then
     let new_battlefield := c :: gs.(battlefield) in
@@ -53,7 +41,7 @@ Import Play_land.
 Definition initial_gamestate : GameState := 
   mkGameState
   nil (* Le champ de bataille est vide *)
-  [Swamp_land]
+  [Swamp; Swamp]
   nil (* La bibliothèque est vide *)
   nil (* Le cimetière est vide *)
   nil (* L'exil est vide *)
@@ -61,9 +49,10 @@ Definition initial_gamestate : GameState :=
   [] 
   nil (* La pile est vide *).
 
-Definition gamestate_proof1 : GameState := Play_land Swamp_land initial_gamestate.
+Definition gamestate_proof1 : GameState := Play_land Swamp initial_gamestate.
+Definition gamestate_proof2 : GameState := Play_land Swamp gamestate_proof1.
 
-Compute gamestate_proof1.
+Compute tap_land Swamp gamestate_proof1.
 
 End Proof_play_land.
 
