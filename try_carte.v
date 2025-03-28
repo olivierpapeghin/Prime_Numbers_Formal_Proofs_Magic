@@ -18,7 +18,7 @@ Module Try_card.
 
 
 (* Fonction pour sacrifier des cartes et les déplacer vers le cimetière *)
-Definition sacrifice_cards_ability_function (targets : option (list Card)) (gs : GameState) : GameState :=
+Definition sacrifice_cards (targets : option (list Card)) (gs : GameState) : GameState :=
   match targets with
   | None => gs (* Si aucune cible n'est fournie, retourner l'état du jeu inchangé *)
   | Some target_cards =>
@@ -27,7 +27,7 @@ Definition sacrifice_cards_ability_function (targets : option (list Card)) (gs :
         match target.(permanent) with
         | None => new_gs (* Si la carte n'est pas un permanent, ne rien faire *)
         | Some target_perm =>
-          let new_battlefield := remove_card_from_hand new_gs.(battlefield) target in
+          let new_battlefield := remove_card new_gs.(battlefield) target in
           let new_graveyard := target :: new_gs.(graveyard) in
           mkGameState new_battlefield new_gs.(hand) new_gs.(library) new_graveyard new_gs.(exile)
                         new_gs.(opponent) new_gs.(manapool) new_gs.(stack)
@@ -36,10 +36,13 @@ Definition sacrifice_cards_ability_function (targets : option (list Card)) (gs :
       gs
   end.
 
-
+(* Définition d'une capacité qui ajoute un mana noir au manapool *)
+Definition add_black_mana (targets : option (list Card)) (gs : GameState) : GameState :=
+  let new_manapool := (mkMana Black 1) :: gs.(manapool) in
+  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack).
 
 (* Définition des sous-dictionnaires *)
-Definition OnCast : Dict := [(1, sacrifice_cards_ability_function)].
+Definition OnCast : Dict := [(1, add_black_mana)].
 Definition OnPhase : Dict := nil.
 Definition OnDeath : Dict := nil.
 
@@ -102,23 +105,37 @@ Definition activate_ability_from_card_with_targets (triggered_abilities : list (
     activate_abilities_from_list_with_targets triggered_abilities event_type ability_keys targets gs
   end.
 
-Definition Cast (c:Card) (gs:GameState) : (GameState) :=
+(* Fonction pour jouer un sort et activer les capacités onCast des cartes du battlefield *)
+Definition Cast (c:Card) (gs:GameState) : GameState :=
   let cost := c.(manacost) in
   let pool := gs.(manapool) in
-  if Can_Pay cost pool then
-    let new_pool := fold_left remove_mana cost pool in
+  if Can_Pay cost pool && mem_card c gs.(hand) then
     let new_hand := remove_card gs.(hand) c in
     let new_stack := CardItem c :: gs.(stack) in
-    let new_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack in
-    (new_gs)
+
+    (* Activer les capacités onCast des cartes du battlefield *)
+    let updated_gs := fold_left
+      (fun gs' card =>
+        activate_ability_from_card_with_targets Triggered_Abilities card 1 None gs')
+      gs.(battlefield)
+      gs
+    in
+
+    (* Mettre à jour le manapool après activation des capacités *)
+    let final_manapool := fold_left remove_mana cost updated_gs.(manapool) in
+
+    let final_gs := mkGameState updated_gs.(battlefield) new_hand updated_gs.(library) updated_gs.(graveyard) updated_gs.(exile) updated_gs.(opponent) final_manapool new_stack in
+    final_gs
   else
-    (gs)
-  .
+    gs.
 
 
 
-Compute Test_gs.
-Compute tap_land card_forest Test_gs. 
+
+
+
+Compute Cast card_forest Test_gs.
+
 
 End Try_card.
 Export Try_card.

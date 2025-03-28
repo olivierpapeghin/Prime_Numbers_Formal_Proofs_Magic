@@ -17,7 +17,7 @@ Module card_instance.
 
 
 Definition forest_land : Land := mkLand (mkMana Green 1).
-Definition forest_perm : Permanent := mkPermanent nil nil nil nil None None (Some forest_land) None false false false.
+Definition forest_perm : Permanent := mkPermanent [1] nil nil nil None None (Some forest_land) None false false false.
 Definition card_forest : Card := mkCard (Some forest_perm) None None [] "Forest".
 
 (* Exemple de création d'une autre carte permanente *)
@@ -25,7 +25,7 @@ Definition creature_perm : Permanent := mkPermanent [1] nil nil nil (Some (mkCre
 Definition card_creature : Card := mkCard (Some creature_perm) None None [] "Creature".
 
 (* État de jeu initial avec des cartes dans le battlefield *)
-Definition Test_gs : GameState := mkGameState [card_forest; card_creature] nil nil nil nil 0 [] nil.
+Definition Test_gs : GameState := mkGameState [card_creature] [card_forest] nil nil nil 0 [] nil.
 
 (* Liste de cartes cibles à sacrifier *)
 Definition target_cards : list Card := [card_forest].
