@@ -48,6 +48,7 @@ Record Permanent := mkPermanent {
   ListOnDeath : list nat;
   ListOnPhase : list nat;
   ListActivated : list nat;
+  subtype : list string;
   creature : option Creature;
   enchantement : option Enchantement;
   land : option Land;
