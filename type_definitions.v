@@ -26,6 +26,13 @@ Inductive CardType :=
   | SorceryType
   | UnknownType. (* Si aucun type n'est défini *)
 
+Inductive PermanentCardType :=
+  | CreatureType
+  | ArtifactType
+  | EnchantmentType
+  | LandType
+  | UnknownPermanentType.
+
 Record Creature := mkCreature {
   power : nat;
   toughness : nat

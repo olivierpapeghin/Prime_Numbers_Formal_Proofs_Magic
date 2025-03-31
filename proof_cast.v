@@ -5,8 +5,7 @@ Require Import Coq.Arith.Peano_dec.
 Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Program.Equality.
 Require Import List String.
-From Coq 
-Require Import String.
+From Coq Require Import String.
 
 Import ListNotations.
 Open Scope list_scope.

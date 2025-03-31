@@ -233,5 +233,17 @@ Definition card_type (c : Card) : CardType :=
   | _ => UnknownType
   end.
 
+Definition permanent_type (c : Permanent) : PermanentCardType :=
+  match c with
+  | mkPermanent _ _ _ _ _ (Some _) None None None _ _ _ => CreatureType
+  | mkPermanent _ _ _ _ _ None (Some _) None None _ _ _ => EnchantmentType
+  | mkPermanent _ _ _ _ _ None None (Some _) None _ _ _ => ArtifactType
+  | mkPermanent _ _ _ _ _ None None None (Some _) _ _ _ => LandType
+  | _ => UnknownPermanentType
+  end.
+
+Definition has_subtype (st : string) (subtypes : list string) : bool :=
+  existsb (fun x => String.eqb x st) subtypes.
+
 End utility_function.
 Export utility_function.
