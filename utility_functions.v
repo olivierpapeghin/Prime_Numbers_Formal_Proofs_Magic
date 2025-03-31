@@ -181,13 +181,9 @@ Fixpoint update_tapped_land (target_land : Land) (battlefield : list Card) : lis
       | None => c :: update_tapped_land target_land rest
       | Some land_in_perm =>
         if eq_mana target_land.(producing) land_in_perm.(producing) then
-<<<<<<< HEAD
-          let updated_perm := mkPermanent perm.(Abilities) perm.(ListActivated) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
-          (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name)) :: update_tapped_land target_land rest
-=======
-          let updated_perm := mkPermanent perm.(ListOnCast) perm.(ListOnDeath) perm.(ListOnPhase) perm.(ListActivated) perm.(subtype) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
+          let updated_perm := mkPermanent perm.(Abilities) perm.(ListActivated) perm.(subtype) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
           (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name) c.(id)) :: update_tapped_land target_land rest
->>>>>>> cb5c35b0445add3b16ff3dae1d74c6408980695d
+
         else
           c :: update_tapped_land target_land rest
       end
