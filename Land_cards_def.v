@@ -15,9 +15,10 @@ Import utility_function.
 
 Module Land_cards.
 
-Definition Plains : Card :=
+Definition Plains (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
+    nil
     nil
     nil
     nil
@@ -32,11 +33,13 @@ Definition Plains : Card :=
   None
   None
   nil
-  "Plains".
+  "Plains"
+  id.
 
-Definition Island : Card :=
+Definition Island (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
+    nil
     nil
     nil
     nil
@@ -51,11 +54,13 @@ Definition Island : Card :=
   None
   None
   nil
-  "Island".
+  "Island"
+  id.
 
-Definition Forest : Card :=
+Definition Forest (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
+    nil
     nil
     nil
     nil
@@ -70,11 +75,13 @@ Definition Forest : Card :=
   None
   None
   nil
-  "Forest".
+  "Forest"
+  id.
 
-Definition Mountain : Card :=
+Definition Mountain (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
+    nil
     nil
     nil
     nil
@@ -89,11 +96,13 @@ Definition Mountain : Card :=
   None
   None
   nil
-  "Mountain".
+  "Mountain"
+  id.
 
-Definition Swamp : Card :=
+Definition Swamp (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
+    nil
     nil
     nil
     nil
@@ -108,7 +117,8 @@ Definition Swamp : Card :=
   None
   None
   nil
-  "Swamp".
+  "Swamp"
+  id.
 
 End Land_cards.
 
