@@ -98,7 +98,8 @@ Definition eq_card (c1 c2 : Card) : bool :=
   eq_option eq_instant c1.(instant) c2.(instant) &&
   eq_option eq_sorcery c1.(sorcery) c2.(sorcery) &&
   eq_list_mana c1.(manacost) c2.(manacost) &&
-  String.eqb c1.(name) c2.(name).
+  String.eqb c1.(name) c2.(name) &&
+  Nat.eqb c1.(id) c2.(id).
 
 (* Définition d'une fonction pour vérifier la présence d'un élément dans une liste *)
 Fixpoint mem_card (c : Card) (l : list Card) : bool :=
@@ -181,7 +182,7 @@ Fixpoint update_tapped_land (target_land : Land) (battlefield : list Card) : lis
       | Some land_in_perm =>
         if eq_mana target_land.(producing) land_in_perm.(producing) then
           let updated_perm := mkPermanent perm.(ListOnCast) perm.(ListOnDeath) perm.(ListOnPhase) perm.(ListActivated) perm.(subtype) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
-          (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name)) :: update_tapped_land target_land rest
+          (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name) c.(id)) :: update_tapped_land target_land rest
         else
           c :: update_tapped_land target_land rest
       end
@@ -227,9 +228,9 @@ Fixpoint remove_last {A : Type} (l : list A) : list A :=
 (* Fonction qui détermine le type d'une carte *)
 Definition card_type (c : Card) : CardType :=
   match c with
-  | mkCard (Some _) None None _ _ => PermanentType
-  | mkCard None (Some _) None _ _ => InstantType
-  | mkCard None None (Some _) _ _ => SorceryType
+  | mkCard (Some _) None None _ _ _ => PermanentType
+  | mkCard None (Some _) None _ _ _ => InstantType
+  | mkCard None None (Some _) _ _ _ => SorceryType
   | _ => UnknownType
   end.
 

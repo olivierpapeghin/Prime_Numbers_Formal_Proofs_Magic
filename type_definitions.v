@@ -71,7 +71,8 @@ Record Card := mkCard {
   instant : option Instant;
   sorcery : option Sorcery;
   manacost : list Mana;
-  name : string
+  name : string;
+  id : nat
 }.
 
 (*Définition d'un type spécial stack *)
