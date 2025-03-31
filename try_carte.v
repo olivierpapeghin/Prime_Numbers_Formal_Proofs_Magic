@@ -45,11 +45,12 @@ Definition add_black_mana (targets : option (list Card)) (gs : GameState) : Game
 Definition OnCast : Dict := [(1, add_black_mana)].
 Definition OnPhase : Dict := nil.
 Definition OnDeath : Dict := nil.
+Definition OnEnter : Dict := [(1, sacrifice_cards)].
 
 
 (* Définition du dictionnaire principal avec des clés de type string *)
 Definition Triggered_Abilities : list (nat * Dict) :=
-  ( 1 , OnCast) :: (2 , OnPhase) :: (3 , OnDeath) :: nil.
+  ( 1 , OnCast) :: (2 , OnPhase) :: (3 , OnDeath) :: (4, OnEnter) :: nil.
 
 (* Fonction pour trouver un sous-dictionnaire par sa clé *)
 Fixpoint find_sub_dict (dicts : list (nat * Dict)) (key1 : nat) : option Dict :=
@@ -74,67 +75,89 @@ Definition find_ability_in_triggered_abilities (triggered_abilities : list (nat 
   | None => None
   | Some sub_dict => find_ability_in_sub_dict sub_dict key2
   end.
-
-
-(* Fonction pour activer les capacités à partir d'une liste de clés avec des cibles *)
-Fixpoint activate_abilities_from_list_with_targets (triggered_abilities : list (nat * Dict)) (event_type : nat) (keys : list nat) (targets : option (list Card)) (gs : GameState) : GameState :=
-  match keys with
-  | [] => gs
-  | key :: rest =>
-    match find_ability_in_triggered_abilities triggered_abilities (event_type, key) with
-    | None => activate_abilities_from_list_with_targets triggered_abilities event_type rest targets gs
-    | Some ability =>
-      let new_gs := ability targets gs in
-      activate_abilities_from_list_with_targets triggered_abilities event_type rest targets new_gs
-    end
+ 
+(* Fonction pour activer une seule capacité à partir d'une clé avec des cibles *)
+Fixpoint activate_ability (triggered_abilities : list (nat * Dict)) (event_type : nat) (key : nat) (targets : option (list Card)) (gs : GameState) : GameState :=
+  match find_ability_in_triggered_abilities triggered_abilities (event_type, key) with
+  | None => gs (* Aucune capacité trouvée, retourner l'état du jeu inchangé *)
+  | Some ability =>
+    let new_gs := ability targets gs in
+    new_gs (* Retourner l'état du jeu mis à jour après activation de la capacité *)
   end.
-
-(* Fonction générique pour activer une capacité à partir d'une carte avec des cibles *)
-Definition activate_ability_from_card_with_targets (triggered_abilities : list (nat * Dict)) (card : Card) (event_type : nat) (targets : option (list Card)) (gs : GameState) : GameState :=
-  match card.(permanent) with
+(* Fonction pour activer une seule capacité à partir d'une carte avec des cibles *)
+Definition activate_ability_from_card (triggered_abilities : list (nat * Dict)) (card : Card) (event_type : nat) (targets : option (list Card)) (gs : GameState) : GameState :=
+  match permanent card with
   | None => gs (* Si la carte n'est pas un permanent, retourner l'état du jeu inchangé *)
   | Some perm =>
-    let ability_keys :=
+    let ability_key :=
       match event_type with
-      | 1 => perm.(ListOnCast)
-      | 2 => perm.(ListOnPhase)
-      | 3 => perm.(ListOnDeath)
-      | _ => [] (* Par défaut, aucune capacité *)
+      | 1 =>
+        (* Activer la première capacité OnCast *)
+        match Abilities perm with
+        | key :: _ => key
+        | _ => 0 (* Clé par défaut si aucune capacité n'est trouvée *)
+        end
+      
+      | _ => 0 (* Par défaut, aucune capacité *)
       end
     in
-    activate_abilities_from_list_with_targets triggered_abilities event_type ability_keys targets gs
+    activate_ability triggered_abilities event_type ability_key targets gs
   end.
 
-(* Fonction pour jouer un sort et activer les capacités onCast des cartes du battlefield *)
-Definition Cast (c:Card) (gs:GameState) : GameState :=
+
+
+
+(* Définition des différentes fonctions pour jouer un sort*)
+Definition Cast (c:Card) (gs:GameState) : (GameState) :=
   let cost := c.(manacost) in
   let pool := gs.(manapool) in
-  if Can_Pay cost pool && mem_card c gs.(hand) then
+  if Can_Pay cost pool && card_in_list c gs.(hand) then
+    let new_pool := fold_left remove_mana cost pool in
     let new_hand := remove_card gs.(hand) c in
     let new_stack := CardItem c :: gs.(stack) in
-
-    (* Activer les capacités onCast des cartes du battlefield *)
-    let updated_gs := fold_left
-      (fun gs' card =>
-        activate_ability_from_card_with_targets Triggered_Abilities card 1 None gs')
-      gs.(battlefield)
-      gs
-    in
-
-    (* Mettre à jour le manapool après activation des capacités *)
-    let final_manapool := fold_left remove_mana cost updated_gs.(manapool) in
-
-    let final_gs := mkGameState updated_gs.(battlefield) new_hand updated_gs.(library) updated_gs.(graveyard) updated_gs.(exile) updated_gs.(opponent) final_manapool new_stack in
-    final_gs
+    let new_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack in
+    (new_gs)
   else
-    gs.
+    (gs)
+  .
+
+(* Fonction qui gère la résolution de la stack avec capacité OnEnter *)
+Definition Resolve (targets : option (list Card)) (gs : GameState) : GameState :=
+  match last_option gs.(stack) with
+  | Some (CardItem c) => (* Si c'est une carte *)
+      match card_type c with
+      | PermanentType => (* Si c'est un permanent *)
+        let new_stack := remove_last gs.(stack) in
+        let new_battlefield := c :: gs.(battlefield) in
+
+        (* Ajouter la capacité OnEnter à la pile *)
+        let on_enter_key :=
+          match permanent c with
+          | Some perm =>
+            match perm.(Abilities) with
+            | key :: _ => key
+            | _ => 0 (* Clé par défaut si aucune capacité n'est trouvée *)
+            end
+          | None => 0
+          end
+        in
+        let new_stack_with_on_enter := (PairItem on_enter_key (OnEnterDict c)) :: new_stack in
+
+        mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack_with_on_enter
+      | InstantType => gs (* On ne gère pas encore cette éventualité *)
+      | SorceryType => gs (* On ne gère pas encore cette éventualité *)
+      | UnknownType => gs (* Si on ne reconnait pas le type de la carte on ne fait rien *)
+      end
+  | Some (PairItem i d) => activate_ability Triggered_Abilities i d targets gs (* Si le dernier élément est une capacité, on l'active *)
+  | None => gs (* Si la stack est vide, on ne fait rien *)
+  end.
 
 
 
 
 
-
-Compute Cast card_forest Test_gs.
+Definition Cast_gs : GameState := Cast destructeur Test_gs.
+Compute Resolve (Some [colossal_dreadmaw]) Test_gs.
 
 
 End Try_card.
