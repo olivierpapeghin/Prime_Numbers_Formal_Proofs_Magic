@@ -46,6 +46,7 @@ Record Land := mkLand {
 Record Permanent := mkPermanent {
   Abilities : list nat;
   ListActivated : list nat;
+  subtype : list string;
   creature : option Creature;
   enchantement : option Enchantement;
   land : option Land;
@@ -68,7 +69,8 @@ Record Card := mkCard {
   instant : option Instant;
   sorcery : option Sorcery;
   manacost : list Mana;
-  name : string
+  name : string;
+  id : nat
 }.
 
 (*Définition d'un type spécial stack *)

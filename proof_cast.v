@@ -5,9 +5,12 @@ Require Import Coq.Arith.Peano_dec.
 Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Program.Equality.
 Require Import List String.
+From Coq 
+Require Import String.
 
 Import ListNotations.
 Open Scope list_scope.
+Local Open Scope string_scope.
 
 Require Import type_definitions.
 Import type_definition.
@@ -38,6 +41,7 @@ Definition colossal_dreadmaw : Card :=
     nil
     nil
     nil
+    ["Dinosaur"]
     (Some (mkCreature 6 6)) (* Est une créature 6/6*)
     None (* N'est pas un enchantement *)
     None (* N'est pas un artifact *)

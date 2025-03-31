@@ -22,7 +22,7 @@ Module Play_land.
 Definition Play_land (c : Card) (gs : GameState) : GameState :=
   if mem_card c gs.(hand) then
     let new_battlefield := c :: gs.(battlefield) in
-    let new_hand := remove_card_from_hand gs.(hand) c in
+    let new_hand := remove_card gs.(hand) c in
     let new_gs := mkGameState new_battlefield new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) gs.(stack) in
     new_gs
   else
@@ -41,7 +41,7 @@ Import Play_land.
 Definition initial_gamestate : GameState := 
   mkGameState
   nil (* Le champ de bataille est vide *)
-  [Swamp; Swamp]
+  [Swamp 1; Swamp 2]
   nil (* La bibliothèque est vide *)
   nil (* Le cimetière est vide *)
   nil (* L'exil est vide *)
@@ -49,10 +49,15 @@ Definition initial_gamestate : GameState :=
   [] 
   nil (* La pile est vide *).
 
-Definition gamestate_proof1 : GameState := Play_land Swamp initial_gamestate.
-Definition gamestate_proof2 : GameState := Play_land Swamp gamestate_proof1.
+Compute initial_gamestate.
 
-Compute tap_land Swamp gamestate_proof2.
+Definition gamestate_proof1 : GameState := Play_land (Swamp 1) initial_gamestate.
+
+Compute gamestate_proof1.
+
+Definition gamestate_proof2 : GameState := Play_land (Swamp 1) gamestate_proof1.
+
+Compute tap_land (Swamp 1) gamestate_proof2.
 
 End Proof_play_land.
 
