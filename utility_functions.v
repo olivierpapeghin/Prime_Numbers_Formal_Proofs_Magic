@@ -101,10 +101,10 @@ Definition eq_card (c1 c2 : Card) : bool :=
   String.eqb c1.(name) c2.(name).
 
 (* Définition d'une fonction pour vérifier la présence d'un élément dans une liste *)
-Fixpoint mem_card (c : Card) (l : list Card) : bool :=
+Fixpoint card_in_list (c : Card) (l : list Card) : bool :=
   match l with
   | [] => false
-  | h :: t => if eq_card c h then true else mem_card c t
+  | h :: t => if eq_card c h then true else card_in_list c t
   end.
 
 (* Fonction qui compte le nombre d'occurrences d'un élément dans une liste *)
@@ -180,7 +180,7 @@ Fixpoint update_tapped_land (target_land : Land) (battlefield : list Card) : lis
       | None => c :: update_tapped_land target_land rest
       | Some land_in_perm =>
         if eq_mana target_land.(producing) land_in_perm.(producing) then
-          let updated_perm := mkPermanent perm.(ListOnCast) perm.(ListOnDeath) perm.(ListOnPhase) perm.(ListActivated) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
+          let updated_perm := mkPermanent perm.(Abilities) perm.(ListActivated) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
           (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name)) :: update_tapped_land target_land rest
         else
           c :: update_tapped_land target_land rest
@@ -197,7 +197,7 @@ Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
     match perm.(land) with
     | None => gs (* Si la carte n'est pas un Land, ne rien faire *)
     | Some target_land =>
-      if mem_card target_card gs.(battlefield) then
+      if card_in_list target_card gs.(battlefield) then
         let new_mana := target_land.(producing) in
         let new_battlefield := update_tapped_land target_land gs.(battlefield) in
         mkGameState new_battlefield gs.(hand) gs.(library)
