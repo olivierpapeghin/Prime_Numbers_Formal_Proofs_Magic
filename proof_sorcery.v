@@ -9,7 +9,7 @@ Import utility_function.
 
 Local Open Scope string_scope.
 
-Definition default_card : Card := mkCard None None None nil "Default".
+Definition default_card : Card := mkCard None None None nil "Default" 0.
 
 (* On va simuler le cast d'un sorcery : Abuelo's Awakening qui ramène un enchantement non-aura ou un artefact du cimetière sur le champ de bataille *)
 Definition abuelo_awakening (targets : option (list Card)) (gs : GameState) : GameState :=
@@ -29,9 +29,7 @@ Definition abuelo_awakening (targets : option (list Card)) (gs : GameState) : Ga
             let new_graveyard : list Card := remove_card gs.(graveyard) target in (* On enlève la carte cible du cimetière *)
             let spirit : Card := mkCard(* On crée le token esprit engendré par Abuelo's Awakening *)
             (Some (mkPermanent
-              p.(ListOnCast) (* On copie les abilités du permanent *)
-              p.(ListOnDeath)
-              p.(ListOnPhase)
+              p.(Abilities) (* On copie les abilités du permanent *)
               p.(ListActivated)
               ("Spirit" :: p.(subtype)) (* On reprend les sous-types et on y ajoute "Spirit" *)
               (Some (mkCreature 1 1)) (* Est une créature 1/1*)
@@ -44,7 +42,8 @@ Definition abuelo_awakening (targets : option (list Card)) (gs : GameState) : Ga
             None (* Ce n'est pas un instant ou un sorcery *)
             None
             target.(manacost)
-            target.(name) in 
+            target.(name)
+            target.(id) in 
             let new_battlefield : list Card := spirit :: gs.(battlefield) in
             mkGameState new_battlefield gs.(hand) gs.(library) new_graveyard gs.(exile) gs.(opponent) gs.(manapool) gs.(stack)
           | false => (* Cible invalide on ne fait rien *)
@@ -63,12 +62,11 @@ Definition abuelos_awakening : Card := mkCard
   None
   (Some (mkSorcery [73]))
   [mkMana White 1; mkMana Generic 2]
-  "Abuelo's Awakening".
+  "Abuelo's Awakening"
+  1.
 
 Definition mirror_gallery : Card := mkCard
   (Some (mkPermanent (* Est un permanent *)
-  nil
-  nil
   nil
   nil
   nil
@@ -82,7 +80,8 @@ Definition mirror_gallery : Card := mkCard
   None 
   None
   [mkMana Generic 5]
-  "Mirror Gallery".
+  "Mirror Gallery"
+  2.
 
 Definition gamestate1 : GameState := 
   mkGameState
@@ -94,6 +93,37 @@ Definition gamestate1 : GameState :=
   20 (* L'opposant est à 20 PV *)
   [mkMana White 20; mkMana Blue 20; mkMana Black 20; mkMana Red 20; mkMana Green 20] (* On se donne assez de mana pour pouvoir lancer le sort *)
   nil (* La pile est vide *).
+
+Compute abuelo_awakening (Some [mirror_gallery]) gamestate1.
+
+(* Définition des différentes fonctions pour jouer un sort*)
+Definition Cast (c:Card) (gs:GameState) : (GameState) :=
+  let cost := c.(manacost) in
+  let pool := gs.(manapool) in
+  if Can_Pay cost pool && card_in_list c gs.(hand) then
+    let new_pool := fold_left remove_mana cost pool in
+    let new_hand := remove_card gs.(hand) c in
+    let new_stack := CardItem c :: gs.(stack) in
+    let new_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack in
+    (new_gs)
+  else
+    (gs)
+  .
+Definition Resolve (gs : GameState) : GameState :=
+  match last_option gs.(stack) with
+  | Some (CardItem c) => (* Si c'est une carte *)
+      match card_type c with
+      | PermanentType => (* Si c'est un permanent *)
+        let new_stack : list CardOrPair:= remove_last gs.(stack) in
+        let new_battlefield : list Card := c :: gs.(battlefield) in
+        mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack
+      | InstantType => gs (* On ne gère pas encore cette éventualité *)
+      | SorceryType => gs (* On ne gère pas encore cette éventualité *)
+      | UnknownType => gs (* Si on ne reconnait pas le type de la carte on ne fait rien *)
+      end
+  | Some (PairItem i d) => gs (* Si le dernier élément est une capacité, on ne la traite pas encore *)
+  | None => gs (* Si la stack est vide, on ne fait rien *)
+  end.
 
 
       
