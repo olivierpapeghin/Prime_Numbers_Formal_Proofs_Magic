@@ -51,7 +51,9 @@ Record Land := mkLand {
 }.
 
 Record Permanent := mkPermanent {
-  Abilities : list nat;
+  ListOnCast : list nat;
+  ListOnDeath : list nat;
+  ListOnPhase : list nat;
   ListActivated : list nat;
   subtype : list string;
   creature : option Creature;
@@ -76,14 +78,13 @@ Record Card := mkCard {
   instant : option Instant;
   sorcery : option Sorcery;
   manacost : list Mana;
-  name : string;
-  id : nat
+  name : string
 }.
 
 (*Définition d'un type spécial stack *)
 Inductive CardOrPair :=
 | CardItem : Card -> CardOrPair
-| PairItem : nat -> nat -> CardOrPair.
+| PairItem : string -> nat -> CardOrPair.
 
 (* Définition de l'état du jeu *)
 Record GameState := mkGameState {
@@ -109,8 +110,6 @@ Record ActivatedAbility := mkActivatedAbility {
 
 (* Définition d'une liste de paires clé-valeur pour un dictionnaire *)
 Definition Dict := list (nat * Ability).
-
-
 
 End type_definition.
 Export type_definition.

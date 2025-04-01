@@ -98,14 +98,13 @@ Definition eq_card (c1 c2 : Card) : bool :=
   eq_option eq_instant c1.(instant) c2.(instant) &&
   eq_option eq_sorcery c1.(sorcery) c2.(sorcery) &&
   eq_list_mana c1.(manacost) c2.(manacost) &&
-  String.eqb c1.(name) c2.(name) &&
-  Nat.eqb c1.(id) c2.(id).
+  String.eqb c1.(name) c2.(name).
 
 (* Définition d'une fonction pour vérifier la présence d'un élément dans une liste *)
-Fixpoint card_in_list (c : Card) (l : list Card) : bool :=
+Fixpoint mem_card (c : Card) (l : list Card) : bool :=
   match l with
   | [] => false
-  | h :: t => if eq_card c h then true else card_in_list c t
+  | h :: t => if eq_card c h then true else mem_card c t
   end.
 
 (* Fonction qui compte le nombre d'occurrences d'un élément dans une liste *)
@@ -181,9 +180,8 @@ Fixpoint update_tapped_land (target_land : Land) (battlefield : list Card) : lis
       | None => c :: update_tapped_land target_land rest
       | Some land_in_perm =>
         if eq_mana target_land.(producing) land_in_perm.(producing) then
-          let updated_perm := mkPermanent perm.(Abilities) perm.(ListActivated) perm.(subtype) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
-          (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name) c.(id)) :: update_tapped_land target_land rest
-
+          let updated_perm := mkPermanent perm.(ListOnCast) perm.(ListOnDeath) perm.(ListOnPhase) perm.(ListActivated) perm.(subtype) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
+          (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name)) :: update_tapped_land target_land rest
         else
           c :: update_tapped_land target_land rest
       end
@@ -199,7 +197,7 @@ Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
     match perm.(land) with
     | None => gs (* Si la carte n'est pas un Land, ne rien faire *)
     | Some target_land =>
-      if card_in_list target_card gs.(battlefield) then
+      if mem_card target_card gs.(battlefield) then
         let new_mana := target_land.(producing) in
         let new_battlefield := update_tapped_land target_land gs.(battlefield) in
         mkGameState new_battlefield gs.(hand) gs.(library)
@@ -229,9 +227,9 @@ Fixpoint remove_last {A : Type} (l : list A) : list A :=
 (* Fonction qui détermine le type d'une carte *)
 Definition card_type (c : Card) : CardType :=
   match c with
-  | mkCard (Some _) None None _ _ _ => PermanentType
-  | mkCard None (Some _) None _ _ _ => InstantType
-  | mkCard None None (Some _) _ _ _ => SorceryType
+  | mkCard (Some _) None None _ _ => PermanentType
+  | mkCard None (Some _) None _ _ => InstantType
+  | mkCard None None (Some _) _ _ => SorceryType
   | _ => UnknownType
   end.
 
