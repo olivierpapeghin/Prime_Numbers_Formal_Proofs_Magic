@@ -89,11 +89,12 @@ Definition gamestate1 : GameState :=
   nil (* Le champ de bataille est vide *)
   [abuelos_awakening]
   nil (* La bibliothèque est vide *)
-  [mirror_gallery] (* Le cimetière est vide *)
+  [mirror_gallery] (* Le cimetière contient une carte *)
   nil (* L'exil est vide *)
   20 (* L'opposant est à 20 PV *)
   [mkMana White 20; mkMana Blue 20; mkMana Black 20; mkMana Red 20; mkMana Green 20] (* On se donne assez de mana pour pouvoir lancer le sort *)
   nil (* La pile est vide *).
 
+Compute abuelo_awakening (Some [mirror_gallery]) gamestate1.
 
       
