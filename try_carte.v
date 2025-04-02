@@ -84,6 +84,7 @@ Fixpoint activate_ability (triggered_abilities : list (nat * Dict)) (event_type 
     let new_gs := ability targets gs in
     new_gs (* Retourner l'état du jeu mis à jour après activation de la capacité *)
   end.
+
 (* Fonction pour activer une seule capacité à partir d'une carte avec des cibles *)
 Definition activate_ability_from_card (triggered_abilities : list (nat * Dict)) (card : Card) (event_type : nat) (targets : option (list Card)) (gs : GameState) : GameState :=
   match permanent card with
