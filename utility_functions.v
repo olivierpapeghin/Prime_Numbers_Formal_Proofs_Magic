@@ -170,8 +170,8 @@ Fixpoint remove_card (l : list Card) (c : Card) : list Card :=
               else h :: remove_card t c (* Sinon, on continue à chercher *)
   end.
 
-(* (* Fonction pour mettre à jour le champ tapped d'un Land dans le battlefield *)
-Fixpoint update_tapped_land2 (target_land : Land) (battlefield : list Card) : list Card :=
+(* Fonction pour mettre à jour le champ tapped d'un Land dans le battlefield *)
+Fixpoint update_tapped_land (target_land : Land) (battlefield : list Card) : list Card :=
   match battlefield with
   | nil => nil
   | c :: rest =>
@@ -189,26 +189,6 @@ Fixpoint update_tapped_land2 (target_land : Land) (battlefield : list Card) : li
           c :: update_tapped_land target_land rest
       end
     end
-  end. *)
-
-(* Fonction pour mettre à jour le champ tapped d'un Land dans le battlefield *)
-Fixpoint update_tapped_land (target_land : Card) (battlefield : list Card) : list Card :=
-  match battlefield with
-  | nil => nil
-  | c :: rest =>
-    if eq_card target_land c then
-      match c.(permanent) with
-      | None => c :: update_tapped_land target_land rest
-      | Some perm =>
-        match perm.(land) with
-        | None => c :: update_tapped_land target_land rest
-        | Some land_in_perm =>
-           let updated_perm := mkPermanent perm.(Abilities) perm.(ListActivated) perm.(subtype) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
-           (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name) c.(id)) :: update_tapped_land target_land rest
-        end
-      end
-    else
-      c :: update_tapped_land target_land rest
   end.
 
 
@@ -222,7 +202,7 @@ Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
     | Some target_land =>
       if card_in_list target_card gs.(battlefield) then
         let new_mana := target_land.(producing) in
-        let new_battlefield := update_tapped_land target_card gs.(battlefield) in
+        let new_battlefield := update_tapped_land target_land gs.(battlefield) in
         mkGameState new_battlefield gs.(hand) gs.(library)
                     gs.(graveyard) gs.(exile) gs.(opponent)
                     (new_mana :: gs.(manapool)) gs.(stack)
@@ -260,8 +240,8 @@ Definition permanent_type (c : Permanent) : PermanentCardType :=
   match c with
   | mkPermanent _ _ _ (Some _) None None None _ _ _ => CreatureType
   | mkPermanent _ _ _ None (Some _) None None _ _ _ => EnchantmentType
-  | mkPermanent _ _ _ None None (Some _) None _ _ _ => LandType
-  | mkPermanent _ _ _ None None None (Some _) _ _ _ => ArtifactType
+  | mkPermanent _ _ _ None None (Some _) None _ _ _ => ArtifactType
+  | mkPermanent _ _ _ None None None (Some _) _ _ _ => LandType
   | _ => UnknownPermanentType
   end.
 
@@ -275,6 +255,20 @@ Fixpoint beq_nat (n m : nat) : bool :=
   | S n', S m' => beq_nat n' m'
   | _, _ => false
   end.
+
+
+
+Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
+ 
+  let new_manapool :=
+    map (fun m =>
+      if eq_mana_color m.(color) mc then
+        mkMana mc (m.(quantity) + q)
+      else
+        m
+    ) gs.(manapool)
+  in
+  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack).
 
 End utility_function.
 Export utility_function.

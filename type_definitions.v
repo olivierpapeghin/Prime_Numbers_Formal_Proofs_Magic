@@ -110,7 +110,7 @@ Record ActivatedAbility := mkActivatedAbility {
 (* Définition d'une liste de paires clé-valeur pour un dictionnaire *)
 Definition Dict := list (nat * Ability).
 
-
+Definition Initial_GS : GameState := mkGameState nil nil nil nil nil 20 [mkMana Green 0; mkMana Red 0; mkMana Blue 0 ;mkMana White 0 ; mkMana Black 0] nil. 
 
 End type_definition.
 Export type_definition.
