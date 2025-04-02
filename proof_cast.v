@@ -20,7 +20,7 @@ Import utility_function.
 Definition Cast (c:Card) (gs:GameState) : (GameState) :=
   let cost := c.(manacost) in
   let pool := gs.(manapool) in
-  if Can_Pay cost pool && mem_card c gs.(hand) then
+  if Can_Pay cost pool && card_in_list c gs.(hand) then
     let new_pool := fold_left remove_mana cost pool in
     let new_hand := remove_card gs.(hand) c in
     let new_stack := CardItem c :: gs.(stack) in
@@ -38,8 +38,6 @@ Definition colossal_dreadmaw : Card :=
   (Some (mkPermanent (* Est un permanent *)
     nil
     nil
-    nil
-    nil
     ["Dinosaur"]
     (Some (mkCreature 6 6)) (* Est une créature 6/6*)
     None (* N'est pas un enchantement *)
@@ -51,7 +49,8 @@ Definition colossal_dreadmaw : Card :=
   None (* N'est pas un instant *)
   None (* N'est pas un sorcery *)
   [mkMana Green 1; mkMana Generic 5] (* Coûte 5 mana générique et 1 mana vert *)
-  "Colossal Dreadmaw". (* Nom de la carte *)
+  "Colossal Dreadmaw"
+  0. (* Nom de la carte *)
 
 (* Instanciation du GameState initial *)
 Definition initial_gamestate : GameState := 
@@ -86,34 +85,6 @@ Proof.
 Qed.
 
 (* On va maintenant resolve la pile pour que notre carte arrive sur le champ de bataille *)
-
-(* Fonction qui retourne le dernier élément d'une liste *)
-Fixpoint last_option {A : Type} (l : list A) : option A :=
-  match l with
-  | [] => None                 (* Si la liste est vide, retourne None *)
-  | [x] => Some x              (* Si un seul élément, retourne Some x *)
-  | _ :: xs => last_option xs  (* Sinon, continue sur le reste de la liste *)
-  end.
-
-(* Fonction pour enlever le dernier élément d'une liste *)
-Fixpoint remove_last {A : Type} (l : list A) : list A :=
-  match l with
-  | [] => []                  (* Si la liste est vide, on retourne une liste vide *)
-  | [x] => []                 (* Si un seul élément, on l'enlève en retournant [] *)
-  | x :: xs => x :: remove_last xs (* Sinon, on reconstruit la liste sans le dernier élément *)
-  end.
-
-(* Fonction qui détermine le type d'une carte *)
-Definition card_type (c : Card) : CardType :=
-  match c with
-  | mkCard (Some _) None None _ _ => PermanentType
-  | mkCard None (Some _) None _ _ => InstantType
-  | mkCard None None (Some _) _ _ => SorceryType
-  | _ => UnknownType
-  end.
-
-
-(* Fonction qui gère la résolution de la stack *)
 Definition Resolve (gs : GameState) : GameState :=
   match last_option gs.(stack) with
   | Some (CardItem c) => (* Si c'est une carte *)
