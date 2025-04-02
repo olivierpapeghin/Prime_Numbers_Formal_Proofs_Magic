@@ -51,7 +51,7 @@ Record Land := mkLand {
 }.
 
 Record Permanent := mkPermanent {
-  Abilities : list nat;
+  Abilities : list (nat * nat);
   ListActivated : list nat;
   subtype : list string;
   creature : option Creature;

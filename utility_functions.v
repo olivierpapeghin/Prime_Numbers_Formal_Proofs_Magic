@@ -1,6 +1,7 @@
 From Coq Require Import Strings.String.
 From Coq Require Import Lists.List.
 Require Import Coq.Bool.Bool.
+Require Import Coq.Arith.Arith.
 Require Import Coq.Arith.Peano_dec.
 Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Program.Equality.
@@ -246,6 +247,14 @@ Definition permanent_type (c : Permanent) : PermanentCardType :=
 
 Definition has_subtype (st : string) (subtypes : list string) : bool :=
   existsb (fun x => String.eqb x st) subtypes.
+
+(* Définition d'une fonction de comparaison booléenne pour nat *)
+Fixpoint beq_nat (n m : nat) : bool :=
+  match n, m with
+  | 0, 0 => true
+  | S n', S m' => beq_nat n' m'
+  | _, _ => false
+  end.
 
 End utility_function.
 Export utility_function.
