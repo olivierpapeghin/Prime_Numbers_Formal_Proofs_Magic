@@ -49,7 +49,7 @@ Definition destructeur : Card := mkCard (Some crea_perm) None None [] "Destructe
 
 
 (* État de jeu initial avec des cartes dans le battlefield *)
-Definition Test_gs : GameState := mkGameState [card_creature;colossal_dreadmaw] [card_forest;destructeur] nil nil nil 0 [] nil.
+Definition Test_gs : GameState := mkGameState [card_creature;colossal_dreadmaw] [card_forest;destructeur] nil nil nil 0 [] nil DefaultListPassiveAbility.
 
 (* Liste de cartes cibles à sacrifier *)
 Definition target_cards : list Card := [card_forest].
