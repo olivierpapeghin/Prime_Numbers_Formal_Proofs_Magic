@@ -33,6 +33,13 @@ Inductive PermanentCardType :=
   | LandType
   | UnknownPermanentType.
 
+Inductive Phase :=
+  | BeginningPhase
+  | MainPhase1
+  | CombatPhase
+  | MainPhase2
+  | EndingPhase.
+
 Record Creature := mkCreature {
   power : nat;
   toughness : nat
@@ -77,7 +84,8 @@ Record Card := mkCard {
   sorcery : option Sorcery;
   manacost : list Mana;
   name : string;
-  id : nat
+  id : nat;
+  keywords : list string
 }.
 
 (*Définition d'un type spécial stack *)

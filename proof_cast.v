@@ -50,7 +50,8 @@ Definition colossal_dreadmaw : Card :=
   None (* N'est pas un sorcery *)
   [mkMana Green 1; mkMana Generic 5] (* Coûte 5 mana générique et 1 mana vert *)
   "Colossal Dreadmaw"
-  0. (* Nom de la carte *)
+  0 (* Nom de la carte *)
+  nil.
 
 (* Instanciation du GameState initial *)
 Definition initial_gamestate : GameState := 
