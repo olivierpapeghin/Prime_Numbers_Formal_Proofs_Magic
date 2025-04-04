@@ -268,12 +268,8 @@ Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
         m
     ) gs.(manapool)
   in
-  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack).
+  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_ability).
 
-<<<<<<< HEAD
-
-
-=======
 Definition eq_passive_key (c1 c2 : PassiveKey) : bool :=
   match c1, c2 with
   | AllSaprolings, AllSaprolings => true
@@ -300,7 +296,6 @@ Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : Passi
       then (k, new_value) :: rest  (* Mise à jour de la valeur si la clé correspond *)
       else (k, activated) :: update_passive_ability_in_dict rest key new_value
   end.
->>>>>>> f7256668adf055dcaf4859d2ed93eb769976e390
 
 End utility_function.
 Export utility_function.
