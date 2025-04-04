@@ -15,17 +15,13 @@ Import utility_function.
 
 Module Passive_Cards.
 
-Definition add_black_mana (targets : option (list Card)) (gs : GameState) : GameState :=
-  let new_manapool := (mkMana Black 1) :: gs.(manapool) in
-  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack).
 
-Record Entry := {
-  index : nat;
-  def : string;
-  flag : bool
-}.
 
-Definition ListPassiveAbility : List := [(1, add_black_mana, false)].
+Compute find_passive_ability_in_dict ListPassiveAbility DoubleToken.
+
+Compute update_passive_ability_in_dict ListPassiveAbility AllFlash true.
+Compute ListPassiveAbility.
 
 End Passive_Cards.
+Export Passive_Cards.
 

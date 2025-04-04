@@ -85,6 +85,21 @@ Inductive CardOrPair :=
 | CardItem : Card -> CardOrPair
 | PairItem : nat -> nat -> CardOrPair.
 
+(* Définition des clé pour les différentes abilitées passives *)
+Inductive PassiveKey :=
+  | AllSaprolings
+  | AllFlash
+  | DoubleToken
+  | AdditionalTrigger
+  | NoLegendaryRule
+  | SaprolingsLands.
+
+(* Définition du dict pour indiquer si les abilitées passives sont activées *)
+Definition PassiveAbilityDict := list (PassiveKey * bool).
+
+(* dict de base pour indiquer si les abilitées passives sont activées *)
+Definition DefaultListPassiveAbility : PassiveAbilityDict := [(AllSaprolings, false); (AllFlash, false); (DoubleToken, false); (AdditionalTrigger, false); (NoLegendaryRule, false)].
+
 (* Définition de l'état du jeu *)
 Record GameState := mkGameState {
   battlefield : list Card;
@@ -95,6 +110,7 @@ Record GameState := mkGameState {
   opponent : nat;
   manapool : list Mana;
   stack : list CardOrPair;
+  passive_ability: PassiveAbilityDict;
 }.
 
 (* Définition générale d'une capacité *)
@@ -109,8 +125,6 @@ Record ActivatedAbility := mkActivatedAbility {
 
 (* Définition d'une liste de paires clé-valeur pour un dictionnaire *)
 Definition Dict := list (nat * Ability).
-
-
 
 End type_definition.
 Export type_definition.
