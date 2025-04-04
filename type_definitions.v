@@ -68,6 +68,7 @@ Definition DefaultListPassiveAbility : PassiveAbilityDict := [(AllSaprolings, fa
 Record Permanent := mkPermanent {
   Abilities : list (nat * nat);
   ListActivated : list nat;
+  PassiveAbility : option PassiveKey;
   subtype : list string;
   creature : option Creature;
   enchantement : option Enchantement;
@@ -76,7 +77,6 @@ Record Permanent := mkPermanent {
   token : bool;
   legendary : bool;
   tapped : bool;
-  passive_ability : option PassiveKey;
 }.
 
 Record Sorcery := mkSorcery {
