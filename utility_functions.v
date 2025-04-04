@@ -205,7 +205,6 @@ Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
         let new_battlefield := update_tapped_land target_land gs.(battlefield) in
         mkGameState new_battlefield gs.(hand) gs.(library)
                     gs.(graveyard) gs.(exile) gs.(opponent)
-                    (new_mana :: gs.(manapool)) gs.(stack)
                     (new_mana :: gs.(manapool)) gs.(stack) gs.(passive_ability)
       else
         gs (* Si la Land n'est pas dans le battlefield, ne rien faire *)
@@ -271,8 +270,37 @@ Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
   in
   mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack).
 
+<<<<<<< HEAD
 
 
+=======
+Definition eq_passive_key (c1 c2 : PassiveKey) : bool :=
+  match c1, c2 with
+  | AllSaprolings, AllSaprolings => true
+  | AllFlash, AllFlash => true
+  | DoubleToken, DoubleToken => true
+  | AdditionalTrigger, AdditionalTrigger => true
+  | NoLegendaryRule, NoLegendaryRule => true
+  | SaprolingsLands, SaprolingsLands => true
+  | _, _ => false
+  end.
+
+Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
+  match dict with
+  | nil => false
+  | (k, activated) :: rest =>
+    if eq_passive_key k key then activated else find_passive_ability_in_dict  rest key
+  end.
+
+Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : bool) : PassiveAbilityDict :=
+  match dict with
+  | nil => nil
+  | (k, activated) :: rest =>
+      if eq_passive_key k key 
+      then (k, new_value) :: rest  (* Mise à jour de la valeur si la clé correspond *)
+      else (k, activated) :: update_passive_ability_in_dict rest key new_value
+  end.
+>>>>>>> f7256668adf055dcaf4859d2ed93eb769976e390
 
 End utility_function.
 Export utility_function.
