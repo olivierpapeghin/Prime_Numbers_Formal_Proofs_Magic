@@ -104,7 +104,7 @@ Definition Ability := option (list Card) -> GameState -> GameState.
 Record ActivatedAbility := mkActivatedAbility {
   cost_mana : option (list Mana);
   cost_cards : option (list Card);
-  effect : option (list Card) -> GameState -> GameState (* Effet de la capacité *)
+  ability_index : nat;
 }.
 
 (* Définition d'une liste de paires clé-valeur pour un dictionnaire *)

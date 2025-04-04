@@ -270,5 +270,8 @@ Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
   in
   mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack).
 
+
+
+
 End utility_function.
 Export utility_function.

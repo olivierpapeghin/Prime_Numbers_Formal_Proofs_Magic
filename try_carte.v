@@ -78,7 +78,7 @@ Definition find_ability_in_triggered_abilities (triggered_abilities : list (nat 
   end.
  
 (* Fonction pour activer une seule capacité à partir d'une clé avec des cibles *)
-Definition activate_ability (triggered_abilities : list (nat * Dict)) (event_type : nat) (key : nat) (targets : option (list Card)) (gs : GameState) : GameState :=
+Definition activate_triggered_ability (triggered_abilities : list (nat * Dict)) (event_type : nat) (key : nat) (targets : option (list Card)) (gs : GameState) : GameState :=
   match find_ability_in_triggered_abilities triggered_abilities (event_type, key) with
   | None => gs (* Aucune capacité trouvée, retourner l'état du jeu inchangé *)
   | Some ability =>
@@ -136,20 +136,29 @@ Definition Resolve (targets : option (list Card)) (gs : GameState) : GameState :
       mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack
     | PairItem dict_id ability_id =>
       (* Activer l'ability correspondante *)
-      let new_gs := activate_ability Triggered_Abilities dict_id ability_id targets gs in
+      let new_gs := activate_triggered_ability Triggered_Abilities dict_id ability_id targets gs in
       let new_stack := rev rest in
       mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_stack
     end
   end.
 
+Definition Activated_abilities := list (nat * ActivatedAbility). 
+Definition Dict_AA := Dict.
 
+Definition activate_ability ( AA : Activated_abilities ) (card : Card) ( index : nat ) ( targets_cost : option (list Card)) ( mana_cost : list Mana ) (targets_ability : option (list Card)) (gs : GameState) : GameState := 
+  
 
 
 Definition Cast_gs : GameState := Cast destructeur Test_gs.
 Definition Resol1 : GameState := Resolve (Some [colossal_dreadmaw]) Cast_gs.
 
+Lemma colossal_dreadmaw_in_graveyard :
+  card_in_list colossal_dreadmaw (Resol1.(graveyard)) = true.
+Proof.
+  simpl.
+  reflexivity.
+Qed.
 
-Compute add_mana Initial_GS Green 1. 
 
 End Try_card.
 Export Try_card.
