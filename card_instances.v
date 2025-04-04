@@ -55,5 +55,6 @@ Definition Test_gs : GameState := mkGameState [card_creature;colossal_dreadmaw] 
 Definition target_cards : list Card := [card_forest].
 
 
+
 End card_instance.
 Export card_instance.

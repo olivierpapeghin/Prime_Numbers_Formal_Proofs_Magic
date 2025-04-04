@@ -146,9 +146,10 @@ Definition Resolve (targets : option (list Card)) (gs : GameState) : GameState :
 
 
 Definition Cast_gs : GameState := Cast destructeur Test_gs.
-Compute Cast_gs.
-Compute Resolve (Some [colossal_dreadmaw]) Cast_gs.
+Definition Resol1 : GameState := Resolve (Some [colossal_dreadmaw]) Cast_gs.
 
+
+Compute add_mana Initial_GS Green 1. 
 
 End Try_card.
 Export Try_card.

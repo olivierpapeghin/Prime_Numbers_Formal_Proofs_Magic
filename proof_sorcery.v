@@ -153,21 +153,64 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
 (* Preuve *)
 (* On fait une preuve en 2 parties, on cast le sorcery, on le résout et on regarde si l'effet est bien appliqué *)
 
-(* L'hypothèse de départ et que la carte Abuelo's Awakening est dans la main et que la carte mirror gallery est dans le cimetière *)
-Hypothesis H_start : In abuelos_awakening initial_gamestate.(hand) /\ 
-                     In mirror_gallery initial_gamestate.(graveyard).
 
 Definition gs_cast : GameState := Cast abuelos_awakening initial_gamestate.
 
-Lemma cast_adds_card_to_stack :
-  forall gs, In (CardItem abuelos_awakening) (Cast abuelos_awakening gs).(stack).
+Lemma cast_moves_card_to_stack :
+  In abuelos_awakening (hand initial_gamestate) ->
+  In (CardItem abuelos_awakening) (stack (Cast abuelos_awakening initial_gamestate)).
+
 Proof.
-  intros gs. (* On introduit l’état initial gs *)
-  unfold Cast. (* On ouvre la définition de cast si nécessaire *)
-  (* Supposons que cast ajoute simplement la carte au début de la pile *)
-  simpl. (* Si cast est une simple mise à jour de liste, simpl peut suffire *)
-  reflexivity. (* L'élément est bien présent *)
+  intros HinHand. (* On suppose que la carte est dans la main *)
+  unfold Cast. (* Dérouler la définition de Cast *)
+  simpl. (* Simplifier l’expression *)
+
+  destruct (match find (fun m : Mana => eq_mana_color (color m) White) (manapool initial_gamestate) with
+            | Some m =>
+                if match quantity m with
+                   | 0 => false
+                   | S _ => true
+                   end
+                then match remove_mana (manapool initial_gamestate) {| color := White; quantity := 1 |} with
+                     | [] => false
+                     | _ :: _ => true
+                     end
+                else false
+            | None => false
+            end && card_in_list abuelos_awakening (hand initial_gamestate)) eqn:Hmana.
+
+  - (* Cas où le lancement du sort est valide *)
+    simpl.
+    unfold stack.
+    unfold hand.
+    unfold remove_card.
+    unfold card_in_list in Hmana.
+
+    (* Montrons que la carte est maintenant dans la pile *)
+    assert (stack (Cast abuelos_awakening initial_gamestate) =
+            CardItem abuelos_awakening :: stack initial_gamestate) as Hstack.
+    {
+      (* Explication : Cast ajoute la carte à la stack *)
+      reflexivity.
+    }
+
+    rewrite Hstack.
+    apply in_eq. (* `CardItem abuelos_awakening` est bien en tête de la pile *)
+
+  - (* Cas où la carte ne peut pas être lancée *)
+    simpl.
+    unfold card_in_list in Hmana.
+    rewrite HinHand in Hmana.
+    discriminate Hmana. (* Contradiction avec notre hypothèse *)
 Qed.
+
+
+
+
+
+
+
+
 
 
       
