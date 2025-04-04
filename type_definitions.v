@@ -50,6 +50,21 @@ Record Land := mkLand {
   producing : Mana;
 }.
 
+(* Définition des clé pour les différentes abilitées passives *)
+Inductive PassiveKey :=
+  | AllSaprolings
+  | AllFlash
+  | DoubleToken
+  | AdditionalTrigger
+  | NoLegendaryRule
+  | SaprolingsLands.
+
+(* Définition du dict pour indiquer si les abilitées passives sont activées *)
+Definition PassiveAbilityDict := list (PassiveKey * bool).
+
+(* dict de base pour indiquer si les abilitées passives sont activées *)
+Definition DefaultListPassiveAbility : PassiveAbilityDict := [(AllSaprolings, false); (AllFlash, false); (DoubleToken, false); (AdditionalTrigger, false); (NoLegendaryRule, false)].
+
 Record Permanent := mkPermanent {
   Abilities : list (nat * nat);
   ListActivated : list nat;
@@ -60,7 +75,8 @@ Record Permanent := mkPermanent {
   artifact : option Artifact;
   token : bool;
   legendary : bool;
-  tapped : bool
+  tapped : bool;
+  passive_ability : option PassiveKey;
 }.
 
 Record Sorcery := mkSorcery {
@@ -95,6 +111,7 @@ Record GameState := mkGameState {
   opponent : nat;
   manapool : list Mana;
   stack : list CardOrPair;
+  passive_abilities : PassiveAbilityDict;
 }.
 
 (* Définition générale d'une capacité *)
@@ -110,7 +127,7 @@ Record ActivatedAbility := mkActivatedAbility {
 (* Définition d'une liste de paires clé-valeur pour un dictionnaire *)
 Definition Dict := list (nat * Ability).
 
-Definition Initial_GS : GameState := mkGameState nil nil nil nil nil 20 [mkMana Green 0; mkMana Red 0; mkMana Blue 0 ;mkMana White 0 ; mkMana Black 0] nil. 
+Definition Initial_GS : GameState := mkGameState nil nil nil nil nil 20 [mkMana Green 0; mkMana Red 0; mkMana Blue 0 ;mkMana White 0 ; mkMana Black 0] nil DefaultListPassiveAbility. 
 
 End type_definition.
 Export type_definition.
