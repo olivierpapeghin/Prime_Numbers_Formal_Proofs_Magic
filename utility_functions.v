@@ -206,6 +206,7 @@ Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
         mkGameState new_battlefield gs.(hand) gs.(library)
                     gs.(graveyard) gs.(exile) gs.(opponent)
                     (new_mana :: gs.(manapool)) gs.(stack)
+                    (new_mana :: gs.(manapool)) gs.(stack) gs.(passive_ability)
       else
         gs (* Si la Land n'est pas dans le battlefield, ne rien faire *)
     end
