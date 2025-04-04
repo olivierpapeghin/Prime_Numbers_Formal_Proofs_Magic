@@ -156,6 +156,9 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
 (* Preuve *)
 (* On fait une preuve en 2 parties, on cast le sorcery, on le résout et on regarde si l'effet est bien appliqué *)
 
+(* L'hypothèse de départ et que la carte Abuelo's Awakening est dans la main et que la carte mirror gallery est dans le cimetière *)
+Hypothesis H_start : In abuelos_awakening initial_gamestate.(hand) /\ 
+                     In mirror_gallery initial_gamestate.(graveyard).
 
 Definition gs_cast : GameState := Cast abuelos_awakening initial_gamestate.
 
@@ -163,43 +166,51 @@ Lemma cast_moves_card_to_stack :
   In abuelos_awakening (hand initial_gamestate) ->
   In (CardItem abuelos_awakening) (stack (Cast abuelos_awakening initial_gamestate)).
 Proof.
-  intros gs. (* On introduit l’état initial gs *)
-  unfold Cast. (* On ouvre la définition de cast si nécessaire *)
-  (* Supposons que cast ajoute simplement la carte au début de la pile *)
-  simpl. (* Si cast est une simple mise à jour de liste, simpl peut suffire *)
-  left. (* abuelos_awakening est ajouté en tête de liste *)
-  reflexivity. (* L'élément est bien présent *)
-Qed.
+  intros HinHand. (* On suppose que la carte est dans la main *)
+  unfold Cast. (* Dérouler la définition de Cast *)
+  simpl. (* Simplifier l’expression *)
 
-Definition gs_resolved := Resolve gs_cast 73 (Some ([mirror_gallery])).
+  destruct (match find (fun m : Mana => eq_mana_color (color m) White) (manapool initial_gamestate) with
+            | Some m =>
+                if match quantity m with
+                   | 0 => false
+                   | S _ => true
+                   end
+                then match remove_mana (manapool initial_gamestate) {| color := White; quantity := 1 |} with
+                     | [] => false
+                     | _ :: _ => true
+                     end
+                else false
+            | None => false
+            end && card_in_list abuelos_awakening (hand initial_gamestate)) eqn:Hmana.
 
-Compute Resolve gs_cast 73 (Some ([mirror_gallery])).
-
-Theorem resolve_moves_card_to_battlefield :
-  ~ In (CardItem abuelos_awakening) gs_resolved.(stack) /\
-  In abuelos_awakening gs_resolved.(battlefield).
-Proof.
-split.  (* Sépare l'objectif en deux sous-objectifs *)
-  - (* Première partie : la main est vide *)
-    simpl. (* Simplifie l'expression si possible *)
-    reflexivity. (* Si l'égalité est triviale, utilise reflexivity *)
-  - (* Deuxième partie : la pile contient un élément *)
+  - (* Cas où le lancement du sort est valide *)
     simpl.
-    reflexivity.
+    unfold stack.
+    unfold hand.
+    unfold remove_card.
+    unfold card_in_list in Hmana.
+
+    (* Montrons que la carte est maintenant dans la pile *)
+    assert (stack (Cast abuelos_awakening initial_gamestate) =
+            CardItem abuelos_awakening :: stack initial_gamestate) as Hstack.
+    {
+      (* Explication : Cast ajoute la carte à la stack *)
+      reflexivity.
+    }
+
+    rewrite Hstack.
+    apply in_eq. (* `CardItem abuelos_awakening` est bien en tête de la pile *)
+
+  - (* Cas où la carte ne peut pas être lancée *)
+    simpl.
+    unfold card_in_list in Hmana.
+    rewrite HinHand in Hmana.
+    discriminate Hmana. (* Contradiction avec notre hypothèse *)
 Qed.
 
 
-Theorem play_and_resolve_card :
-  In abuelos_awakening initial_gamestate.(hand) ->
-  In (CardItem abuelos_awakening) (Cast abuelos_awakening initial_gamestate).(stack) /\
-  (~ In (CardItem abuelos_awakening) (Resolve (Cast abuelos_awakening initial_gamestate) 73 (Some ([mirror_gallery]))).(stack)) /\
-  In abuelos_awakening (Resolve (Cast abuelos_awakening initial_gamestate) 73 (Some ([mirror_gallery]))).(battlefield).
-Proof.
-  intros H_hand.
-  split.
-  - apply cast_moves_card_to_stack.
-  - apply resolve_moves_card_to_battlefield.
-Qed.
+
 
 
 

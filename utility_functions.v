@@ -102,6 +102,17 @@ Definition eq_card (c1 c2 : Card) : bool :=
   String.eqb c1.(name) c2.(name) &&
   Nat.eqb c1.(id) c2.(id).
 
+Definition phase_eqb (p1 p2 : Phase) : bool :=
+  match p1, p2 with
+  | BeginningPhase, BeginningPhase => true
+  | MainPhase1, MainPhase1 => true
+  | CombatPhase, CombatPhase => true
+  | MainPhase2, MainPhase2 => true
+  | EndingPhase, EndingPhase => true
+  | _, _ => false
+  end.
+
+
 (* Définition d'une fonction pour vérifier la présence d'un élément dans une liste *)
 Fixpoint card_in_list (c : Card) (l : list Card) : bool :=
   match l with
@@ -182,8 +193,8 @@ Fixpoint update_tapped_land (target_land : Land) (battlefield : list Card) : lis
       | None => c :: update_tapped_land target_land rest
       | Some land_in_perm =>
         if eq_mana target_land.(producing) land_in_perm.(producing) then
-          let updated_perm := mkPermanent perm.(Abilities) perm.(ListActivated) perm.(subtype) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
-          (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name) c.(id)) :: update_tapped_land target_land rest
+          let updated_perm := mkPermanent perm.(Abilities) perm.(ListActivated) None perm.(subtype) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
+          (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name) c.(id) c.(keywords)) :: update_tapped_land target_land rest
 
         else
           c :: update_tapped_land target_land rest
@@ -205,7 +216,7 @@ Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
         let new_battlefield := update_tapped_land target_land gs.(battlefield) in
         mkGameState new_battlefield gs.(hand) gs.(library)
                     gs.(graveyard) gs.(exile) gs.(opponent)
-                    (new_mana :: gs.(manapool)) gs.(stack)
+                    (new_mana :: gs.(manapool)) gs.(stack) gs.(passive_abilities) gs.(phase)
       else
         gs (* Si la Land n'est pas dans le battlefield, ne rien faire *)
     end
@@ -230,9 +241,9 @@ Fixpoint remove_last {A : Type} (l : list A) : list A :=
 (* Fonction qui détermine le type d'une carte *)
 Definition card_type (c : Card) : CardType :=
   match c with
-  | mkCard (Some _) None None _ _ _ => PermanentType
-  | mkCard None (Some _) None _ _ _ => InstantType
-  | mkCard None None (Some _) _ _ _ => SorceryType
+  | mkCard (Some _) None None _ _ _ _ => PermanentType
+  | mkCard None (Some _) None _ _ _ _ => InstantType
+  | mkCard None None (Some _) _ _ _ _ => SorceryType
   | _ => UnknownType
   end.
 
@@ -268,7 +279,34 @@ Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
         m
     ) gs.(manapool)
   in
-  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack).
+  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_abilities) gs.(phase).
+
+Definition eq_passive_key (c1 c2 : PassiveKey) : bool :=
+  match c1, c2 with
+  | AllSaprolings, AllSaprolings => true
+  | AllFlash, AllFlash => true
+  | DoubleToken, DoubleToken => true
+  | AdditionalTrigger, AdditionalTrigger => true
+  | NoLegendaryRule, NoLegendaryRule => true
+  | SaprolingsLands, SaprolingsLands => true
+  | _, _ => false
+  end.
+
+Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
+  match dict with
+  | nil => false
+  | (k, activated) :: rest =>
+    if eq_passive_key k key then activated else find_passive_ability_in_dict  rest key
+  end.
+
+Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : bool) : PassiveAbilityDict :=
+  match dict with
+  | nil => nil
+  | (k, activated) :: rest =>
+      if eq_passive_key k key 
+      then (k, new_value) :: rest  (* Mise à jour de la valeur si la clé correspond *)
+      else (k, activated) :: update_passive_ability_in_dict rest key new_value
+  end.
 
 End utility_function.
 Export utility_function.
