@@ -141,7 +141,7 @@ Definition Resolve (targets : option (list Card)) (gs : GameState) : GameState :
     end
   end.
 
-<<<<<<< HEAD
+
 (* Fonction pour activer une capacité *)
 Definition activate_ability
   (index : nat)
@@ -177,12 +177,9 @@ Definition activate_ability
       gs (* L'index n'est pas dans la liste des capacités activées *)
   end.
 
-=======
-
   
 
  *)
->>>>>>> 6476c5ad349c895222d34c3bf2080b45e98a12d9
 Definition Cast_gs : GameState := Cast destructeur Test_gs.
 Definition Resol1 : GameState := Resolve (Some [colossal_dreadmaw]) Cast_gs.
 
