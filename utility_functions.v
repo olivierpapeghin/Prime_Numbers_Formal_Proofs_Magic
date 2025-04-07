@@ -13,6 +13,14 @@ Require Import type_definitions.
 Import type_definition.
 Module utility_function.
 
+
+Definition isSome {A : Type} (o : option A) : bool :=
+  match o with
+  | Some _ => true
+  | None => false
+  end.
+
+
 (* Fonction pour obtenir le champ token d'une carte *)
 Definition get_token (c : Card) : option bool :=
   match c.(permanent) with
@@ -41,6 +49,23 @@ Definition eq_mana_color (c1 c2 : ManaColor) : bool :=
   | Generic, Generic => true
   | _, _ => false
   end.
+
+
+Definition next_phase (p : Phase) : Phase :=
+  match p with
+  | BeginningPhase => MainPhase1
+  | MainPhase1 => CombatPhase
+  | CombatPhase => MainPhase2
+  | MainPhase2 => EndingPhase
+  | EndingPhase => BeginningPhase 
+  end.
+
+Definition advance_phase (gs : GameState) : GameState :=
+  let new_phase := next_phase gs.(phase) in
+  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard)
+              gs.(exile) gs.(opponent) gs.(manapool) gs.(stack) gs.(passive_abilities) new_phase.
+
+
 Definition eq_mana (m1 m2 : Mana) : bool :=
   eq_mana_color m1.(color) m2.(color) && Nat.eqb m1.(quantity) m2.(quantity).
 
