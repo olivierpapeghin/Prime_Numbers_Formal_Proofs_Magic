@@ -57,6 +57,7 @@ Definition colossal_dreadmaw : Card :=
   (Some (mkPermanent (* Est un permanent *)
     nil
     nil
+    None
     ["Dinosaur"]
     (Some (mkCreature 6 6)) (* Est une créature 6/6*)
     None (* N'est pas un enchantement *)
@@ -82,7 +83,9 @@ Definition initial_gamestate : GameState :=
   nil (* L'exil est vide *)
   20 (* L'opposant est à 20 PV *)
   [mkMana White 20; mkMana Blue 20; mkMana Black 20; mkMana Red 20; mkMana Green 20] (* On se donne assez de mana pour pouvoir lancer le sort *)
-  nil (* La pile est vide *).
+  nil (* La pile est vide *)
+  nil
+  BeginningPhase.
 
 Definition gamestate_proof1 : GameState := Cast colossal_dreadmaw initial_gamestate.
 
