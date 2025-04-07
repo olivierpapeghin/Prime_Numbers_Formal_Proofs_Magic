@@ -354,5 +354,39 @@ Fixpoint List_assoc {A B : Type} (eq : A -> A -> bool) (x : A) (l : list (A * B)
   | (k, v) :: l' => if eqb eq x k then Some v else List_assoc eq x l'
   end.
 
+
+Definition add_abilities_to_stack (event_type : nat) (p : Permanent) (gs : GameState) : GameState :=
+  fold_left
+    (fun gs' pair =>
+      match pair with
+      | (dict_id, ability_id) =>
+        if beq_nat dict_id event_type then
+          let new_stack := (PairItem dict_id ability_id) :: gs'.(stack) in
+          mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) new_stack gs.(passive_abilities) gs.(phase)
+        else
+          gs'
+      end
+    )
+    p.(Abilities)
+    gs.
+
+(* Vérifie si une carte possède un mot-clé spécifique *)
+Definition has_keyword (kw : string) (c : Card) : bool :=
+  existsb (String.eqb kw) (keywords c).
+
+Definition can_cast (c : Card) (p : Phase) : bool :=
+  match c with
+  | mkCard _ _ (Some _) _ _ _ _ => (* It's a Sorcery *)
+      if has_keyword "flash" c then true
+      else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
+      else false
+  | mkCard _ (Some _) _ _ _ _ _ => true (* An Instant can be played anytime *)
+  | mkCard (Some _) _ _ _ _ _ _ => (* A Permanent *)
+      if has_keyword "flash" c then true
+      else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
+      else false
+  | _ => false
+  end.
+
 End utility_function.
 Export utility_function.
