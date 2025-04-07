@@ -31,7 +31,7 @@ Definition sacrifice_cards (targets : option (list Card)) (gs : GameState) : Gam
           let new_battlefield := remove_card new_gs.(battlefield) target in
           let new_graveyard := target :: new_gs.(graveyard) in
           mkGameState new_battlefield new_gs.(hand) new_gs.(library) new_graveyard new_gs.(exile)
-                        new_gs.(opponent) new_gs.(manapool) new_gs.(stack) gs.(passive_abilities)
+                        new_gs.(opponent) new_gs.(manapool) new_gs.(stack) gs.(passive_abilities) gs.(phase)
         end)
       target_cards
       gs
@@ -40,7 +40,7 @@ Definition sacrifice_cards (targets : option (list Card)) (gs : GameState) : Gam
 (* Définition d'une capacité qui ajoute un mana noir au manapool *)
 Definition add_black_mana (targets : option (list Card)) (gs : GameState) : GameState :=
   let new_manapool := (mkMana Black 1) :: gs.(manapool) in
-  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_abilities).
+  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_abilities) gs.(phase).
 
 (* Définition des sous-dictionnaires *)
 Definition OnCast : Dict := [(1, sacrifice_cards)].
