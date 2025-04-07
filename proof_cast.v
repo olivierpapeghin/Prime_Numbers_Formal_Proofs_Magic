@@ -16,19 +16,38 @@ Import type_definition.
 Require Import utility_functions.
 Import utility_function.
 
-(* Définition des différentes fonctions pour jouer un sort*)
-Definition Cast (c:Card) (gs:GameState) : (GameState) :=
+(* Vérifie si une carte possède un mot-clé spécifique *)
+Definition has_keyword (kw : string) (c : Card) : bool :=
+  existsb (String.eqb kw) (keywords c).
+
+Definition can_cast (c : Card) (p : Phase) : bool :=
+  match c with
+  | mkCard _ _ (Some _) _ _ _ _ => (* It's a Sorcery *)
+      if has_keyword "flash" c then true
+      else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
+      else false
+  | mkCard _ (Some _) _ _ _ _ _ => true (* An Instant can be played anytime *)
+  | mkCard (Some _) _ _ _ _ _ _ => (* A Permanent *)
+      if has_keyword "flash" c then true
+      else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
+      else false
+  | _ => false
+  end.
+
+
+(* Définition de Cast avec la vérification de phase *)
+Definition Cast (c:Card) (gs:GameState) : GameState :=
   let cost := c.(manacost) in
   let pool := gs.(manapool) in
-  if Can_Pay cost pool && card_in_list c gs.(hand) then
+  let current_phase := gs.(phase) in
+  if Can_Pay cost pool && card_in_list c gs.(hand) && can_cast c current_phase then
     let new_pool := fold_left remove_mana cost pool in
     let new_hand := remove_card gs.(hand) c in
     let new_stack := CardItem c :: gs.(stack) in
-    let new_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack in
-    (new_gs)
+    let new_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack gs.(passive_abilities) gs.(phase) in
+    new_gs
   else
-    (gs)
-  .
+    gs.
 
 (* On peut déjà vérifer que toutes les étapes marchent bien en testant si un cast est bien fonctionnel *)
 
@@ -50,7 +69,8 @@ Definition colossal_dreadmaw : Card :=
   None (* N'est pas un sorcery *)
   [mkMana Green 1; mkMana Generic 5] (* Coûte 5 mana générique et 1 mana vert *)
   "Colossal Dreadmaw"
-  0. (* Nom de la carte *)
+  0 (* Nom de la carte *)
+  nil.
 
 (* Instanciation du GameState initial *)
 Definition initial_gamestate : GameState := 

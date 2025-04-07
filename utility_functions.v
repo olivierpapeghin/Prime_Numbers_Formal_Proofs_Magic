@@ -102,6 +102,38 @@ Definition eq_card (c1 c2 : Card) : bool :=
   String.eqb c1.(name) c2.(name) &&
   Nat.eqb c1.(id) c2.(id).
 
+Definition phase_eqb (p1 p2 : Phase) : bool :=
+  match p1, p2 with
+  | BeginningPhase, BeginningPhase => true
+  | MainPhase1, MainPhase1 => true
+  | CombatPhase, CombatPhase => true
+  | MainPhase2, MainPhase2 => true
+  | EndingPhase, EndingPhase => true
+  | _, _ => false
+  end.
+
+
+(* Fonction principale de comparaison de deux base de cartes *)
+Definition eq_card_base (c1 c2 : Card) : bool :=
+  eq_option eq_permanent c1.(permanent) c2.(permanent) &&
+  eq_option eq_instant c1.(instant) c2.(instant) &&
+  eq_option eq_sorcery c1.(sorcery) c2.(sorcery) &&
+  eq_list_mana c1.(manacost) c2.(manacost) &&
+  String.eqb c1.(name) c2.(name).
+
+Definition eq_passive_key (c1 c2 : PassiveKey) : bool :=
+  match c1, c2 with
+  | AllSaprolings, AllSaprolings => true
+  | AllFlash, AllFlash => true
+  | DoubleToken, DoubleToken => true
+  | AdditionalTrigger, AdditionalTrigger => true
+  | NoLegendaryRule, NoLegendaryRule => true
+  | SaprolingsLands, SaprolingsLands => true
+  | _, _ => false
+  end.
+
+
+
 (* Définition d'une fonction pour vérifier la présence d'un élément dans une liste *)
 Fixpoint card_in_list (c : Card) (l : list Card) : bool :=
   match l with
@@ -161,6 +193,22 @@ Fixpoint Can_Pay (cost : list Mana) (pool : list Mana) : bool :=
         end
   end.
 
+Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
+  match dict with
+  | nil => false
+  | (k, activated) :: rest =>
+    if eq_passive_key k key then activated else find_passive_ability_in_dict  rest key
+  end.
+
+Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : bool) : PassiveAbilityDict :=
+  match dict with
+  | nil => nil
+  | (k, activated) :: rest =>
+      if eq_passive_key k key 
+      then (k, new_value) :: rest  (* Mise à jour de la valeur si la clé correspond *)
+      else (k, activated) :: update_passive_ability_in_dict rest key new_value
+  end.
+
 (* On doit ensuite manipuler les zones dans lesquelles les cartes vont passer *)
 (* Fonction remove_card qui retire la première occurrence de c dans la liste l *)
 Fixpoint remove_card (l : list Card) (c : Card) : list Card :=
@@ -182,8 +230,8 @@ Fixpoint update_tapped_land (target_land : Land) (battlefield : list Card) : lis
       | None => c :: update_tapped_land target_land rest
       | Some land_in_perm =>
         if eq_mana target_land.(producing) land_in_perm.(producing) then
-          let updated_perm := mkPermanent perm.(Abilities) perm.(ListActivated) perm.(PassiveAbility) perm.(subtype) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
-          (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name) c.(id)) :: update_tapped_land target_land rest
+          let updated_perm := mkPermanent perm.(Abilities) perm.(ListActivated) None perm.(subtype) perm.(creature) perm.(enchantement) (Some land_in_perm) perm.(artifact) true perm.(legendary) true in
+          (mkCard (Some updated_perm) c.(instant) c.(sorcery) c.(manacost) c.(name) c.(id) c.(keywords)) :: update_tapped_land target_land rest
 
         else
           c :: update_tapped_land target_land rest
@@ -191,6 +239,22 @@ Fixpoint update_tapped_land (target_land : Land) (battlefield : list Card) : lis
     end
   end.
 
+Fixpoint is_card_base_in (l : list Card) (c: Card) : bool :=
+  match l with
+  | [] => true (* Si la liste est vide, retourne une liste vide *)
+  | h :: t => if eq_card_base h c then false (* Si on trouve la carte, on la retire *)
+              else is_card_base_in t c (* Sinon, on continue à chercher *)
+  end.
+
+Definition check_legendary_rule (gs: GameState) (c: Card) : bool :=
+  match c.(permanent) with
+  | None => true
+  | Some perm =>
+    if (negb (find_passive_ability_in_dict gs.(passive_abilities) NoLegendaryRule)) && perm.(legendary) then
+      is_card_base_in gs.(battlefield) c
+    else 
+      true
+  end.
 
 (* Fonction pour tap une Land et produire du mana, en mettant à jour le GameState *)
 Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
@@ -205,7 +269,7 @@ Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
         let new_battlefield := update_tapped_land target_land gs.(battlefield) in
         mkGameState new_battlefield gs.(hand) gs.(library)
                     gs.(graveyard) gs.(exile) gs.(opponent)
-                    (new_mana :: gs.(manapool)) gs.(stack) gs.(passive_abilities)
+                    (new_mana :: gs.(manapool)) gs.(stack) gs.(passive_abilities) gs.(phase)
       else
         gs (* Si la Land n'est pas dans le battlefield, ne rien faire *)
     end
@@ -230,9 +294,9 @@ Fixpoint remove_last {A : Type} (l : list A) : list A :=
 (* Fonction qui détermine le type d'une carte *)
 Definition card_type (c : Card) : CardType :=
   match c with
-  | mkCard (Some _) None None _ _ _ => PermanentType
-  | mkCard None (Some _) None _ _ _ => InstantType
-  | mkCard None None (Some _) _ _ _ => SorceryType
+  | mkCard (Some _) None None _ _ _ _ => PermanentType
+  | mkCard None (Some _) None _ _ _ _ => InstantType
+  | mkCard None None (Some _) _ _ _ _ => SorceryType
   | _ => UnknownType
   end.
 
@@ -240,8 +304,8 @@ Definition permanent_type (c : Permanent) : PermanentCardType :=
   match c with
   | mkPermanent _ _ _ _ (Some _) None None None _ _ _ => CreatureType
   | mkPermanent _ _ _ _ None (Some _) None None _ _ _ => EnchantmentType
-  | mkPermanent _ _ _ _ None None (Some _) None _ _ _ => ArtifactType
-  | mkPermanent _ _ _ _ None None None (Some _) _ _ _ => LandType
+  | mkPermanent _ _ _ _ None None (Some _) None _ _ _ => LandType
+  | mkPermanent _ _ _ _ None None None (Some _) _ _ _ => ArtifactType
   | _ => UnknownPermanentType
   end.
 
@@ -268,34 +332,9 @@ Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
         m
     ) gs.(manapool)
   in
-  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_abilities).
+  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_abilities) gs.(phase).
 
-Definition eq_passive_key (c1 c2 : PassiveKey) : bool :=
-  match c1, c2 with
-  | AllSaprolings, AllSaprolings => true
-  | AllFlash, AllFlash => true
-  | DoubleToken, DoubleToken => true
-  | AdditionalTrigger, AdditionalTrigger => true
-  | NoLegendaryRule, NoLegendaryRule => true
-  | SaprolingsLands, SaprolingsLands => true
-  | _, _ => false
-  end.
 
-Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
-  match dict with
-  | nil => false
-  | (k, activated) :: rest =>
-    if eq_passive_key k key then activated else find_passive_ability_in_dict  rest key
-  end.
-
-Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : bool) : PassiveAbilityDict :=
-  match dict with
-  | nil => nil
-  | (k, activated) :: rest =>
-      if eq_passive_key k key 
-      then (k, new_value) :: rest  (* Mise à jour de la valeur si la clé correspond *)
-      else (k, activated) :: update_passive_ability_in_dict rest key new_value
-  end.
 
 (* Vérifie si un élément est présent dans une liste d'entiers *)
 Fixpoint List_In_nat (x : nat) (l : list nat) : bool :=
