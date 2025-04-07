@@ -10,7 +10,7 @@ Import utility_function.
 
 Local Open Scope string_scope.
 
-Definition default_card : Card := mkCard None None None nil "Default" 0.
+Definition default_card : Card := mkCard None None None nil "Default" 0 [].
 
 (* On va simuler le cast d'un sorcery : Abuelo's Awakening qui ramène un enchantement non-aura ou un artefact du cimetière sur le champ de bataille *)
 Definition abuelos_awakening_ability (targets : option (list Card)) (gs : GameState) : GameState :=
@@ -32,21 +32,23 @@ Definition abuelos_awakening_ability (targets : option (list Card)) (gs : GameSt
             (Some (mkPermanent
               p.(Abilities) (* On copie les abilités du permanent *)
               p.(ListActivated)
+              p.(PassiveAbility)
               ("Spirit" :: p.(subtype)) (* On reprend les sous-types et on y ajoute "Spirit" *)
               (Some (mkCreature 1 1)) (* Est une créature 1/1*)
               p.(enchantement)
               p.(land)
               p.(artifact)
-              true (* C'est un token *)
+              false (* C'est un token *)
               p.(legendary)
               false)) (* Il n'entre pas engagé *)
             None (* Ce n'est pas un instant ou un sorcery *)
             None
             target.(manacost)
             target.(name)
-            target.(id) in 
+            target.(id) 
+            target.(keywords) in 
             let new_battlefield : list Card := spirit :: gs.(battlefield) in
-            mkGameState new_battlefield gs.(hand) gs.(library) new_graveyard gs.(exile) gs.(opponent) gs.(manapool) gs.(stack)
+            (mkGameState new_battlefield gs.(hand) gs.(library) new_graveyard gs.(exile) gs.(opponent) gs.(manapool) gs.(stack) gs.(passive_abilities) gs.(phase))
           | false => (* Cible invalide on ne fait rien *)
             gs
           end
@@ -75,21 +77,21 @@ Definition activate_spell (spell_abilities : Dict) (key : nat) (targets : option
     new_gs (* Retourner l'état du jeu mis à jour après activation de la capacité *)
   end.
 
-Definition non_permanent_abilities : Dict := [(73,abuelos_awakening_ability)]. (* On lie l'abilité abuelo's awakening à l'id 73) *)
-
 Definition abuelos_awakening : Card := mkCard
   None
   None
   (Some (mkSorcery [73]))
   [mkMana White 1; mkMana Generic 2]
   "Abuelo's Awakening"
-  1.
+  1
+  [].
 
 Definition mirror_gallery : Card := mkCard
   (Some (mkPermanent (* Est un permanent *)
   nil
   nil
-  nil
+  None
+  []
   None
   None
   None
@@ -101,7 +103,8 @@ Definition mirror_gallery : Card := mkCard
   None
   [mkMana Generic 5]
   "Mirror Gallery"
-  2.
+  2
+  [].
 
 Definition initial_gamestate : GameState := 
   mkGameState
@@ -112,9 +115,18 @@ Definition initial_gamestate : GameState :=
   nil (* L'exil est vide *)
   20 (* L'opposant est à 20 PV *)
   [mkMana White 20; mkMana Blue 20; mkMana Black 20; mkMana Red 20; mkMana Green 20] (* On se donne assez de mana pour pouvoir lancer le sort *)
-  nil (* La pile est vide *).
+  nil (* La pile est vide *)
+  nil  
+  MainPhase1.
+
+Compute match mirror_gallery.(permanent) with
+| Some p => permanent_type p
+| _ => UnknownPermanentType
+end.
 
 Compute abuelos_awakening_ability (Some [mirror_gallery]) initial_gamestate. (* On vérifie que l'abilité marche bien comme attendu *)
+
+Definition non_permanent_abilities : Dict := [(73, abuelos_awakening_ability)].
 
 (* Définition des différentes fonctions pour jouer un sort*)
 Definition Cast (c:Card) (gs:GameState) : (GameState) :=
@@ -124,7 +136,7 @@ Definition Cast (c:Card) (gs:GameState) : (GameState) :=
     let new_pool := fold_left remove_mana cost pool in
     let new_hand := remove_card gs.(hand) c in
     let new_stack := CardItem c :: gs.(stack) in
-    let new_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack in
+    let new_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack gs.(passive_abilities) gs.(phase) in
     (new_gs)
   else
     (gs)
@@ -137,13 +149,13 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
       | PermanentType => (* Si c'est un permanent *)
         let new_stack : list CardOrPair:= remove_last gs.(stack) in
         let new_battlefield : list Card := c :: gs.(battlefield) in
-        mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack
+        mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
       | InstantType => gs (* On ne gère pas encore cette éventualité *)
       | SorceryType => 
         let new_gs : GameState := activate_spell non_permanent_abilities key targets gs in
         let new_stack : list CardOrPair:= remove_last gs.(stack) in
         let new_graveyard : list Card := c :: new_gs.(graveyard) in
-        mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_graveyard new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_stack
+        mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_graveyard new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
       | UnknownType => gs (* Si on ne reconnait pas le type de la carte on ne fait rien *)
       end
   | Some (PairItem i d) => gs (* Si le dernier élément est une capacité, on ne la traite pas encore *)
@@ -151,23 +163,28 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
   end.
 
 (* Preuve *)
-(* On fait une preuve en 2 parties, on cast le sorcery, on le résout et on regarde si l'effet est bien appliqué *)
+(* On veut prouver que l'abilité de la carte Abuelo's Awakening fonctionne correctement tant que
+   la carte passée en paramètre est de type Artefact ou Enchantement et qu'elle n'a pas 
+   de sous type Aura, de plus elle doit se trouver dans le cimetière du GameState *)
+Lemma abuelos_effect : 
+  forall (gs : GameState) (c : Card) (p : Permanent), (* On définit les variables *)
+  In c gs.(graveyard) -> (* La carte cible est dans le cimetière du gamestate *)
+  c.(permanent) = Some p -> (* Contrainte de la cible *)
+  (permanent_type p = ArtifactType \/ permanent_type p = EnchantmentType) ->
+  ~ In "aura" p.(subtype) ->
+  let new_gs := abuelos_awakening_ability (Some [c]) gs in (* On résaut l'abitlité *)
+  In (mkCard (Some (mkPermanent p.(Abilities) p.(ListActivated) p.(PassiveAbility)
+                   ("Spirit" :: p.(subtype))
+                   (Some (mkCreature 1 1)) p.(enchantement)
+                   p.(land) p.(artifact) true p.(legendary) false))
+             None None c.(manacost) c.(name) c.(id) c.(keywords))
+     new_gs.(battlefield) (* On vérifie qu'on a bien le résultat attendu dans le gamestate *)
+  /\ ~ In c new_gs.(graveyard). (* Enfin on vérifie que la cible a quitté le cimetière *)
 
-(* L'hypothèse de départ et que la carte Abuelo's Awakening est dans la main et que la carte mirror gallery est dans le cimetière *)
-Hypothesis H_start : In abuelos_awakening initial_gamestate.(hand) /\ 
-                     In mirror_gallery initial_gamestate.(graveyard).
 
-Definition gs_cast : GameState := Cast abuelos_awakening initial_gamestate.
 
-Lemma cast_adds_card_to_stack :
-  forall gs, In (CardItem abuelos_awakening) (Cast abuelos_awakening gs).(stack).
-Proof.
-  intros gs. (* On introduit l’état initial gs *)
-  unfold Cast. (* On ouvre la définition de cast si nécessaire *)
-  (* Supposons que cast ajoute simplement la carte au début de la pile *)
-  simpl. (* Si cast est une simple mise à jour de liste, simpl peut suffire *)
-  reflexivity. (* L'élément est bien présent *)
-Qed.
+
+
 
 
       
