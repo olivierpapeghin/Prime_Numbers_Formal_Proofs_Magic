@@ -17,7 +17,7 @@ Import abilities_effects.
 
 Local Open Scope string_scope.
 
-Module game_actions.
+Module game_action.
   
   (* Fonction pour sacrifier des cartes et les déplacer vers le cimetière *)
 Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) : GameState :=
@@ -71,5 +71,5 @@ Definition Cast (c:Card) (gs:GameState) : GameState :=
 
 
 
-End game_actions.
-Export game_actions.
+End game_action.
+Export game_action.
