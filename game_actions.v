@@ -7,6 +7,8 @@ Require Import type_definitions.
 Import type_definition.
 Require Import utility_functions.
 Import utility_function.
+Require Import abilities_effects.
+Import abilities_effects.
 
 Local Open Scope string_scope.
 
@@ -33,7 +35,10 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
   | Some (PairItem dict_id ability_id) =>
       (* Activer l'ability correspondante *)
       let new_gs := activate_triggered_ability Triggered_Abilities dict_id ability_id targets gs in
-      let new_stack := rev rest in
-      mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_stack gs.(passive_ability)
+      let new_stack : list CardOrPair:= remove_last gs.(stack) in
+      mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
   | None => gs (* Si la stack est vide, on ne fait rien *)
   end.
+
+
+
