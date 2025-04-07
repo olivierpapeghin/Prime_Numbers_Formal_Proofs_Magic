@@ -105,6 +105,7 @@ Definition add_abilities_to_stack (event_type : nat) (p : Permanent) (gs : GameS
 Definition Cast (c:Card) (gs:GameState) : GameState :=
   let cost := c.(manacost) in
   let pool := gs.(manapool) in
+  
   if Can_Pay cost pool && card_in_list c gs.(hand) && check_legendary_rule gs c then
     let new_pool := fold_left remove_mana cost pool in
     let new_hand := remove_card gs.(hand) c in
