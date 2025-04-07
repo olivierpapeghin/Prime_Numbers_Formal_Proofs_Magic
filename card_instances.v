@@ -41,12 +41,15 @@ Definition colossal_dreadmaw : Card :=
 Definition forest_land : Land := mkLand (mkMana Green 1).
 Definition forest_perm : Permanent := mkPermanent nil nil None ["essai"] None None (Some forest_land) None false false false.
 Definition card_forest : Card := mkCard (Some forest_perm) None None [] "Forest" 3 nil.
+Definition card_forest : Card := mkCard (Some forest_perm) None None [] "Forest" 3 nil.
 
 (* Exemple de création d'une autre carte permanente *)
 Definition creature_perm : Permanent := mkPermanent [(1,1)] nil None ["pui"] (Some (mkCreature 2 2)) None None None false false false.
 Definition card_creature : Card := mkCard (Some creature_perm) None None [] "Creature" 4 nil.
+Definition card_creature : Card := mkCard (Some creature_perm) None None [] "Creature" 4 nil.
 
 Definition crea_perm : Permanent := mkPermanent nil nil None ["perm"] (Some (mkCreature 2 2)) None None None false false false.
+Definition destructeur : Card := mkCard (Some crea_perm) None None [] "Destructeur" 5 nil.
 Definition destructeur : Card := mkCard (Some crea_perm) None None [] "Destructeur" 5 nil.
 
 
