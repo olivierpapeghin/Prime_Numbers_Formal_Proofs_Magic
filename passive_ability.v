@@ -12,20 +12,67 @@ Require Import type_definitions.
 Import type_definition.
 Require Import utility_functions.
 Import utility_function.
+Require Import try_carte.
+Import Try_card.
 
 Module Passive_Cards.
 
-Definition add_black_mana (targets : option (list Card)) (gs : GameState) : GameState :=
-  let new_manapool := (mkMana Black 1) :: gs.(manapool) in
-  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack).
+Definition MirrorGallery (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    nil
+    (Some NoLegendaryRule)
+    nil
+    None
+    None
+    None
+    (Some mkArtifact)
+    false
+    false
+    false))
+  None
+  None
+  [mkMana Generic 5]
+  "Mirror Gallery"
+  id.
 
-Record Entry := {
-  index : nat;
-  def : string;
-  flag : bool
-}.
+Definition BobLegend (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    nil
+    None
+    nil
+    None
+    None
+    None
+    None
+    false
+    true
+    false))
+  None
+  None
+  []
+  "Bob"
+  id.
 
-Definition ListPassiveAbility : List := [(1, add_black_mana, false)].
+(* État de jeu initial avec des cartes dans le battlefield *)
+Definition Test_gs : GameState := mkGameState 
+  [(BobLegend 1)] 
+  [(BobLegend 2)] 
+  nil 
+  nil 
+  nil 
+  0 
+  [] 
+  nil 
+  DefaultListPassiveAbility.
+
+
+Compute Cast (BobLegend 2) Test_gs.
+
+
 
 End Passive_Cards.
 

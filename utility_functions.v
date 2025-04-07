@@ -102,6 +102,27 @@ Definition eq_card (c1 c2 : Card) : bool :=
   String.eqb c1.(name) c2.(name) &&
   Nat.eqb c1.(id) c2.(id).
 
+(* Fonction principale de comparaison de deux base de cartes *)
+Definition eq_card_base (c1 c2 : Card) : bool :=
+  eq_option eq_permanent c1.(permanent) c2.(permanent) &&
+  eq_option eq_instant c1.(instant) c2.(instant) &&
+  eq_option eq_sorcery c1.(sorcery) c2.(sorcery) &&
+  eq_list_mana c1.(manacost) c2.(manacost) &&
+  String.eqb c1.(name) c2.(name).
+
+Definition eq_passive_key (c1 c2 : PassiveKey) : bool :=
+  match c1, c2 with
+  | AllSaprolings, AllSaprolings => true
+  | AllFlash, AllFlash => true
+  | DoubleToken, DoubleToken => true
+  | AdditionalTrigger, AdditionalTrigger => true
+  | NoLegendaryRule, NoLegendaryRule => true
+  | SaprolingsLands, SaprolingsLands => true
+  | _, _ => false
+  end.
+
+
+
 (* Définition d'une fonction pour vérifier la présence d'un élément dans une liste *)
 Fixpoint card_in_list (c : Card) (l : list Card) : bool :=
   match l with
@@ -161,6 +182,22 @@ Fixpoint Can_Pay (cost : list Mana) (pool : list Mana) : bool :=
         end
   end.
 
+Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
+  match dict with
+  | nil => false
+  | (k, activated) :: rest =>
+    if eq_passive_key k key then activated else find_passive_ability_in_dict  rest key
+  end.
+
+Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : bool) : PassiveAbilityDict :=
+  match dict with
+  | nil => nil
+  | (k, activated) :: rest =>
+      if eq_passive_key k key 
+      then (k, new_value) :: rest  (* Mise à jour de la valeur si la clé correspond *)
+      else (k, activated) :: update_passive_ability_in_dict rest key new_value
+  end.
+
 (* On doit ensuite manipuler les zones dans lesquelles les cartes vont passer *)
 (* Fonction remove_card qui retire la première occurrence de c dans la liste l *)
 Fixpoint remove_card (l : list Card) (c : Card) : list Card :=
@@ -191,6 +228,22 @@ Fixpoint update_tapped_land (target_land : Land) (battlefield : list Card) : lis
     end
   end.
 
+Fixpoint is_card_base_in (l : list Card) (c: Card) : bool :=
+  match l with
+  | [] => true (* Si la liste est vide, retourne une liste vide *)
+  | h :: t => if eq_card_base h c then false (* Si on trouve la carte, on la retire *)
+              else is_card_base_in t c (* Sinon, on continue à chercher *)
+  end.
+
+Definition check_legendary_rule (gs: GameState) (c: Card) : bool :=
+  match c.(permanent) with
+  | None => true
+  | Some perm =>
+    if (negb (find_passive_ability_in_dict gs.(passive_abilities) NoLegendaryRule)) && perm.(legendary) then
+      is_card_base_in gs.(battlefield) c
+    else 
+      true
+  end.
 
 (* Fonction pour tap une Land et produire du mana, en mettant à jour le GameState *)
 Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
@@ -270,32 +323,7 @@ Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
   in
   mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_abilities).
 
-Definition eq_passive_key (c1 c2 : PassiveKey) : bool :=
-  match c1, c2 with
-  | AllSaprolings, AllSaprolings => true
-  | AllFlash, AllFlash => true
-  | DoubleToken, DoubleToken => true
-  | AdditionalTrigger, AdditionalTrigger => true
-  | NoLegendaryRule, NoLegendaryRule => true
-  | SaprolingsLands, SaprolingsLands => true
-  | _, _ => false
-  end.
 
-Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
-  match dict with
-  | nil => false
-  | (k, activated) :: rest =>
-    if eq_passive_key k key then activated else find_passive_ability_in_dict  rest key
-  end.
-
-Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : bool) : PassiveAbilityDict :=
-  match dict with
-  | nil => nil
-  | (k, activated) :: rest =>
-      if eq_passive_key k key 
-      then (k, new_value) :: rest  (* Mise à jour de la valeur si la clé correspond *)
-      else (k, activated) :: update_passive_ability_in_dict rest key new_value
-  end.
 
 End utility_function.
 Export utility_function.

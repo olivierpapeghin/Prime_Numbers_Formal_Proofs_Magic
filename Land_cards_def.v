@@ -12,6 +12,8 @@ Require Import type_definitions.
 Import type_definition.
 Require Import utility_functions.
 Import utility_function.
+Require Import utility_functions.
+Import utility_function.
 
 Module Land_cards.
 
@@ -20,6 +22,7 @@ Definition Plains (id : nat) : Card :=
   (Some (mkPermanent
     nil
     nil
+    None
     nil
     None
     None
@@ -39,6 +42,7 @@ Definition Island (id : nat) : Card :=
   (Some (mkPermanent
     nil
     nil
+    None
     nil
     None
     None
@@ -58,6 +62,7 @@ Definition Forest (id : nat) : Card :=
   (Some (mkPermanent
     nil
     nil
+    None
     nil
     None
     None
@@ -77,6 +82,7 @@ Definition Mountain (id : nat) : Card :=
   (Some (mkPermanent
     nil
     nil
+    None
     nil
     None
     None
@@ -96,6 +102,7 @@ Definition Swamp (id : nat) : Card :=
   (Some (mkPermanent
     nil
     nil
+    None
     nil
     None
     None
