@@ -379,5 +379,81 @@ Fixpoint List_assoc {A B : Type} (eq : A -> A -> bool) (x : A) (l : list (A * B)
   | (k, v) :: l' => if eqb eq x k then Some v else List_assoc eq x l'
   end.
 
+(* Fonction pour trouver une capacité par sa clé dans un sous-dictionnaire *)
+Fixpoint find_ability_in_sub_dict (sub_dict : Dict) (key2 : nat) : option Ability :=
+  match sub_dict with
+  | nil => None
+  | (k, ability) :: rest =>
+    if Nat.eqb k key2 then Some ability else find_ability_in_sub_dict rest key2
+  end.
+
+(* Fonction pour activer une seule capacité à partir d'une clé avec des cibles *)
+Definition activate_spell (spell_abilities : Dict) (key : nat) (targets : option (list Card)) (gs : GameState) : GameState :=
+  match find_ability_in_sub_dict spell_abilities key with
+  | None => gs (* Aucune capacité trouvée, retourner l'état du jeu inchangé *)
+  | Some ability =>
+    let new_gs := ability targets gs in
+    new_gs (* Retourner l'état du jeu mis à jour après activation de la capacité *)
+  end.
+
+(* Fonction pour trouver un sous-dictionnaire par sa clé *)
+Fixpoint find_sub_dict (dicts : list (nat * Dict)) (key1 : nat) : option Dict :=
+  match dicts with
+  | nil => None
+  | (k, sub_dict) :: rest =>
+    if Nat.eqb k key1 then Some sub_dict else find_sub_dict rest key1
+  end.
+
+(* Fonction principale pour trouver une capacité dans le dictionnaire principal *)
+Definition find_ability_in_triggered_abilities (triggered_abilities : list (nat * Dict)) (pair : nat * nat) : option Ability :=
+  let (key1, key2) := pair in
+  match find_sub_dict triggered_abilities key1 with
+  | None => None
+  | Some sub_dict => find_ability_in_sub_dict sub_dict key2
+  end.
+ 
+(* Fonction pour activer une seule capacité à partir d'une clé avec des cibles *)
+Definition activate_triggered_ability (triggered_abilities : list (nat * Dict)) (event_type : nat) (key : nat) (targets : option (list Card)) (gs : GameState) : GameState :=
+  match find_ability_in_triggered_abilities triggered_abilities (event_type, key) with
+  | None => gs (* Aucune capacité trouvée, retourner l'état du jeu inchangé *)
+  | Some ability =>
+    let new_gs := ability targets gs in
+    new_gs (* Retourner l'état du jeu mis à jour après activation de la capacité *)
+  end.
+
+
+Definition add_abilities_to_stack (event_type : nat) (p : Permanent) (gs : GameState) : GameState :=
+  fold_left
+    (fun gs' pair =>
+      match pair with
+      | (dict_id, ability_id) =>
+        if beq_nat dict_id event_type then
+          let new_stack := (PairItem dict_id ability_id) :: gs'.(stack) in
+          mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) new_stack gs.(passive_abilities) gs.(phase)
+        else
+          gs'
+      end
+    )
+    p.(Abilities)
+    gs.
+
+(* Vérifie si une carte possède un mot-clé spécifique *)
+Definition has_keyword (kw : string) (c : Card) : bool :=
+  existsb (String.eqb kw) (keywords c).
+
+Definition can_cast (c : Card) (p : Phase) : bool :=
+  match c with
+  | mkCard _ _ (Some _) _ _ _ _ => (* It's a Sorcery *)
+      if has_keyword "flash" c then true
+      else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
+      else false
+  | mkCard _ (Some _) _ _ _ _ _ => true (* An Instant can be played anytime *)
+  | mkCard (Some _) _ _ _ _ _ _ => (* A Permanent *)
+      if has_keyword "flash" c then true
+      else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
+      else false
+  | _ => false
+  end.
+
 End utility_function.
 Export utility_function.
