@@ -118,14 +118,11 @@ Record GameState := mkGameState {
 Definition Ability := option (list Card) -> GameState -> GameState.
 
 (* Définition d'une capacité à activer *)
-Record ActivatedAbility := mkActivatedAbility {
-  cost_mana : option (list Mana);
-  cost_cards : option (list Card);
-  ability_index : nat;
-}.
+Definition Activated_Ability := option (list Card) -> option (list Card) -> option (list Mana) -> GameState -> GameState.
 
 (* Définition d'une liste de paires clé-valeur pour un dictionnaire *)
 Definition Dict := list (nat * Ability).
+Definition Activated_abilities := list (nat * Activated_Ability).
 
 Definition Initial_GS : GameState := mkGameState nil nil nil nil nil 20 [mkMana Green 0; mkMana Red 0; mkMana Blue 0 ;mkMana White 0 ; mkMana Black 0] nil DefaultListPassiveAbility. 
 

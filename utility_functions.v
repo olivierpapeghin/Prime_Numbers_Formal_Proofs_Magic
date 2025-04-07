@@ -297,5 +297,23 @@ Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : Passi
       else (k, activated) :: update_passive_ability_in_dict rest key new_value
   end.
 
+(* Vérifie si un élément est présent dans une liste d'entiers *)
+Fixpoint List_In_nat (x : nat) (l : list nat) : bool :=
+  match l with
+  | [] => false
+  | y :: l' => if beq_nat x y then true else List_In_nat x l'
+  end.
+
+(* Fonction générique pour comparer deux éléments *)
+Definition eqb {A : Type} (eq : A -> A -> bool) (x y : A) : bool :=
+  eq x y.
+
+(* Cherche une clé dans une liste de paires et retourne la valeur associée *)
+Fixpoint List_assoc {A B : Type} (eq : A -> A -> bool) (x : A) (l : list (A * B)) : option B :=
+  match l with
+  | [] => None
+  | (k, v) :: l' => if eqb eq x k then Some v else List_assoc eq x l'
+  end.
+
 End utility_function.
 Export utility_function.
