@@ -54,7 +54,7 @@ Definition Cast (c:Card) (gs:GameState) : GameState :=
   let pool := gs.(manapool) in
   let current_phase := gs.(phase) in
   if Can_Pay cost pool && card_in_list c gs.(hand) && check_legendary_rule gs c && can_cast c current_phase then
-    let new_pool := fold_left remove_mana cost pool in
+    let new_pool := fold_left (fun pool' cost' => snd (remove_mana pool' cost')) pool cost in
     let new_hand := remove_card gs.(hand) c in
     let new_stack := CardItem c :: gs.(stack) in
     let intermediate_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack gs.(passive_abilities) gs.(phase) in

@@ -47,11 +47,11 @@ Definition creature_perm : Permanent := mkPermanent [(1,1)] [1] None ["pui"] (So
 Definition card_creature : Card := mkCard (Some creature_perm) None None [] "Creature" 4 nil.
 
 Definition crea_perm : Permanent := mkPermanent nil nil None ["perm"] (Some (mkCreature 2 2)) None None None false false false.
-Definition destructeur : Card := mkCard (Some crea_perm) None None [] "Destructeur" 5 nil.
+Definition destructeur : Card := mkCard (Some crea_perm) None None [mkMana Red 2; mkMana Green 2; mkMana Generic 1] "Destructeur" 5 nil.
 
 
 (* État de jeu initial avec des cartes dans le battlefield *)
-Definition Test_gs : GameState := mkGameState [card_creature;colossal_dreadmaw] [card_forest;destructeur] nil nil nil 0 [mkMana Green 0; mkMana Red 0; mkMana Blue 0 ;mkMana White 0 ; mkMana Black 0] nil DefaultListPassiveAbility MainPhase1.
+Definition Test_gs : GameState := mkGameState [card_creature;colossal_dreadmaw] [card_forest;destructeur] nil nil nil 0 [mkMana Green 5; mkMana Red 5; mkMana Blue 5 ;mkMana White 5 ; mkMana Black 5] nil DefaultListPassiveAbility MainPhase1.
 
 (* Liste de cartes cibles à sacrifier *)
 Definition target_cards : list Card := [card_forest].
