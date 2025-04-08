@@ -35,7 +35,8 @@ Definition MirrorGallery (id : nat) : Card :=
   None
   [mkMana Generic 5]
   "Mirror Gallery"
-  id.
+  id
+  nil.
 
 Definition BobLegend (id : nat) : Card :=
   mkCard 
@@ -55,7 +56,8 @@ Definition BobLegend (id : nat) : Card :=
   None
   []
   "Bob"
-  id.
+  id
+  nil.
 
 (* État de jeu initial avec des cartes dans le battlefield *)
 Definition Test_gs : GameState := mkGameState 
@@ -67,8 +69,29 @@ Definition Test_gs : GameState := mkGameState
   0 
   [] 
   nil 
-  DefaultListPassiveAbility.
+  DefaultListPassiveAbility
+  BeginningPhase.
 
+(* Definition Transform_all_creature (new_type : string) (gs : GameState) : gs :=
+  match
+  . *)
+  
+Fixpoint Transform_all_creature_in (new_type : string) (l : list Card) : list Card :=
+  match gs.(hand) with
+  | [] => gs
+  | c :: rest => 
+    match c.(permanent) with
+    | None => Transform_all_creature_in new_type rest
+    | Some perm =>
+      match perm.(creature) with
+      | None => Transform_all_creature_in new_type rest
+      | Some creature =>
+        perm.(subtype) :: new_type in
+        Transform_all_creature_in new_type rest
+      end
+    end
+  end.
+  
 
 Compute Cast (BobLegend 2) Test_gs.
 

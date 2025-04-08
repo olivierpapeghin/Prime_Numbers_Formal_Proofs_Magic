@@ -31,7 +31,7 @@ Definition sacrifice_cards (targets : option (list Card)) (gs : GameState) : Gam
           let new_battlefield := remove_card new_gs.(battlefield) target in
           let new_graveyard := target :: new_gs.(graveyard) in
           mkGameState new_battlefield new_gs.(hand) new_gs.(library) new_graveyard new_gs.(exile)
-                        new_gs.(opponent) new_gs.(manapool) new_gs.(stack) gs.(passive_abilities)
+                        new_gs.(opponent) new_gs.(manapool) new_gs.(stack) gs.(passive_abilities) gs.(phase)
         end)
       target_cards
       gs
@@ -40,7 +40,7 @@ Definition sacrifice_cards (targets : option (list Card)) (gs : GameState) : Gam
 (* Définition d'une capacité qui ajoute un mana noir au manapool *)
 Definition add_black_mana (targets : option (list Card)) (gs : GameState) : GameState :=
   let new_manapool := (mkMana Black 1) :: gs.(manapool) in
-  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_abilities).
+  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_abilities) gs.(phase).
 
 (* Définition des sous-dictionnaires *)
 Definition OnCast : Dict := [(1, sacrifice_cards)].
@@ -93,7 +93,7 @@ Definition add_abilities_to_stack (event_type : nat) (p : Permanent) (gs : GameS
       | (dict_id, ability_id) =>
         if beq_nat dict_id event_type then
           let new_stack := (PairItem dict_id ability_id) :: gs'.(stack) in
-          mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) new_stack gs.(passive_abilities)
+          mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) new_stack gs.(passive_abilities) gs.(phase)
         else
           gs'
       end
@@ -110,7 +110,7 @@ Definition Cast (c:Card) (gs:GameState) : GameState :=
     let new_pool := fold_left remove_mana cost pool in
     let new_hand := remove_card gs.(hand) c in
     let new_stack := CardItem c :: gs.(stack) in
-    let intermediate_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack gs.(passive_abilities) in
+    let intermediate_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack gs.(passive_abilities) gs.(phase) in
     (* Ajouter les abilities des permanents sur le battlefield au stack *)
     let final_gs := fold_left (fun gs' perm =>
       match perm.(permanent) with
@@ -134,12 +134,12 @@ Definition Resolve (targets : option (list Card)) (gs : GameState) : GameState :
       (* Ajouter la carte au battlefield *)
       let new_battlefield := card :: gs.(battlefield) in
       let new_stack := rest in
-      mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack gs.(passive_abilities)
+      mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
     | PairItem dict_id ability_id =>
       (* Activer l'ability correspondante *)
       let new_gs := activate_triggered_ability Triggered_Abilities dict_id ability_id targets gs in
       let new_stack := rev rest in
-      mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_stack gs.(passive_abilities)
+      mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
     end
   end.
 
