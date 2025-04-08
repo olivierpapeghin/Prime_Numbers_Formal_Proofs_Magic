@@ -12,71 +12,31 @@ Require Import type_definitions.
 Import type_definition.
 Require Import utility_functions.
 Import utility_function.
-Require Import try_carte.
-Import Try_card.
+Require Import game_actions.
+Import game_action.
+Require Import card_instances.
+Import card_instance.
 
 Module Passive_Cards.
 
-Definition MirrorGallery (id : nat) : Card :=
-  mkCard 
-  (Some (mkPermanent
-    nil
-    nil
-    (Some NoLegendaryRule)
-    nil
-    None
-    None
-    None
-    (Some mkArtifact)
-    false
-    false
-    false))
-  None
-  None
-  [mkMana Generic 5]
-  "Mirror Gallery"
-  id
-  nil.
-
-Definition BobLegend (id : nat) : Card :=
-  mkCard 
-  (Some (mkPermanent
-    nil
-    nil
-    None
-    nil
-    None
-    None
-    None
-    None
-    false
-    true
-    false))
-  None
-  None
-  []
-  "Bob"
-  id
-  nil.
-
 (* État de jeu initial avec des cartes dans le battlefield *)
 Definition Test_gs : GameState := mkGameState 
-  [(BobLegend 1)] 
-  [(BobLegend 2)] 
+  [] 
+  [(MirrorGallery 1)] 
   nil 
   nil 
   nil 
   0 
-  [] 
+  [mkMana White 10] 
   nil 
   DefaultListPassiveAbility
-  BeginningPhase.
+  MainPhase1.
 
 (* Definition Transform_all_creature (new_type : string) (gs : GameState) : gs :=
   match
   . *)
   
-Fixpoint Transform_all_creature_in (new_type : string) (l : list Card) : list Card :=
+(* Fixpoint Transform_all_creature_in (new_type : string) (l : list Card) : list Card :=
   match gs.(hand) with
   | [] => gs
   | c :: rest => 
@@ -90,10 +50,9 @@ Fixpoint Transform_all_creature_in (new_type : string) (l : list Card) : list Ca
         Transform_all_creature_in new_type rest
       end
     end
-  end.
-  
+  end. *)
 
-Compute Cast (BobLegend 2) Test_gs.
+Compute Resolve (Cast (MirrorGallery 1) Test_gs) 0.
 
 
 

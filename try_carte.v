@@ -101,7 +101,7 @@ Definition add_abilities_to_stack (event_type : nat) (p : Permanent) (gs : GameS
     p.(Abilities)
     gs.
 
-(* Utilisation de la fonction dans Cast *)
+(* (* Utilisation de la fonction dans Cast *)
 Definition Cast (c:Card) (gs:GameState) : GameState :=
   let cost := c.(manacost) in
   let pool := gs.(manapool) in
@@ -120,7 +120,7 @@ Definition Cast (c:Card) (gs:GameState) : GameState :=
     )  gs.(battlefield) intermediate_gs in
     final_gs
   else
-    gs.
+    gs. *)
 
 
 

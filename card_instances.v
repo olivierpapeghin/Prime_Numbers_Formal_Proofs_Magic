@@ -37,6 +37,26 @@ Definition colossal_dreadmaw : Card :=
   2
   ["Trample"]. (* Nom de la carte *)
 
+Definition MirrorGallery (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    nil
+    (Some NoLegendaryRule)
+    nil
+    None
+    None
+    None
+    (Some mkArtifact)
+    false
+    false
+    false))
+  None
+  None
+  [mkMana Generic 5]
+  "Mirror Gallery"
+  id
+  nil.
 
 Definition forest_land : Land := mkLand (mkMana Green 1).
 Definition forest_perm : Permanent := mkPermanent nil nil None ["essai"] None None (Some forest_land) None false false false.
