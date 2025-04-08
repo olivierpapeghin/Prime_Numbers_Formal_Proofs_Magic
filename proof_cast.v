@@ -21,18 +21,17 @@ Definition has_keyword (kw : string) (c : Card) : bool :=
   existsb (String.eqb kw) (keywords c).
 
 Definition can_cast (c : Card) (p : Phase) : bool :=
-  match c with
-  | mkCard _ _ (Some _) _ _ _ _ => (* It's a Sorcery *)
-      if has_keyword "flash" c then true
-      else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
-      else false
-  | mkCard _ (Some _) _ _ _ _ _ => true (* An Instant can be played anytime *)
-  | mkCard (Some _) _ _ _ _ _ _ => (* A Permanent *)
-      if has_keyword "flash" c then true
-      else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
-      else false
-  | _ => false
-  end.
+  if isSome c.(instant) then
+    true
+  else if isSome c.(sorcery) || isSome c.(permanent) then
+    if has_keyword "Flash" c then true
+    else match p with
+         | MainPhase1 | MainPhase2 => true
+         | _ => false
+         end
+  else
+    false.
+
 
 
 (* Définition de Cast avec la vérification de phase *)
@@ -57,6 +56,7 @@ Definition colossal_dreadmaw : Card :=
   (Some (mkPermanent (* Est un permanent *)
     nil
     nil
+    None
     ["Dinosaur"]
     (Some (mkCreature 6 6)) (* Est une créature 6/6*)
     None (* N'est pas un enchantement *)
@@ -70,7 +70,7 @@ Definition colossal_dreadmaw : Card :=
   [mkMana Green 1; mkMana Generic 5] (* Coûte 5 mana générique et 1 mana vert *)
   "Colossal Dreadmaw"
   0 (* Nom de la carte *)
-  nil.
+  ["Trample"].
 
 (* Instanciation du GameState initial *)
 Definition initial_gamestate : GameState := 
@@ -82,7 +82,9 @@ Definition initial_gamestate : GameState :=
   nil (* L'exil est vide *)
   20 (* L'opposant est à 20 PV *)
   [mkMana White 20; mkMana Blue 20; mkMana Black 20; mkMana Red 20; mkMana Green 20] (* On se donne assez de mana pour pouvoir lancer le sort *)
-  nil (* La pile est vide *).
+  nil (* La pile est vide *)
+  nil
+  BeginningPhase.
 
 Definition gamestate_proof1 : GameState := Cast colossal_dreadmaw initial_gamestate.
 
@@ -90,19 +92,70 @@ Compute gamestate_proof1. (* On peut vérifier à la main que l'effet attendu es
 
 Definition list_length := Coq.Lists.List.length.
 
-(* On va vérifier via un théorème qu'on n'a plus de Colossal Dreadmaw en main et un dans la stack*)
+(* On va vérifier via un théorème qu'on a le colossal dreadmaw dans la main et rien dans le stack car la phase empêche de poser la carte*)
 Theorem proof1 :
-  list_length Card gamestate_proof1.(hand) = 0 /\
-  list_length CardOrPair gamestate_proof1.(stack) = 1.
+  list_length Card gamestate_proof1.(hand) = 1 /\
+  list_length CardOrPair gamestate_proof1.(stack) = 0.
 Proof.
   split.  (* Sépare l'objectif en deux sous-objectifs *)
-  - (* Première partie : la main est vide *)
+  - (* Première partie : la main contient un élément *)
     simpl. (* Simplifie l'expression si possible *)
     reflexivity. (* Si l'égalité est triviale, utilise reflexivity *)
   - (* Deuxième partie : la pile contient un élément *)
     simpl.
     reflexivity.
 Qed.
+
+(*On prépare pour la preuve de fonctionnement de Cast avec un flash*)
+
+Definition dreadmaw_with_flash : Card := 
+  mkCard 
+  (Some (mkPermanent
+    nil
+    nil
+    None
+    ["Dinosaur"]
+    (Some (mkCreature 6 6))
+    None
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [mkMana Green 1; mkMana Generic 5]
+  "Colossal Dreadmaw with Flash"
+  1
+  ["Trample"; "Flash"]. 
+
+Definition gamestate_flash_test : GameState := 
+  mkGameState
+  nil
+  [dreadmaw_with_flash]
+  nil
+  nil
+  nil
+  20
+  [mkMana White 20; mkMana Blue 20; mkMana Black 20; mkMana Red 20; mkMana Green 20]
+  nil
+  nil
+  BeginningPhase.
+
+Definition gamestate_after_flash_cast : GameState := Cast dreadmaw_with_flash gamestate_flash_test.
+
+Compute gamestate_after_flash_cast.
+
+Theorem flash_card_can_be_cast_in_beginning_phase :
+  list_length Card gamestate_after_flash_cast.(hand) = 0 /\
+  list_length CardOrPair gamestate_after_flash_cast.(stack) = 1.
+Proof.
+  split.
+  - simpl. reflexivity.
+  - simpl. reflexivity.
+Qed.
+
+
 
 (* On va maintenant resolve la pile pour que notre carte arrive sur le champ de bataille *)
 Definition Resolve (gs : GameState) : GameState :=

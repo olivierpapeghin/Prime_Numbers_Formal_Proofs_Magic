@@ -15,6 +15,8 @@ Require Import utility_functions.
 Import utility_function.
 Require Import card_instances.
 Import card_instance.
+Require Import game_actions.
+Import game_action.
 Module Try_card.
 
 
@@ -38,10 +40,8 @@ Definition sacrifice_cards (targets : option (list Card)) (gs : GameState) : Gam
   end.
 
 (* Définition d'une capacité qui ajoute un mana noir au manapool *)
-Definition add_black_mana (targets : option (list Card)) (gs : GameState) : GameState :=
-  let new_manapool := (mkMana Black 1) :: gs.(manapool) in
-  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_abilities) gs.(phase).
-
+Definition add_black_mana (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
+  add_mana gs Black 1.
 (* Définition des sous-dictionnaires *)
 Definition OnCast : Dict := [(1, sacrifice_cards)].
 Definition OnPhase : Dict := nil.
@@ -110,7 +110,7 @@ Definition Cast (c:Card) (gs:GameState) : GameState :=
     let new_pool := fold_left remove_mana cost pool in
     let new_hand := remove_card gs.(hand) c in
     let new_stack := CardItem c :: gs.(stack) in
-    let intermediate_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack gs.(passive_abilities) gs.(phase) in
+    let intermediate_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack gs.(passive_abilities) in
     (* Ajouter les abilities des permanents sur le battlefield au stack *)
     let final_gs := fold_left (fun gs' perm =>
       match perm.(permanent) with
@@ -143,15 +143,53 @@ Definition Resolve (targets : option (list Card)) (gs : GameState) : GameState :
     end
   end.
 
-Definition Activated_abilities := list (nat * ActivatedAbility). 
-Definition Dict_AA := Dict.
+Definition Activated_abilities := list (nat * Activated_Ability). 
+Definition Dict_AA : Activated_abilities := [(1, add_black_mana)].
 
-(* Definition activate_ability ( AA : Activated_abilities ) (card : Card) ( index : nat ) ( targets_cost : option (list Card)) ( mana_cost : list Mana ) (targets_ability : option (list Card)) (gs : GameState) : GameState := 
-  
+Definition activate_ability
+  (index : nat)
+  (targets_cost : option (list Card))
+  (mana_cost : option (list Mana))
+  (targets_ability : option (list Card))
+  (card : Card)
+  (dico : Activated_abilities)
+  (gs : GameState) : GameState :=
+  match card.(permanent) with
+  | None => gs (* La carte n'a pas de permanent *)
+  | Some perm =>
+    if List_In_nat index perm.(ListActivated) then
+      (* Trouver l'Activated_Ability correspondante dans le dictionnaire *)
+      match List_assoc beq_nat index dico with
+      | Some ability =>
+        (* Vérifier si le coût de mana est fourni *)
+        match mana_cost with
+        | None =>
+          (* Pas de coût de mana, activer directement la capacité *)
+          let new_gs := ability targets_cost targets_ability None gs in
+          mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_gs.(stack) gs.(passive_abilities) gs.(phase)
+        | Some mana_list =>
+          if Can_Pay mana_list gs.(manapool) then
+            (* Appliquer l'effet de la capacité *)
+            let new_gs := ability targets_cost targets_ability (Some mana_list) gs in
+            (* Mettre à jour l'état du jeu *)
+            let new_pool := fold_left remove_mana mana_list gs.(manapool) in
+              mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_pool new_gs.(stack) gs.(passive_abilities) gs.(phase)
+          else
+            gs (* Le coût de mana n'est pas payé *)
+        end
+      | None => gs (* L'index n'est pas dans le dictionnaire *)
+      end
+    else
+      gs (* L'index n'est pas dans la liste des capacités activées *)
+  end.
 
- *)
+
+
+
+
 Definition Cast_gs : GameState := Cast destructeur Test_gs.
 Definition Resol1 : GameState := Resolve (Some [colossal_dreadmaw]) Cast_gs.
+Compute activate_ability 1 None None None card_creature Dict_AA Test_gs.
 
 Lemma colossal_dreadmaw_in_graveyard :
   card_in_list colossal_dreadmaw (Resol1.(graveyard)) = true.
@@ -159,6 +197,9 @@ Proof.
   simpl.
   reflexivity.
 Qed.
+
+
+
 
 
 End Try_card.
