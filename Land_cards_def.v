@@ -35,7 +35,8 @@ Definition Plains (id : nat) : Card :=
   None
   nil
   "Plains"
-  id.
+  id
+  nil.
 
 Definition Island (id : nat) : Card :=
   mkCard 
@@ -55,7 +56,8 @@ Definition Island (id : nat) : Card :=
   None
   nil
   "Island"
-  id.
+  id
+  nil.
 
 Definition Forest (id : nat) : Card :=
   mkCard 
@@ -75,7 +77,8 @@ Definition Forest (id : nat) : Card :=
   None
   nil
   "Forest"
-  id.
+  id
+  nil.
 
 Definition Mountain (id : nat) : Card :=
   mkCard 
@@ -95,7 +98,8 @@ Definition Mountain (id : nat) : Card :=
   None
   nil
   "Mountain"
-  id.
+  id
+  nil.
 
 Definition Swamp (id : nat) : Card :=
   mkCard 
@@ -115,7 +119,8 @@ Definition Swamp (id : nat) : Card :=
   None
   nil
   "Swamp"
-  id.
+  id
+  nil.
 
 End Land_cards.
 

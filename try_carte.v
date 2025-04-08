@@ -8,7 +8,11 @@ Require Import Coq.Program.Equality.
 Require Import List String.
 Require Import String.
 Require Import List.
+Require Import Arith.
+Require Import PeanoNat.
 Import ListNotations.
+
+
 Require Import type_definitions.
 Import type_definition.
 Require Import utility_functions.
@@ -18,6 +22,8 @@ Import card_instance.
 Require Import game_actions.
 Import game_action.
 Module Try_card.
+
+
 
 
 (* Fonction pour sacrifier des cartes et les déplacer vers le cimetière *)
@@ -101,7 +107,26 @@ Definition add_abilities_to_stack (event_type : nat) (p : Permanent) (gs : GameS
     p.(Abilities)
     gs.
 
-
+(* (* Utilisation de la fonction dans Cast *)
+Definition Cast (c:Card) (gs:GameState) : GameState :=
+  let cost := c.(manacost) in
+  let pool := gs.(manapool) in
+  
+  if Can_Pay cost pool && card_in_list c gs.(hand) && check_legendary_rule gs c then
+    let new_pool := fold_left remove_mana cost pool in
+    let new_hand := remove_card gs.(hand) c in
+    let new_stack := CardItem c :: gs.(stack) in
+    let intermediate_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack gs.(passive_abilities) in
+    (* Ajouter les abilities des permanents sur le battlefield au stack *)
+    let final_gs := fold_left (fun gs' perm =>
+      match perm.(permanent) with
+      | Some perm_data => add_abilities_to_stack 1 perm_data gs'
+      | None => gs'
+      end
+    )  gs.(battlefield) intermediate_gs in
+    final_gs
+  else
+    gs. *)
 
 
 
@@ -124,8 +149,8 @@ Definition Resolve (targets : option (list Card)) (gs : GameState) : GameState :
     end
   end.
 
-Definition Activated_abilities := list (nat * Activated_Ability). 
-Definition Dict_AA : Activated_abilities := [(1, add_black_mana)].
+
+Definition Dict_AA : list (nat * Activated_Ability) := [(1, add_black_mana)].
 
 Definition activate_ability
   (index : nat)
@@ -133,7 +158,7 @@ Definition activate_ability
   (mana_cost : option (list Mana))
   (targets_ability : option (list Card))
   (card : Card)
-  (dico : Activated_abilities)
+  (dico : list (nat * Activated_Ability))
   (gs : GameState) : GameState :=
   match card.(permanent) with
   | None => gs (* La carte n'a pas de permanent *)
@@ -162,6 +187,13 @@ Definition activate_ability
       end
     else
       gs (* L'index n'est pas dans la liste des capacités activées *)
+  end.
+
+Definition divides (a b : nat) : bool :=
+  match a with
+  | 0 => false
+  | 1 => true
+  | _ => if Nat.modulo b a =? 0 then true else false
   end.
 
 

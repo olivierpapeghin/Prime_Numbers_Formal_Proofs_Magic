@@ -47,7 +47,15 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
         | false => (* Il y a déjà une instance de cette carte légendaire sur le champ de bataille *)
         sacrifice gs' [c]
         | true => (* Pas de problèmes de carte légendaire *)
-        gs'
+          match c.(permanent) with
+          | None => gs'
+          | Some c_perm =>
+            match c_perm.(PassiveAbility) with
+            | None => gs'
+            | Some p_ability => 
+              mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) gs'.(stack) (update_passive_ability_in_dict gs'.(passive_abilities) p_ability true) gs'.(phase)
+            end
+          end
         end
       | InstantType => 
         let new_gs : GameState := activate_spell non_permanent_abilities key targets gs in
@@ -77,8 +85,8 @@ Definition Cast (c:Card) (gs:GameState) : GameState :=
   let cost := c.(manacost) in
   let pool := gs.(manapool) in
   let current_phase := gs.(phase) in
-  if Can_Pay cost pool && card_in_list c gs.(hand) && can_cast c current_phase then
-    let new_pool := fold_left remove_mana cost pool in
+  if Can_Pay cost pool && card_in_list c gs.(hand) && check_legendary_rule gs c && can_cast c current_phase then
+    let new_pool := fold_left (fun pool' cost' => snd (remove_mana pool' cost')) pool cost in
     let new_hand := remove_card gs.(hand) c in
     let new_stack := CardItem c :: gs.(stack) in
     let intermediate_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack gs.(passive_abilities) gs.(phase) in
@@ -89,7 +97,7 @@ Definition Cast (c:Card) (gs:GameState) : GameState :=
       | None => gs'
       end
     )  gs.(battlefield) intermediate_gs in
-    final_gs
+   final_gs
   else
     gs.
 

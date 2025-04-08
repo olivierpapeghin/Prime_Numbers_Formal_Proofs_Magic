@@ -9,9 +9,18 @@ Require Import List String.
 Require Import String.
 Require Import List.
 Import ListNotations.
+Open Scope list_scope.
 Require Import type_definitions.
 Import type_definition.
 Module utility_function.
+
+
+Definition isSome {A : Type} (o : option A) : bool :=
+  match o with
+  | Some _ => true
+  | None => false
+  end.
+
 
 (* Fonction pour obtenir le champ token d'une carte *)
 Definition get_token (c : Card) : option bool :=
@@ -41,6 +50,23 @@ Definition eq_mana_color (c1 c2 : ManaColor) : bool :=
   | Generic, Generic => true
   | _, _ => false
   end.
+
+
+Definition next_phase (p : Phase) : Phase :=
+  match p with
+  | BeginningPhase => MainPhase1
+  | MainPhase1 => CombatPhase
+  | CombatPhase => MainPhase2
+  | MainPhase2 => EndingPhase
+  | EndingPhase => BeginningPhase 
+  end.
+
+Definition advance_phase (gs : GameState) : GameState :=
+  let new_phase := next_phase gs.(phase) in
+  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard)
+              gs.(exile) gs.(opponent) gs.(manapool) gs.(stack) gs.(passive_abilities) new_phase.
+
+
 Definition eq_mana (m1 m2 : Mana) : bool :=
   eq_mana_color m1.(color) m2.(color) && Nat.eqb m1.(quantity) m2.(quantity).
 
@@ -146,49 +172,35 @@ Fixpoint count_occ (A : Type) (eqb : A -> A -> bool) (l : list A) (x : A) : nat 
   | h :: t => if eqb x h then 1 + count_occ A eqb t x else count_occ A eqb t x
   end.
 
-Fixpoint remove_mana (pool : list Mana) (cost : Mana) : list Mana :=
+Fixpoint remove_mana (pool : list Mana) (cost : Mana) : (bool * list Mana) :=
   match pool with
-  | [] => [] (* Si le pool est vide, rien à retirer *)
+  | [] => (false, []) (* Si le pool est vide, rien à retirer *)
   | h :: t =>
-      if eq_mana_color h.(color) cost.(color) then
-        (* Si c'est le même type de mana, on essaie de le consommer *)
+      if eq_mana_color cost.(color) Generic || eq_mana_color h.(color) cost.(color) then
         if Nat.leb cost.(quantity) h.(quantity) then
-          (* Si la quantité du mana est suffisante pour le coût, on réduit ou on retire *)
           if Nat.eqb cost.(quantity) h.(quantity) then
-            t (* On retire le mana si la quantité est exactement la même *)
+            (true, t) (* On retire le mana si la quantité est exactement la même *)
           else
-            {| color := h.(color); quantity := h.(quantity) - cost.(quantity) |} :: t (* On ajuste la quantité restante *)
+            let new_pool := {| color := h.(color); quantity := h.(quantity) - cost.(quantity) |} :: t in
+            (true, new_pool) (* On ajuste la quantité restante *)
         else
-          (* Si le mana n'est pas suffisant, on le laisse dans le pool *)
-          remove_mana t cost
+          let (success, updated_pool) := remove_mana t cost in
+          (success, h :: updated_pool)
       else
-        (* Si ce n'est pas le mana de la bonne couleur, on continue avec le reste du pool *)
-        h :: remove_mana t cost
+        let (success, updated_pool) := remove_mana t cost in
+        (success, h :: updated_pool)
   end.
 
+(* Fonction pour vérifier si un coût peut être payé à partir du pool *)
 Fixpoint Can_Pay (cost : list Mana) (pool : list Mana) : bool :=
   match cost with
   | [] => true (* Tout le coût est couvert, on retourne vrai *)
   | c :: cs =>
-      if eq_mana_color c.(color) Generic then
-        (* Si le coût est générique, on cherche un mana de n'importe quelle couleur dans le pool *)
-        match pool with
-        | [] => false (* Pas assez de mana dans le pool *)
-        | h :: t =>
-            (* On consomme n'importe quel mana coloré pour couvrir le coût générique *)
-            Can_Pay cs t (* Continue à chercher les autres coûts, après avoir retiré un mana du pool *)
-        end
+      let (success, updated_pool) := remove_mana pool c in
+      if success then
+        Can_Pay cs updated_pool (* Continue à chercher les autres coûts, après avoir retiré un mana du pool *)
       else
-        (* Si c'est un mana coloré spécifique, on cherche un mana correspondant dans le pool *)
-        match find (fun m => eq_mana_color m.(color) c.(color)) pool with
-        | Some m =>
-            (* Si on trouve un mana de la bonne couleur, on le consomme *)
-            if Nat.leb c.(quantity) m.(quantity) then
-              Can_Pay cs (remove_mana pool c) (* Consommer le mana et vérifier les autres coûts *)
-            else
-              false (* Pas assez de mana de cette couleur, on échoue *)
-        | None => false (* Pas de mana correspondant dans le pool, on échoue *)
-        end
+        false (* Pas assez de mana, on échoue *)
   end.
 
 Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
