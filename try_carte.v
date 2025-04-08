@@ -107,7 +107,26 @@ Definition add_abilities_to_stack (event_type : nat) (p : Permanent) (gs : GameS
     p.(Abilities)
     gs.
 
-
+(* (* Utilisation de la fonction dans Cast *)
+Definition Cast (c:Card) (gs:GameState) : GameState :=
+  let cost := c.(manacost) in
+  let pool := gs.(manapool) in
+  
+  if Can_Pay cost pool && card_in_list c gs.(hand) && check_legendary_rule gs c then
+    let new_pool := fold_left remove_mana cost pool in
+    let new_hand := remove_card gs.(hand) c in
+    let new_stack := CardItem c :: gs.(stack) in
+    let intermediate_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack gs.(passive_abilities) in
+    (* Ajouter les abilities des permanents sur le battlefield au stack *)
+    let final_gs := fold_left (fun gs' perm =>
+      match perm.(permanent) with
+      | Some perm_data => add_abilities_to_stack 1 perm_data gs'
+      | None => gs'
+      end
+    )  gs.(battlefield) intermediate_gs in
+    final_gs
+  else
+    gs. *)
 
 
 

@@ -19,6 +19,7 @@ Local Open Scope string_scope.
 
 Module game_action.
   
+
   (* Fonction pour sacrifier des cartes et les déplacer vers le cimetière *)
 Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) : GameState :=
   match last_option gs.(stack) with
@@ -27,7 +28,16 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
       | PermanentType => (* Si c'est un permanent *)
         let new_stack : list CardOrPair:= remove_last gs.(stack) in
         let new_battlefield : list Card := c :: gs.(battlefield) in
-        mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
+        let final_gs := mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack gs.(passive_abilities) gs.(phase) in
+        match c.(permanent) with
+        | None => final_gs
+        | Some c_perm =>
+          match c_perm.(PassiveAbility) with
+          | None => final_gs
+          | Some p_ability => 
+            mkGameState final_gs.(battlefield) final_gs.(hand) final_gs.(library) final_gs.(graveyard) final_gs.(exile) final_gs.(opponent) final_gs.(manapool) final_gs.(stack) (update_passive_ability_in_dict final_gs.(passive_abilities) p_ability true) final_gs.(phase)
+          end
+        end
       | InstantType =>
         let new_gs : GameState := activate_spell non_permanent_abilities key targets gs in
         let new_stack : list CardOrPair:= remove_last gs.(stack) in
@@ -65,7 +75,7 @@ Definition Cast (c:Card) (gs:GameState) : GameState :=
       | None => gs'
       end
     )  gs.(battlefield) intermediate_gs in
-    final_gs
+   final_gs
   else
     gs.
 
