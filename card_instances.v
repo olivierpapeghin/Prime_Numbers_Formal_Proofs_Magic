@@ -22,7 +22,7 @@ Definition colossal_dreadmaw : Card :=
     nil
     nil
     None
-    ["Graou"]
+    ["Dinosaur"]
     (Some (mkCreature 6 6)) (* Est une créature 6/6*)
     None (* N'est pas un enchantement *)
     None (* N'est pas un artifact *)
@@ -32,11 +32,31 @@ Definition colossal_dreadmaw : Card :=
     false)) (* N'est pas légendaire *)
   None (* N'est pas un instant *)
   None (* N'est pas un sorcery *)
-  [mkMana Green 1; mkMana Generic 5] (* Coûte 5 mana générique et 1 mana vert *)
+  [mkMana Green 1; mkMana Generic 5]
   "Colossal Dreadmaw"
   2
-  ["Trample"]. (* Nom de la carte *)
+  ["Trample"].
 
+Definition birgi : Card := 
+  mkCard 
+  (Some (mkPermanent (* Est un permanent *)
+    [] (* La liste des capacités déclenchées *)
+    nil
+    None
+    ["God"]
+    (Some (mkCreature 3 3)) (* Est une créature 6/6*)
+    None (* N'est pas un enchantement *)
+    None (* N'est pas un artifact *)
+    None (* N'est pas une land *)
+    false (* N'est pas un token *)
+    true (* Est légendaire *)
+    false)) (* N'est pas tapped *)
+  None (* N'est pas un instant *)
+  None (* N'est pas un sorcery *)
+  [mkMana Red 1; mkMana Generic 2]
+  "Birgi, God of Storytelling"
+  3
+  nil.
 
 Definition forest_land : Land := mkLand (mkMana Green 1).
 Definition forest_perm : Permanent := mkPermanent nil nil None ["essai"] None None (Some forest_land) None false false false.
@@ -55,7 +75,6 @@ Definition Test_gs : GameState := mkGameState [card_creature;colossal_dreadmaw] 
 
 (* Liste de cartes cibles à sacrifier *)
 Definition target_cards : list Card := [card_forest].
-
 
 
 End card_instance.

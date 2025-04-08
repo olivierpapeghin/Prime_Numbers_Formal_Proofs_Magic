@@ -132,8 +132,6 @@ Definition eq_passive_key (c1 c2 : PassiveKey) : bool :=
   | _, _ => false
   end.
 
-
-
 (* Définition d'une fonction pour vérifier la présence d'un élément dans une liste *)
 Fixpoint card_in_list (c : Card) (l : list Card) : bool :=
   match l with
