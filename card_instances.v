@@ -16,7 +16,7 @@ Import utility_function.
 Module card_instance.
 
 (* Instanciation de la carte *)
-Definition colossal_dreadmaw : Card := 
+Definition colossal_dreadmaw (id : nat) : Card := 
   mkCard 
   (Some (mkPermanent (* Est un permanent *)
     nil
@@ -34,7 +34,7 @@ Definition colossal_dreadmaw : Card :=
   None (* N'est pas un sorcery *)
   [mkMana Green 1; mkMana Generic 5]
   "Colossal Dreadmaw"
-  2
+  id
   ["Trample"].
 
 Definition birgi : Card := 
@@ -79,6 +79,27 @@ Definition MirrorGallery (id : nat) : Card :=
   "Mirror Gallery"
   id
   nil.
+  
+Definition leyline_of_transformation (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    nil
+    (Some AllSaprolings)
+    nil
+    None
+    (Some mkEnchantement)
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Blue 2); (mkMana Generic 2) ]
+  "Leyline of Transformation"
+  id
+  nil.
 
 Definition forest_land : Land := mkLand (mkMana Green 1).
 Definition forest_perm : Permanent := mkPermanent nil nil None ["essai"] None None (Some forest_land) None false false false.
@@ -93,7 +114,7 @@ Definition destructeur : Card := mkCard (Some crea_perm) None None [mkMana Red 2
 
 
 (* État de jeu initial avec des cartes dans le battlefield *)
-Definition Test_gs : GameState := mkGameState [card_creature;colossal_dreadmaw] [card_forest;destructeur] nil nil nil 0 [mkMana Green 5; mkMana Red 5; mkMana Blue 5 ;mkMana White 5 ; mkMana Black 5] nil DefaultListPassiveAbility MainPhase1.
+Definition Test_gs : GameState := mkGameState [card_creature;colossal_dreadmaw 1] [card_forest;destructeur] nil nil nil 0 [mkMana Green 5; mkMana Red 5; mkMana Blue 5 ;mkMana White 5 ; mkMana Black 5] nil DefaultListPassiveAbility MainPhase1.
 
 (* Liste de cartes cibles à sacrifier *)
 Definition target_cards : list Card := [card_forest].
