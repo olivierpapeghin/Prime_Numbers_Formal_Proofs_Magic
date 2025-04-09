@@ -133,7 +133,7 @@ Definition siege_zombie_ability (target_cost : option (list Card)) (targets : op
     else gs (* La liste n'a pas exactement 3 cartes *)
   | None => gs
   end.
-s
+
 Definition Dict_AA : list (nat * Activated_Ability) := [(1, siege_zombie_ability)].
 
 End abilities_effects.
