@@ -92,7 +92,59 @@ Definition abuelos_awakening_ability (targets : option (list Card)) (gs : GameSt
       gs
     end.
 
-Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability)].
+Definition narsets_reversal (targets : option (list Card)) (gs : GameState) : GameState :=
+  match targets with
+  | Some [target] =>  (* exactement une cible *)
+      match target.(instant), target.(sorcery) with
+      | Some _, _ | _, Some _ =>  (* la cible est un sort *)
+          (* Générer un nouvel ID en comptant les occurrences du nom de la carte dans la stack *)
+          let get_card_name (item : CardOrPair) : option string :=
+            match item with
+            | CardItem c => Some c.(name)
+            | _ => None
+            end in
+
+          let stack_names := map get_card_name gs.(stack) in
+          let name_eqb (a b : option string) : bool :=
+            match a, b with
+            | Some s1, Some s2 => String.eqb s1 s2
+            | _, _ => false
+            end in
+
+          let id_generated := count_occ (option string) name_eqb stack_names (Some target.(name)) in
+
+          (* Création de la copie *)
+          let copied := mkCard
+            target.(permanent)
+            target.(instant)
+            target.(sorcery)
+            target.(manacost)
+            (target.(name) ++ " (Copy)")
+            id_generated
+            target.(keywords) in
+
+          (* Supprimer le sort original de la stack *)
+          let new_stack :=
+            filter (fun item =>
+              match item with
+              | CardItem c => negb (Nat.eqb c.(id) target.(id))
+              | _ => true
+              end) gs.(stack) in
+
+          (* Ajouter la copie sur la pile, remettre le sort original en main *)
+          let new_stack := CardItem copied :: new_stack in
+          let new_hand := target :: gs.(hand) in
+
+          mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard)
+                      gs.(exile) gs.(opponent) gs.(manapool) new_stack
+                      gs.(passive_abilities) gs.(phase)
+      | _, _ => gs
+      end
+  | _ => gs
+  end.
+
+
+Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability); (2,narsets_reversal)].
 
 (*-----------------------------------------Abilités déclenchées----------------------------------------------*)
 
