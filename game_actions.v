@@ -13,6 +13,8 @@ Require Import card_instances.
 Import card_instance.
 Require Import abilities_effects.
 Import abilities_effects.
+Require Import passive_ability.
+Import passive_ability.
 
 Local Open Scope string_scope.
 
@@ -37,7 +39,8 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
             match c_perm.(PassiveAbility) with
             | None => gs'
             | Some p_ability => 
-              mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) gs'.(stack) (update_passive_ability_in_dict gs'.(passive_abilities) p_ability true) gs'.(phase)
+              let _gs := mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) gs'.(stack) (update_passive_ability_in_dict gs'.(passive_abilities) p_ability true) gs'.(phase) in
+              trigger_passive_effect _gs p_ability
             end
           end
         end
@@ -63,7 +66,7 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
 
   | None => gs (* Si la stack est vide, on ne fait rien *)
   end.
-
+(* a *)
 
 Definition Cast (c:Card) (gs:GameState) : GameState :=
   let cost := c.(manacost) in

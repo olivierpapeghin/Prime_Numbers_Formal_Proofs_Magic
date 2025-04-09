@@ -203,21 +203,6 @@ Fixpoint Can_Pay (cost : list Mana) (pool : list Mana) : bool :=
         false (* Pas assez de mana, on échoue *)
   end.
 
-Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
-  match dict with
-  | nil => false
-  | (k, activated) :: rest =>
-    if eq_passive_key k key then activated else find_passive_ability_in_dict  rest key
-  end.
-
-Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : bool) : PassiveAbilityDict :=
-  match dict with
-  | nil => nil
-  | (k, activated) :: rest =>
-      if eq_passive_key k key 
-      then (k, new_value) :: rest  (* Mise à jour de la valeur si la clé correspond *)
-      else (k, activated) :: update_passive_ability_in_dict rest key new_value
-  end.
 
 (* On doit ensuite manipuler les zones dans lesquelles les cartes vont passer *)
 (* Fonction remove_card qui retire la première occurrence de c dans la liste l *)
@@ -254,6 +239,13 @@ Fixpoint is_card_base_in (l : list Card) (c: Card) : bool :=
   | [] => true (* Si la liste est vide, retourne une liste vide *)
   | h :: t => if eq_card_base h c then false (* Si on trouve la carte, on la retire *)
               else is_card_base_in t c (* Sinon, on continue à chercher *)
+  end.
+  
+Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
+  match dict with
+  | nil => false
+  | (k, activated) :: rest =>
+    if eq_passive_key k key then activated else find_passive_ability_in_dict  rest key
   end.
 
 Definition check_legendary_rule (gs: GameState) (c: Card) : bool :=
