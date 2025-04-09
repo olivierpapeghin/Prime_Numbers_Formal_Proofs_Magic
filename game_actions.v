@@ -18,22 +18,6 @@ Local Open Scope string_scope.
 
 Module game_action.
 
-Definition sacrifice (gs : GameState) (targets : list Card) : GameState :=
-  (* On retire les cartes sacrifiées du champ de bataille *)
-  let new_battlefield := fold_left remove_card targets gs.(battlefield) in
-  (* On ajoute les cartes sacrifiées au cimetière *)
-  let new_graveyard : list Card := List.app targets gs.(graveyard) in
-  (* On prépare un GameState intermédiaire, sans les permanents morts *)
-  let intermediate_gs := mkGameState new_battlefield gs.(hand) gs.(library) new_graveyard gs.(exile) gs.(opponent) gs.(manapool) gs.(stack) gs.(passive_abilities) gs.(phase) in
-  (* On déclenche les capacités à la mort de chaque permanent sacrifié *)
-  let final_gs := fold_left (fun gs' card =>
-    match card.(permanent) with
-    | Some perm_data => add_abilities_to_stack 3 perm_data gs'
-    | None => gs'
-    end
-  ) targets intermediate_gs in
-  final_gs.
-
   (* Fonction pour sacrifier des cartes et les déplacer vers le cimetière *)
 Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) : GameState :=
   match last_option gs.(stack) with

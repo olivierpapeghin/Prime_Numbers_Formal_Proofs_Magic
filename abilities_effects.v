@@ -14,6 +14,37 @@ Module abilities_effects.
 
 Definition default_card : Card := mkCard None None None nil "Default" 0 [].
 
+(*-----------------------------------------Abilités génériques----------------------------------------------*)
+
+Definition sacrifice (gs : GameState) (targets : list Card) : GameState :=
+  (* On retire les cartes sacrifiées du champ de bataille *)
+  let new_battlefield := fold_left remove_card targets gs.(battlefield) in
+  (* On ajoute les cartes sacrifiées au cimetière *)
+  let new_graveyard : list Card := List.app targets gs.(graveyard) in
+  (* On prépare un GameState intermédiaire, sans les permanents morts *)
+  let intermediate_gs := mkGameState new_battlefield gs.(hand) gs.(library) new_graveyard gs.(exile) gs.(opponent) gs.(manapool) gs.(stack) gs.(passive_abilities) gs.(phase) in
+  (* On déclenche les capacités à la mort de chaque permanent sacrifié *)
+  let final_gs := fold_left (fun gs' card =>
+    match card.(permanent) with
+    | Some perm_data => add_abilities_to_stack 3 perm_data gs'
+    | None => gs'
+    end
+  ) targets intermediate_gs in
+  final_gs.
+
+Definition tap (gs : GameState) (targets : list Card) : GameState :=
+  let new_battlefield := fold_left (fun gs' c =>
+      match c.(permanent) with
+      | Some perm => gs'
+      
+      | None => gs'
+      end
+    ) targets gs.(battlefield) in
+  gs.
+
+
+(*-----------------------------------------Effets des Instants/Sorcery----------------------------------------------*)
+
 Definition abuelos_awakening_ability (targets : option (list Card)) (gs : GameState) : GameState :=
   (* On s'assure en premier lieu qu'on a bien une cible *)
   match targets with
@@ -63,9 +94,13 @@ Definition abuelos_awakening_ability (targets : option (list Card)) (gs : GameSt
 
 Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability)].
 
+(*-----------------------------------------Abilités déclenchées----------------------------------------------*)
+
+Definition birgi_ability (targets : option (list Card)) (gs : GameState) : GameState :=
+  add_mana gs Red 1.
 
 (* Définition des sous-dictionnaires *)
-Definition OnCast : Dict := nil.
+Definition OnCast : Dict := [(1,birgi_ability)].
 Definition OnPhase : Dict := nil.
 Definition OnDeath : Dict := nil.
 Definition OnEnter : Dict := nil.
@@ -73,7 +108,25 @@ Definition OnEnter : Dict := nil.
 
 (* Définition du dictionnaire principal avec des clés de type string *)
 Definition Triggered_Abilities : list (nat * Dict) :=
-  ( 1 , OnCast) :: (2 , OnPhase) :: (3 , OnDeath) :: nil.
+  ( 1 , OnCast) :: (2 , OnPhase) :: (3 , OnDeath) :: (4 , OnEnter) :: nil.
+
+(*-----------------------------------------Abilités activées----------------------------------------------*)
+
+Definition siege_zombie_ability (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
+  (* On vérifie qu'il y a bien trois cibles dans la liste target_cost *)
+  match target_cost with
+  | Some tc =>
+    match length tc with
+    | 3 => (* Il y a le bon nombre de cibles on peut les tapper et infliger 1 dégât à l'adversaire *)
+    let new_battlefield : list Card := fold_left tap target_cost gs.(battlefield) in
+    let new_lp : nat := gs.(opponent) - 1 in
+    (mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) new_lp gs.(manapool) gs.(stack) gs.(passive_abilities) gs.(phase))
+    | _ => gs (* Il n'y a pas le bon nombre de cibles, on ne fait rien *)
+    end
+  | None => gs
+  end.
+
+Definition Dict_AA : list (nat * Activated_Ability) := [(1, siege_zombie_ability)].
 
 End abilities_effects.
 Export abilities_effects.
