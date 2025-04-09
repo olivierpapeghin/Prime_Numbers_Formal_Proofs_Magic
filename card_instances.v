@@ -37,10 +37,10 @@ Definition colossal_dreadmaw (id : nat) : Card :=
   id
   ["Trample"].
 
-Definition birgi : Card := 
+Definition birgi (id : nat) : Card := 
   mkCard 
   (Some (mkPermanent (* Est un permanent *)
-    [] (* La liste des capacités déclenchées *)
+    [1] (* La liste des capacités déclenchées *)
     nil
     None
     ["God"]
@@ -55,11 +55,31 @@ Definition birgi : Card :=
   None (* N'est pas un sorcery *)
   [mkMana Red 1; mkMana Generic 2]
   "Birgi, God of Storytelling"
-  3
+  id
   nil.
 
+Definition siege_zombie (id : nat): Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    [1]
+    None
+    ["Zombie"]
+    (Some (mkCreature 2 2))
+    None
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [mkMana Black 1; mkMana Generic 1 ]
+  "Siege Zombie"
+  id
+  nil.
 
-Definition MirrorGallery (id : nat) : Card :=
+Definition mirror_gallery (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
     nil
