@@ -32,15 +32,16 @@ Definition sacrifice (gs : GameState) (targets : list Card) : GameState :=
   ) targets intermediate_gs in
   final_gs.
 
-Definition tap (gs : GameState) (targets : list Card) : GameState :=
-  let new_battlefield := fold_left (fun gs' c =>
-      match c.(permanent) with
-      | Some perm => gs'
-      
-      | None => gs'
-      end
-    ) targets gs.(battlefield) in
-  gs.
+Definition tap (c : Card) : Card :=
+  match c.(permanent) with
+  | Some p =>
+  mkCard
+  (Some (mkPermanent p.(Abilities) p.(ListActivated) p.(PassiveAbility) p.(subtype) p.(creature) p.(enchantement) p.(land) p.(artifact) p.(token) p.(legendary) true))
+  c.(instant) c.(sorcery) c.(manacost) c.(name) c.(id) c.(keywords)
+  | None => c
+  end.
+
+
 
 
 (*-----------------------------------------Effets des Instants/Sorcery----------------------------------------------*)
@@ -116,16 +117,23 @@ Definition siege_zombie_ability (target_cost : option (list Card)) (targets : op
   (* On vérifie qu'il y a bien trois cibles dans la liste target_cost *)
   match target_cost with
   | Some tc =>
-    match length tc with
-    | 3 => (* Il y a le bon nombre de cibles on peut les tapper et infliger 1 dégât à l'adversaire *)
-    let new_battlefield : list Card := fold_left tap target_cost gs.(battlefield) in
-    let new_lp : nat := gs.(opponent) - 1 in
-    (mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) new_lp gs.(manapool) gs.(stack) gs.(passive_abilities) gs.(phase))
-    | _ => gs (* Il n'y a pas le bon nombre de cibles, on ne fait rien *)
-    end
+      if Nat.eqb (Coq.Lists.List.length tc) 3 then
+    (* Vérifie que chaque carte de la liste a bien un permanent *)
+    if forallb (fun c => match c.(permanent) with | Some _ => true | None => false end) tc then
+      let tapped_cards := map tap tc in
+      let new_battlefield := map (fun c =>
+         if existsb (fun target => Nat.eqb target.(id) c.(id)) tc
+         then tap c
+         else c
+      ) gs.(battlefield) in
+      mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard)
+                        gs.(exile) (gs.(opponent)-1) gs.(manapool) gs.(stack)
+                        gs.(passive_abilities) gs.(phase)
+      else gs (* Une des cartes n'est pas un permanent *)
+    else gs (* La liste n'a pas exactement 3 cartes *)
   | None => gs
   end.
-
+s
 Definition Dict_AA : list (nat * Activated_Ability) := [(1, siege_zombie_ability)].
 
 End abilities_effects.

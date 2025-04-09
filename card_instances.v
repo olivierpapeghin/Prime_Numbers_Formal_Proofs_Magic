@@ -40,7 +40,7 @@ Definition colossal_dreadmaw : Card :=
 Definition birgi (id : nat) : Card := 
   mkCard 
   (Some (mkPermanent (* Est un permanent *)
-    [1] (* La liste des capacités déclenchées *)
+    [(1,1)] (* La liste des capacités déclenchées *)
     nil
     None
     ["God"]
