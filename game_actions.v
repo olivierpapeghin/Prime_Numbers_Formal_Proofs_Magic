@@ -111,8 +111,8 @@ Definition birgi2 : Card :=
 
 Definition initial_gamestate : GameState := 
   mkGameState
-  [birgi] (* Le champ de bataille est vide *)
-  [birgi2]
+  [birgi 1] (* Le champ de bataille est vide *)
+  [birgi 2]
   nil (* La bibliothèque est vide *)
   [] (* Le cimetière est vide *)
   nil (* L'exil est vide *)
