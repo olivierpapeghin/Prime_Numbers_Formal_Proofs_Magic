@@ -13,8 +13,6 @@ Require Import card_instances.
 Import card_instance.
 Require Import abilities_effects.
 Import abilities_effects.
-Require Import passive_ability.
-Import passive_ability.
 
 Local Open Scope string_scope.
 
@@ -39,8 +37,7 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
             match c_perm.(PassiveAbility) with
             | None => gs'
             | Some p_ability => 
-              let _gs := mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) gs'.(stack) (update_passive_ability_in_dict gs'.(passive_abilities) p_ability true) gs'.(phase) in
-              trigger_passive_effect _gs p_ability
+              mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) gs'.(stack) (update_passive_ability_in_dict gs'.(passive_abilities) p_ability true) gs'.(phase)
             end
           end
         end
@@ -66,7 +63,7 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
 
   | None => gs (* Si la stack est vide, on ne fait rien *)
   end.
-(* a *)
+
 
 Definition Cast (c:Card) (gs:GameState) : GameState :=
   let cost := c.(manacost) in
@@ -88,42 +85,5 @@ Definition Cast (c:Card) (gs:GameState) : GameState :=
   else
     gs.
 
-Definition birgi2 : Card := 
-  mkCard 
-  (Some (mkPermanent (* Est un permanent *)
-    [] (* La liste des capacités déclenchées *)
-    nil
-    None
-    ["God"]
-    (Some (mkCreature 3 3)) (* Est une créature 6/6*)
-    None (* N'est pas un enchantement *)
-    None (* N'est pas un artifact *)
-    None (* N'est pas une land *)
-    false (* N'est pas un token *)
-    true (* Est légendaire *)
-    false)) (* N'est pas tapped *)
-  None (* N'est pas un instant *)
-  None (* N'est pas un sorcery *)
-  [mkMana Red 1; mkMana Generic 2]
-  "Birgi, God of Storytelling"
-  4
-  nil.
-
-Definition initial_gamestate : GameState := 
-  mkGameState
-  [birgi 1] (* Le champ de bataille est vide *)
-  [birgi 2]
-  nil (* La bibliothèque est vide *)
-  [] (* Le cimetière est vide *)
-  nil (* L'exil est vide *)
-  20 (* L'opposant est à 20 PV *)
-  [mkMana White 20; mkMana Blue 20; mkMana Black 20; mkMana Red 20; mkMana Green 20] (* On se donne assez de mana pour pouvoir lancer le sort *)
-  nil (* La pile est vide *)
-  nil  
-  MainPhase1.
-
-Definition gs_inter : GameState := Cast birgi2 initial_gamestate.
-
-Compute Resolve gs_inter 0.
 End game_action.
 Export game_action.
