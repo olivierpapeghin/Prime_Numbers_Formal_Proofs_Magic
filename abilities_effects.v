@@ -152,6 +152,17 @@ Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability); (2
 Definition birgi_ability (targets : option (list Card)) (gs : GameState) : GameState :=
   add_mana gs Red 1.
 
+Definition desecration_elemental (targets : option (list Card)) (gs : GameState) : GameState :=
+    match targets with
+  | None => gs (* Pas de cible, on ne fait rien *)
+  | Some target_list => 
+    (* On doit ensuite vérifier qu'on a qu'une seule cible *)
+    if Nat.eqb (List.length target_list) 1 then 
+    sacrifice gs target_list
+    else
+    gs
+  end.
+
 (* Définition des sous-dictionnaires *)
 Definition OnCast : Dict := [(1,birgi_ability)].
 Definition OnPhase : Dict := nil.
