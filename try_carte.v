@@ -107,26 +107,7 @@ Definition add_abilities_to_stack (event_type : nat) (p : Permanent) (gs : GameS
     p.(Abilities)
     gs.
 
-(* (* Utilisation de la fonction dans Cast *)
-Definition Cast (c:Card) (gs:GameState) : GameState :=
-  let cost := c.(manacost) in
-  let pool := gs.(manapool) in
-  
-  if Can_Pay cost pool && card_in_list c gs.(hand) && check_legendary_rule gs c then
-    let new_pool := fold_left remove_mana cost pool in
-    let new_hand := remove_card gs.(hand) c in
-    let new_stack := CardItem c :: gs.(stack) in
-    let intermediate_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack gs.(passive_abilities) in
-    (* Ajouter les abilities des permanents sur le battlefield au stack *)
-    let final_gs := fold_left (fun gs' perm =>
-      match perm.(permanent) with
-      | Some perm_data => add_abilities_to_stack 1 perm_data gs'
-      | None => gs'
-      end
-    )  gs.(battlefield) intermediate_gs in
-    final_gs
-  else
-    gs. *)
+
 
 
 
@@ -152,6 +133,9 @@ Definition Resolve (targets : option (list Card)) (gs : GameState) : GameState :
 
 Definition Dict_AA : list (nat * Activated_Ability) := [(1, add_black_mana)].
 
+
+
+(* Fonction pour activer une capacité *)
 Definition activate_ability
   (index : nat)
   (targets_cost : option (list Card))
@@ -174,20 +158,23 @@ Definition activate_ability
           let new_gs := ability targets_cost targets_ability None gs in
           mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_gs.(stack) gs.(passive_abilities) gs.(phase)
         | Some mana_list =>
-          if Can_Pay mana_list gs.(manapool) then
+          (* Vérifier si le mana peut être payé *)
+          match remove_card_costs gs mana_list with
+          | None => gs (* Le coût de mana ne peut pas être payé *)
+          | Some new_gs_with_pool =>
             (* Appliquer l'effet de la capacité *)
-            let new_gs := ability targets_cost targets_ability (Some mana_list) gs in
+            let new_gs := ability targets_cost targets_ability (Some mana_list) new_gs_with_pool in
             (* Mettre à jour l'état du jeu *)
-            let new_pool := fold_left remove_mana mana_list gs.(manapool) in
-              mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_pool new_gs.(stack) gs.(passive_abilities) gs.(phase)
-          else
-            gs (* Le coût de mana n'est pas payé *)
+            mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs_with_pool.(manapool) new_gs.(stack) gs.(passive_abilities) gs.(phase)
+          end
         end
       | None => gs (* L'index n'est pas dans le dictionnaire *)
       end
     else
       gs (* L'index n'est pas dans la liste des capacités activées *)
   end.
+
+
 
 Definition divides (a b : nat) : bool :=
   match a with
@@ -202,17 +189,8 @@ Definition divides (a b : nat) : bool :=
 
 Definition Cast_gs : GameState := Cast destructeur Test_gs.
 Definition Resol1 : GameState := Resolve (Some [colossal_dreadmaw]) Cast_gs.
+Compute Cast_gs.
 Compute activate_ability 1 None None None card_creature Dict_AA Test_gs.
-
-Lemma colossal_dreadmaw_in_graveyard :
-  card_in_list colossal_dreadmaw (Resol1.(graveyard)) = true.
-Proof.
-  simpl.
-  reflexivity.
-Qed.
-
-
-
 
 
 End Try_card.

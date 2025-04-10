@@ -8,6 +8,8 @@ Require Import Coq.Program.Equality.
 Require Import List String.
 Require Import String.
 Require Import List.
+Require Import Coq.Logic.EqdepFacts.
+
 Import ListNotations.
 Open Scope list_scope.
 Require Import type_definitions.
@@ -128,6 +130,8 @@ Definition eq_card (c1 c2 : Card) : bool :=
   String.eqb c1.(name) c2.(name) &&
   Nat.eqb c1.(id) c2.(id).
 
+
+
 Definition phase_eqb (p1 p2 : Phase) : bool :=
   match p1, p2 with
   | BeginningPhase, BeginningPhase => true
@@ -172,36 +176,52 @@ Fixpoint count_occ (A : Type) (eqb : A -> A -> bool) (l : list A) (x : A) : nat 
   | h :: t => if eqb x h then 1 + count_occ A eqb t x else count_occ A eqb t x
   end.
 
-Fixpoint remove_mana (pool : list Mana) (cost : Mana) : (bool * list Mana) :=
+
+
+(* Fonction pour retirer le mana d'une couleur spécifique *)
+Fixpoint remove_mana_from_pool (pool : list Mana) (color : ManaColor) (qty : nat) : option (list Mana) :=
   match pool with
-  | [] => (false, []) (* Si le pool est vide, rien à retirer *)
-  | h :: t =>
-      if eq_mana_color cost.(color) Generic || eq_mana_color h.(color) cost.(color) then
-        if Nat.leb cost.(quantity) h.(quantity) then
-          if Nat.eqb cost.(quantity) h.(quantity) then
-            (true, t) (* On retire le mana si la quantité est exactement la même *)
-          else
-            let new_pool := {| color := h.(color); quantity := h.(quantity) - cost.(quantity) |} :: t in
-            (true, new_pool) (* On ajuste la quantité restante *)
-        else
-          let (success, updated_pool) := remove_mana t cost in
-          (success, h :: updated_pool)
+  | [] => None
+  | mkMana c q :: rest =>
+    if eq_mana_color c color then
+      if qty <=? q then
+        Some ((mkMana c (q - qty)) :: rest)
       else
-        let (success, updated_pool) := remove_mana t cost in
-        (success, h :: updated_pool)
+        None
+    else
+      match remove_mana_from_pool rest color qty with
+      | None => None
+      | Some new_rest => Some (mkMana c q :: new_rest)
+      end
   end.
 
-(* Fonction pour vérifier si un coût peut être payé à partir du pool *)
-Fixpoint Can_Pay (cost : list Mana) (pool : list Mana) : bool :=
-  match cost with
-  | [] => true (* Tout le coût est couvert, on retourne vrai *)
-  | c :: cs =>
-      let (success, updated_pool) := remove_mana pool c in
-      if success then
-        Can_Pay cs updated_pool (* Continue à chercher les autres coûts, après avoir retiré un mana du pool *)
-      else
-        false (* Pas assez de mana, on échoue *)
+
+(* Fonction pour retirer les coûts d'une carte *)
+Fixpoint remove_card_costs (game_state : GameState) (costs : list Mana) : option GameState :=
+  match costs with
+  | [] => Some game_state (* Tous les coûts ont été retirés avec succès *)
+  | cost :: remaining_costs =>
+    match remove_mana_from_pool game_state.(manapool) cost.(color) cost.(quantity) with
+    | None => None (* Impossible de retirer ce coût, donc échec *)
+    | Some new_pool =>
+      let new_game_state := mkGameState
+        game_state.(battlefield)
+        game_state.(hand)
+        game_state.(library)
+        game_state.(graveyard)
+        game_state.(exile)
+        game_state.(opponent)
+        new_pool
+        game_state.(stack)
+        game_state.(passive_abilities)
+        game_state.(phase) in
+      remove_card_costs new_game_state remaining_costs
+    end
   end.
+
+
+
+
 
 Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
   match dict with
