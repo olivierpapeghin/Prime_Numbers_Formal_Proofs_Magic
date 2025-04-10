@@ -275,6 +275,13 @@ Fixpoint is_card_base_in (l : list Card) (c: Card) : bool :=
   | h :: t => if eq_card_base h c then false (* Si on trouve la carte, on la retire *)
               else is_card_base_in t c (* Sinon, on continue à chercher *)
   end.
+  
+Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
+  match dict with
+  | nil => false
+  | (k, activated) :: rest =>
+    if eq_passive_key k key then activated else find_passive_ability_in_dict  rest key
+  end.
 
 Definition check_legendary_rule (gs: GameState) (c: Card) : bool :=
   match c.(permanent) with

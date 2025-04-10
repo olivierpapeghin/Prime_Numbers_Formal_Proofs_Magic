@@ -16,7 +16,7 @@ Import utility_function.
 Module card_instance.
 
 (* Instanciation de la carte *)
-Definition colossal_dreadmaw : Card := 
+Definition colossal_dreadmaw (id : nat) : Card := 
   mkCard 
   (Some (mkPermanent (* Est un permanent *)
     nil
@@ -34,13 +34,13 @@ Definition colossal_dreadmaw : Card :=
   None (* N'est pas un sorcery *)
   [mkMana Green 1; mkMana Generic 5]
   "Colossal Dreadmaw"
-  2
+  id
   ["Trample"].
 
-Definition birgi : Card := 
+Definition birgi (id : nat) : Card := 
   mkCard 
   (Some (mkPermanent (* Est un permanent *)
-    [] (* La liste des capacités déclenchées *)
+    [(1,1)] (* La liste des capacités déclenchées *)
     nil
     None
     ["God"]
@@ -55,11 +55,31 @@ Definition birgi : Card :=
   None (* N'est pas un sorcery *)
   [mkMana Red 1; mkMana Generic 2]
   "Birgi, God of Storytelling"
-  3
+  id
   nil.
 
+Definition siege_zombie (id : nat): Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    [1]
+    None
+    ["Zombie"]
+    (Some (mkCreature 2 2))
+    None
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [mkMana Black 1; mkMana Generic 1 ]
+  "Siege Zombie"
+  id
+  nil.
 
-Definition MirrorGallery (id : nat) : Card :=
+Definition mirror_gallery (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
     nil
@@ -79,22 +99,48 @@ Definition MirrorGallery (id : nat) : Card :=
   "Mirror Gallery"
   id
   nil.
+  
+Definition leyline_of_transformation (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    nil
+    (Some AllSaprolings)
+    nil
+    None
+    (Some mkEnchantement)
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Blue 2); (mkMana Generic 2) ]
+  "Leyline of Transformation"
+  id
+  nil.
 
-Definition forest_land : Land := mkLand (mkMana Green 1).
-Definition forest_perm : Permanent := mkPermanent nil nil None ["essai"] None None (Some forest_land) None false false false.
-Definition card_forest : Card := mkCard (Some forest_perm) None None [] "Forest" 3 nil.
-
-(* Exemple de création d'une autre carte permanente *)
-Definition creature_perm : Permanent := mkPermanent [(1,1)] [1] None ["pui"] (Some (mkCreature 2 2)) None None None false false false.
-Definition card_creature : Card := mkCard (Some creature_perm) None None [] "Creature" 4 nil.
-
-Definition crea_perm : Permanent := mkPermanent nil nil None ["perm"] (Some (mkCreature 2 2)) None None None false false false.
-Definition destructeur : Card := mkCard (Some crea_perm) None None [mkMana Red 2; mkMana Green 2; mkMana Generic 4] "Destructeur" 5 nil.
-
-
-(* État de jeu initial avec des cartes dans le battlefield *)
-Definition Test_gs : GameState := mkGameState [card_creature;colossal_dreadmaw] [card_forest;destructeur] nil nil nil 0 [mkMana Green 5; mkMana Red 5; mkMana Blue 5 ;mkMana White 5 ; mkMana Black 5 ; mkMana Generic 10] nil DefaultListPassiveAbility MainPhase1.
-
+Definition desecration_elemental (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    [(1,2)]
+    nil
+    None
+    nil
+    (Some (mkCreature 8 8))
+    None
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Black 1); (mkMana Generic 3) ]
+  "Desecreation Elemental"
+  id
+  ["Fear"].
 
 
 End card_instance.

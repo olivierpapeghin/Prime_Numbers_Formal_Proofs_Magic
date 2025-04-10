@@ -8,11 +8,7 @@ Require Import Coq.Program.Equality.
 Require Import List String.
 Require Import String.
 Require Import List.
-Require Import Arith.
-Require Import PeanoNat.
 Import ListNotations.
-
-
 Require Import type_definitions.
 Import type_definition.
 Require Import utility_functions.
@@ -22,8 +18,6 @@ Import card_instance.
 Require Import game_actions.
 Import game_action.
 Module Try_card.
-
-
 
 
 (* Fonction pour sacrifier des cartes et les déplacer vers le cimetière *)
@@ -111,6 +105,7 @@ Definition add_abilities_to_stack (event_type : nat) (p : Permanent) (gs : GameS
 
 
 
+
 (* Fonction pour résoudre le dernier élément du stack *)
 Definition Resolve (targets : option (list Card)) (gs : GameState) : GameState :=
   match gs.(stack) with
@@ -130,8 +125,7 @@ Definition Resolve (targets : option (list Card)) (gs : GameState) : GameState :
     end
   end.
 
-
-Definition Dict_AA : list (nat * Activated_Ability) := [(1, add_black_mana)].
+  Definition Dict_AA : list (nat * Activated_Ability) := [(1, add_black_mana)].
 
 
 
@@ -142,7 +136,7 @@ Definition activate_ability
   (mana_cost : option (list Mana))
   (targets_ability : option (list Card))
   (card : Card)
-  (dico : list (nat * Activated_Ability))
+  (dico : Activated_abilities)
   (gs : GameState) : GameState :=
   match card.(permanent) with
   | None => gs (* La carte n'a pas de permanent *)
@@ -175,13 +169,6 @@ Definition activate_ability
   end.
 
 
-
-Definition divides (a b : nat) : bool :=
-  match a with
-  | 0 => false
-  | 1 => true
-  | _ => if Nat.modulo b a =? 0 then true else false
-  end.
 
 
 
