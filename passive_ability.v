@@ -15,9 +15,6 @@ Import utility_function.
 
 Module passive_ability.
 
-
-
-
 Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : bool) : PassiveAbilityDict :=
   match dict with
   | nil => nil
@@ -63,8 +60,22 @@ Fixpoint Transform_all_creature_in (l : list Card) (new_type : string) : list Ca
       end
     end
   end.
-  
-  
+
+Fixpoint Add_key_word_to (l : list Card) (new_key_word : string) : list Card :=
+  match l with
+  | [] => []
+  | c :: rest =>
+      let new_card := mkCard
+        c.(permanent)
+        c.(instant)
+        c.(sorcery)
+        c.(manacost)
+        c.(name)
+        c.(id)
+        (new_key_word :: c.(keywords)) in
+      new_card :: Add_key_word_to rest new_key_word
+  end.
+
 Definition Leyline_of_transformation_passive (gs : GameState) : GameState :=
   let new_battlefield := Transform_all_creature_in gs.(battlefield) "Saproling" in
   let new_hand := Transform_all_creature_in gs.(hand) "Saproling" in
@@ -85,12 +96,32 @@ Definition Leyline_of_transformation_passive (gs : GameState) : GameState :=
   new_gs
   .
   
+Definition Leyline_of_anticipation_passive (gs : GameState) : GameState :=
+  let new_battlefield := Add_key_word_to gs.(battlefield) "Flash" in
+  let new_hand := Add_key_word_to gs.(hand) "Flash" in
+  let new_library := Add_key_word_to gs.(library) "Flash" in
+  let new_grave := Add_key_word_to gs.(graveyard) "Flash" in
+  let new_exile := Add_key_word_to gs.(exile) "Flash" in
+  let new_gs := mkGameState
+    new_battlefield
+    new_hand
+    new_library
+    new_grave
+    new_exile
+    gs.(opponent)
+    gs.(manapool)
+    gs.(stack)
+    gs.(passive_abilities)
+    gs.(phase) in
+  new_gs
+  .
+
 Definition trigger_passive_effect (gs : GameState) (key : PassiveKey) : GameState :=
   match key with
   | AllSaprolings => Leyline_of_transformation_passive gs
+  | AllFlash => Leyline_of_anticipation_passive gs
   | _ => gs
   end.
-
 
 End passive_ability.
 Export passive_ability.
