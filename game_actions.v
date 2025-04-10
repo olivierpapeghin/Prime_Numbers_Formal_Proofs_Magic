@@ -63,20 +63,6 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
 
   | None => gs (* Si la stack est vide, on ne fait rien *)
   end.
-Fixpoint is_pool_modified (original new : list Mana) : bool :=
-  match original, new with
-  | [], [] => false
-  | [], _ => true
-  | _, [] => true
-  | (mkMana col1 qty1) :: rest1, (mkMana col2 qty2) :: rest2 =>
-    if eq_mana_color col1 col2 then
-      if Nat.eqb qty1 qty2 then
-        is_pool_modified rest1 rest2
-      else
-        true
-    else
-      true
-  end.
 
 
 
@@ -112,6 +98,45 @@ Definition Cast (c : Card) (gs : GameState) : GameState :=
       gs (* Si la carte ne peut pas être lancée, retourne le GameState inchangé *)
   end.
 
+
+(* Fonction pour activer une capacité *)
+Definition activate_ability
+  (index : nat)
+  (targets_cost : option (list Card))
+  (mana_cost : option (list Mana))
+  (targets_ability : option (list Card))
+  (card : Card)
+  (dico : list(nat * Activated_Ability))
+  (gs : GameState) : GameState :=
+  match card.(permanent) with
+  | None => gs (* La carte n'a pas de permanent *)
+  | Some perm =>
+    if List_In_nat index perm.(ListActivated) then
+      (* Trouver l'Activated_Ability correspondante dans le dictionnaire *)
+      match List_assoc beq_nat index dico with
+      | Some ability =>
+        (* Vérifier si le coût de mana est fourni *)
+        match mana_cost with
+        | None =>
+          (* Pas de coût de mana, activer directement la capacité *)
+          let new_gs := ability targets_cost targets_ability None gs in
+          mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_gs.(stack) gs.(passive_abilities) gs.(phase)
+        | Some mana_list =>
+          (* Vérifier si le mana peut être payé *)
+          match remove_card_costs gs mana_list with
+          | None => gs (* Le coût de mana ne peut pas être payé *)
+          | Some new_gs_with_pool =>
+            (* Appliquer l'effet de la capacité *)
+            let new_gs := ability targets_cost targets_ability (Some mana_list) new_gs_with_pool in
+            (* Mettre à jour l'état du jeu *)
+            mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs_with_pool.(manapool) new_gs.(stack) gs.(passive_abilities) gs.(phase)
+          end
+        end
+      | None => gs (* L'index n'est pas dans le dictionnaire *)
+      end
+    else
+      gs (* L'index n'est pas dans la liste des capacités activées *)
+  end.
 
 
 
