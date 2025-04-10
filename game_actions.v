@@ -64,7 +64,6 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
   | None => gs (* Si la stack est vide, on ne fait rien *)
   end.
 
-
 Definition Cast (c:Card) (gs:GameState) : GameState :=
   let cost := c.(manacost) in
   let pool := gs.(manapool) in

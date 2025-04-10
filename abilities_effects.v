@@ -41,7 +41,14 @@ Definition tap (c : Card) : Card :=
   | None => c
   end.
 
-
+Definition untap (c : Card) : Card :=
+  match c.(permanent) with
+  | Some p =>
+  mkCard
+  (Some (mkPermanent p.(Abilities) p.(ListActivated) p.(PassiveAbility) p.(subtype) p.(creature) p.(enchantement) p.(land) p.(artifact) p.(token) p.(legendary) false))
+  c.(instant) c.(sorcery) c.(manacost) c.(name) c.(id) c.(keywords)
+  | None => c
+  end.
 
 
 (*-----------------------------------------Effets des Instants/Sorcery----------------------------------------------*)
@@ -197,7 +204,48 @@ Definition siege_zombie_ability (target_cost : option (list Card)) (targets : op
   | None => gs
   end.
 
-Definition Dict_AA : list (nat * Activated_Ability) := [(1, siege_zombie_ability)].
+Definition clock_of_omens_ability (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
+  match target_cost, targets with (* On regarde si les listes concernées existent *)
+  | Some cost_cards, Some target_list =>
+      if Nat.eqb (Coq.Lists.List.length cost_cards) 2 then (* On a bien deux cibles uniquements *)
+        if forallb is_untapped_artifact cost_cards then
+          match target_list with
+          | [target] => (* On vérifie qu'il n'y a qu'une seule cible à untap *)
+              match target.(permanent) with
+              | Some p =>
+                  match p.(artifact) with 
+                  | Some _ => (* C'est bien un artefact *)
+                      (* Tap les cartes utilisées en coût *)
+                      let tapped_costs := map tap cost_cards in
+                      let battlefield_after_cost :=
+                        map (fun c =>
+                               if existsb (fun t => Nat.eqb t.(id) c.(id)) cost_cards
+                               then tap c
+                               else c
+                            ) gs.(battlefield) in
+                      (* Untap la carte cible *)
+                      let battlefield_final :=
+                        map (fun c =>
+                               if Nat.eqb c.(id) target.(id)
+                               then untap c
+                               else c
+                            ) battlefield_after_cost in
+                      mkGameState battlefield_final gs.(hand) gs.(library) gs.(graveyard)
+                                  gs.(exile) gs.(opponent) gs.(manapool) gs.(stack)
+                                  gs.(passive_abilities) gs.(phase)
+                  | None => gs
+                  end
+              | None => gs
+              end
+          | _ => gs
+          end
+        else gs
+      else gs
+  | _, _ => gs
+  end.
+
+Definition Dict_AA : list (nat * Activated_Ability) := [(1, siege_zombie_ability); (2, clock_of_omens_ability)].
+
 
 End abilities_effects.
 Export abilities_effects.
