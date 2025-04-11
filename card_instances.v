@@ -163,23 +163,26 @@ Definition life_and_limb (id : nat) : Card :=
   id
   nil.
 
-Definition forest_land : Land := mkLand (mkMana Green 1).
-Definition forest_perm : Permanent := mkPermanent nil nil None ["essai"] None None (Some forest_land) None false false false.
-Definition card_forest : Card := mkCard (Some forest_perm) None None [] "Forest" 3 nil.
-
-(* Exemple de création d'une autre carte permanente *)
-Definition creature_perm : Permanent := mkPermanent [(1,1)] [1] None ["pui"] (Some (mkCreature 2 2)) None None None false false false.
-Definition card_creature : Card := mkCard (Some creature_perm) None None [] "Creature" 4 nil.
-
-Definition crea_perm : Permanent := mkPermanent nil nil None ["perm"] (Some (mkCreature 2 2)) None None None false false false.
-Definition destructeur : Card := mkCard (Some crea_perm) None None [mkMana Red 2; mkMana Green 2; mkMana Generic 1] "Destructeur" 5 nil.
-
-
-(* État de jeu initial avec des cartes dans le battlefield *)
-Definition Test_gs : GameState := mkGameState [card_creature;colossal_dreadmaw 1] [card_forest;destructeur] nil nil nil 0 [mkMana Green 5; mkMana Red 5; mkMana Blue 5 ;mkMana White 5 ; mkMana Black 5] nil DefaultListPassiveAbility MainPhase1.
-
-(* Liste de cartes cibles à sacrifier *)
-Definition target_cards : list Card := [card_forest].
+Definition desecration_elemental (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    [(1,2)]
+    nil
+    None
+    nil
+    (Some (mkCreature 8 8))
+    None
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Black 1); (mkMana Generic 3) ]
+  "Desecreation Elemental"
+  id
+  ["Fear"].
 
 
 End card_instance.
