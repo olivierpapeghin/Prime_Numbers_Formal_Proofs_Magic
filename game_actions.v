@@ -65,25 +65,80 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
   end.
 
 
-Definition Cast (c:Card) (gs:GameState) : GameState :=
+
+(* Fonction pour lancer une carte *)
+Definition Cast (c : Card) (gs : GameState) : GameState :=
   let cost := c.(manacost) in
-  let pool := gs.(manapool) in
-  let current_phase := gs.(phase) in
-  if Can_Pay cost pool && card_in_list c gs.(hand) && check_legendary_rule gs c && can_cast c current_phase then
-    let new_pool := fold_left (fun pool' cost' => snd (remove_mana pool' cost')) pool cost in
-    let new_hand := remove_card gs.(hand) c in
-    let new_stack := CardItem c :: gs.(stack) in
-    let intermediate_gs := mkGameState gs.(battlefield) new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_pool new_stack gs.(passive_abilities) gs.(phase) in
-    (* Ajouter les abilities des permanents sur le battlefield au stack *)
-    let final_gs := fold_left (fun gs' perm =>
-      match perm.(permanent) with
-      | Some perm_data => add_abilities_to_stack 1 perm_data gs'
-      | None => gs'
+  match remove_card_costs gs cost with
+  | None => gs (* Si les coûts ne peuvent pas être payés, retourne le GameState inchangé *)
+  | Some new_gs =>
+    if card_in_list c new_gs.(hand) && can_cast c new_gs.(phase) then
+      let new_hand := remove_card new_gs.(hand) c in
+      let new_stack := CardItem c :: new_gs.(stack) in
+      let intermediate_gs := mkGameState
+        new_gs.(battlefield)
+        new_hand
+        new_gs.(library)
+        new_gs.(graveyard)
+        new_gs.(exile)
+        new_gs.(opponent)
+        new_gs.(manapool)
+        new_stack
+        new_gs.(passive_abilities)
+        new_gs.(phase) in
+      (* Ajouter les abilities des permanents sur le battlefield au stack *)
+      let final_gs := fold_left (fun gs' perm =>
+        match perm.(permanent) with
+        | Some perm_data => add_abilities_to_stack 1 perm_data gs'
+        | None => gs'
+        end
+      ) new_gs.(battlefield) intermediate_gs in
+      final_gs
+    else
+      gs (* Si la carte ne peut pas être lancée, retourne le GameState inchangé *)
+  end.
+
+
+(* Fonction pour activer une capacité *)
+Definition activate_ability
+  (index : nat)
+  (targets_cost : option (list Card))
+  (mana_cost : option (list Mana))
+  (targets_ability : option (list Card))
+  (card : Card)
+  (dico : list(nat * Activated_Ability))
+  (gs : GameState) : GameState :=
+  match card.(permanent) with
+  | None => gs (* La carte n'a pas de permanent *)
+  | Some perm =>
+    if List_In_nat index perm.(ListActivated) then
+      (* Trouver l'Activated_Ability correspondante dans le dictionnaire *)
+      match List_assoc beq_nat index dico with
+      | Some ability =>
+        (* Vérifier si le coût de mana est fourni *)
+        match mana_cost with
+        | None =>
+          (* Pas de coût de mana, activer directement la capacité *)
+          let new_gs := ability targets_cost targets_ability None gs in
+          mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_gs.(stack) gs.(passive_abilities) gs.(phase)
+        | Some mana_list =>
+          (* Vérifier si le mana peut être payé *)
+          match remove_card_costs gs mana_list with
+          | None => gs (* Le coût de mana ne peut pas être payé *)
+          | Some new_gs_with_pool =>
+            (* Appliquer l'effet de la capacité *)
+            let new_gs := ability targets_cost targets_ability (Some mana_list) new_gs_with_pool in
+            (* Mettre à jour l'état du jeu *)
+            mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs_with_pool.(manapool) new_gs.(stack) gs.(passive_abilities) gs.(phase)
+          end
+        end
+      | None => gs (* L'index n'est pas dans le dictionnaire *)
       end
-    )  gs.(battlefield) intermediate_gs in
-   final_gs
-  else
-    gs.
+    else
+      gs (* L'index n'est pas dans la liste des capacités activées *)
+  end.
+
+
 
 End game_action.
 Export game_action.
