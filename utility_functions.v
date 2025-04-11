@@ -130,8 +130,6 @@ Definition eq_card (c1 c2 : Card) : bool :=
   String.eqb c1.(name) c2.(name) &&
   Nat.eqb c1.(id) c2.(id).
 
-
-
 Definition phase_eqb (p1 p2 : Phase) : bool :=
   match p1, p2 with
   | BeginningPhase, BeginningPhase => true
@@ -220,7 +218,12 @@ Fixpoint remove_card_costs (game_state : GameState) (costs : list Mana) : option
   end.
 
 
-
+(* Définition d'une fonction pour vérifier la présence d'un élément dans une liste *)
+Fixpoint find_card_in_list (c : Card) (l : list Card) : option Card :=
+  match l with
+  | [] => None
+  | h :: t => if String.eqb c.(name) h.(name) && Nat.eqb c.(id) h.(id) then (Some h) else find_card_in_list c t
+  end.
 
 
 Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
