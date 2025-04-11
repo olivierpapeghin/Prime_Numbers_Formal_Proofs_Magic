@@ -220,7 +220,12 @@ Fixpoint remove_card_costs (game_state : GameState) (costs : list Mana) : option
   end.
 
 
-
+(* Définition d'une fonction pour vérifier la présence d'un élément dans une liste *)
+Fixpoint find_card_in_list (c : Card) (l : list Card) : option Card :=
+  match l with
+  | [] => None
+  | h :: t => if String.eqb c.(name) h.(name) && Nat.eqb c.(id) h.(id) then (Some h) else find_card_in_list c t
+  end.
 
 
 Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
