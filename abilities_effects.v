@@ -144,8 +144,11 @@ Definition narsets_reversal (targets : option (list Card)) (gs : GameState) : Ga
   | _ => gs
   end.
 
+Definition molten_duplication (targets : option (list Card)) (gs : GameState) : GameState :=
+  gs.
 
-Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability); (2,narsets_reversal)].
+
+Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability); (2,narsets_reversal); (3,molten_duplication)].
 
 (*-----------------------------------------Abilités déclenchées----------------------------------------------*)
 
