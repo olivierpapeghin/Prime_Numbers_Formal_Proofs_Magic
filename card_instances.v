@@ -121,6 +121,48 @@ Definition leyline_of_transformation (id : nat) : Card :=
   id
   nil.
 
+Definition leyline_of_anticipation (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    nil
+    (Some AllFlash)
+    nil
+    None
+    (Some mkEnchantement)
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Blue 2); (mkMana Generic 2) ]
+  "Leyline of Anticipation"
+  id
+  nil.
+
+Definition life_and_limb (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    nil
+    (Some SaprolingsLands)
+    nil
+    None
+    (Some mkEnchantement)
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Green 1); (mkMana Generic 3) ]
+  "Life and Limb"
+  id
+  nil.
+
 Definition desecration_elemental (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent

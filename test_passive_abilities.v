@@ -21,7 +21,7 @@ Import game_action.
 Definition initial_gamestate : GameState := 
   mkGameState
   [(colossal_dreadmaw 1); (colossal_dreadmaw 2)]
-  [(colossal_dreadmaw 3); (leyline_of_transformation 1)]
+  [(colossal_dreadmaw 3); (leyline_of_transformation 1); (leyline_of_anticipation 1)]
   nil (* La bibliothèque est vide *)
   [] (* Le cimetière est vide *)
   nil (* L'exil est vide *)
@@ -32,3 +32,4 @@ Definition initial_gamestate : GameState :=
   MainPhase1.
   
 Compute Resolve (Cast (leyline_of_transformation 1) initial_gamestate).
+Compute Resolve (Cast (leyline_of_anticipation 1) initial_gamestate).
