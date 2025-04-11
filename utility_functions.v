@@ -462,5 +462,15 @@ Definition can_cast (c : Card) (p : Phase) : bool :=
   | _ => false
   end.
 
+Definition is_untapped_artifact (c : Card) : bool :=
+  match c.(permanent) with
+  | Some p =>
+      match p.(artifact) with
+      | Some _ => negb p.(tapped) (* C'est un artefact non tappé *)
+      | None => false
+      end
+  | None => false
+  end.
+
 End utility_function.
 Export utility_function.

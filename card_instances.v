@@ -184,6 +184,27 @@ Definition desecration_elemental (id : nat) : Card :=
   id
   ["Fear"].
 
+Definition clock_of_omens (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    [(1,2)]
+    nil
+    None
+    nil
+    None
+    None
+    None
+    (Some (mkArtifact))
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Generic 4) ]
+  "Clock of Omens"
+  id
+  nil.
+
 
 End card_instance.
 Export card_instance.
