@@ -130,8 +130,6 @@ Definition eq_card (c1 c2 : Card) : bool :=
   String.eqb c1.(name) c2.(name) &&
   Nat.eqb c1.(id) c2.(id).
 
-
-
 Definition phase_eqb (p1 p2 : Phase) : bool :=
   match p1, p2 with
   | BeginningPhase, BeginningPhase => true

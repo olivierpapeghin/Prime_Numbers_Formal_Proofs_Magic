@@ -219,14 +219,14 @@ Definition clock_of_omens_ability (target_cost : option (list Card)) (targets : 
                       let tapped_costs := map tap cost_cards in
                       let battlefield_after_cost :=
                         map (fun c =>
-                               if existsb (fun t => Nat.eqb t.(id) c.(id)) cost_cards
+                               if existsb (fun t => eq_card t c) cost_cards
                                then tap c
                                else c
                             ) gs.(battlefield) in
                       (* Untap la carte cible *)
                       let battlefield_final :=
                         map (fun c =>
-                               if Nat.eqb c.(id) target.(id)
+                               if eq_card target c
                                then untap c
                                else c
                             ) battlefield_after_cost in
@@ -244,7 +244,7 @@ Definition clock_of_omens_ability (target_cost : option (list Card)) (targets : 
   | _, _ => gs
   end.
 
-Definition Dict_AA : list (nat * Activated_Ability) := [(1, siege_zombie_ability); (2, clock_of_omens_ability)].
+Definition Dict_AA : list (nat * Activated_Ability) := [(1, siege_zombie_ability);(2, clock_of_omens_ability)].
 
 
 End abilities_effects.
