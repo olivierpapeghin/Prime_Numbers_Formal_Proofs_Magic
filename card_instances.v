@@ -172,6 +172,27 @@ Definition life_and_limb (id : nat) : Card :=
   "Life and Limb"
   id
   nil.
+  
+Definition fractured_realm (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    nil
+    (Some AdditionalTrigger)
+    nil
+    None
+    (Some mkEnchantement)
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Blue 2); (mkMana Generic 5) ]
+  "Fractured Realm"
+  id
+  nil.
 
 Definition desecration_elemental (id : nat) : Card :=
   mkCard 
@@ -215,6 +236,25 @@ Definition clock_of_omens (id : nat) : Card :=
   id
   nil.
 
+Definition narsets_reversal (id : nat) : Card :=
+  mkCard
+    None 
+    (Some (mkInstant [2]))
+    None
+    [(mkMana Blue 1); (mkMana Blue 1) ]
+    "Narset's Reversal"
+    id
+    nil.
+
+Definition molten_duplication (id : nat) : Card :=
+  mkCard
+  None
+  None
+  (Some (mkSorcery[3]))
+  [(mkMana Red 1)]
+  "Molten Duplication"
+  id
+  nil.
 Definition sanctum_weaver (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent

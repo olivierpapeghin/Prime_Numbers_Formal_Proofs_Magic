@@ -16,12 +16,12 @@ Import utility_function.
 Module passive_ability.
 
 Definition get_active_passives (dict : PassiveAbilityDict) : list PassiveKey :=
-  fold_right (fun (p : PassiveKey * bool) (acc : list PassiveKey) =>
-                let (k, b) := p in if b then k :: acc else acc)
+  fold_right (fun (p : PassiveKey * nat) (acc : list PassiveKey) =>
+                let (k, b) := p in if Nat.ltb 0 b then k :: acc else acc)
              []
              dict.
 
-Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : bool) : PassiveAbilityDict :=
+Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : nat) : PassiveAbilityDict :=
   match dict with
   | nil => nil
   | (k, activated) :: rest =>

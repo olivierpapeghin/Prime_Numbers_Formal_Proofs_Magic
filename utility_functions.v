@@ -63,10 +63,17 @@ Definition next_phase (p : Phase) : Phase :=
   | EndingPhase => BeginningPhase 
   end.
 
-Definition advance_phase (gs : GameState) : GameState :=
-  let new_phase := next_phase gs.(phase) in
-  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard)
-              gs.(exile) gs.(opponent) gs.(manapool) gs.(stack) gs.(passive_abilities) new_phase.
+Definition phase_eqb (p1 p2 : Phase) : bool :=
+  match p1, p2 with
+  | BeginningPhase, BeginningPhase => true
+  | MainPhase1, MainPhase1 => true
+  | CombatPhase, CombatPhase => true
+  | MainPhase2, MainPhase2 => true
+  | EndingPhase, EndingPhase => true
+  | _, _ => false
+  end.
+
+
 
 
 Definition eq_mana (m1 m2 : Mana) : bool :=
@@ -226,14 +233,14 @@ Fixpoint find_card_in_list (c : Card) (l : list Card) : option Card :=
   end.
 
 
-Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
+Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : nat :=
   match dict with
-  | nil => false
+  | nil => 0
   | (k, activated) :: rest =>
     if eq_passive_key k key then activated else find_passive_ability_in_dict  rest key
   end.
 
-Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : bool) : PassiveAbilityDict :=
+Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : nat) : PassiveAbilityDict :=
   match dict with
   | nil => nil
   | (k, activated) :: rest =>
@@ -285,7 +292,7 @@ Definition check_legendary_rule (gs: GameState) (c: Card) : bool :=
   match c.(permanent) with
   | None => true
   | Some perm =>
-    if (negb (find_passive_ability_in_dict gs.(passive_abilities) NoLegendaryRule)) && perm.(legendary) then
+    if (Nat.ltb (find_passive_ability_in_dict (passive_abilities gs) NoLegendaryRule) 1) && perm.(legendary) then
       is_card_base_in gs.(battlefield) c
     else 
       true
@@ -449,12 +456,12 @@ Definition has_keyword (kw : string) (c : Card) : bool :=
 Definition can_cast (c : Card) (p : Phase) : bool :=
   match c with
   | mkCard _ _ (Some _) _ _ _ _ => (* It's a Sorcery *)
-      if has_keyword "flash" c then true
+      if has_keyword "Flash" c then true
       else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
       else false
   | mkCard _ (Some _) _ _ _ _ _ => true (* An Instant can be played anytime *)
   | mkCard (Some _) _ _ _ _ _ _ => (* A Permanent *)
-      if has_keyword "flash" c then true
+      if has_keyword "Flash" c then true
       else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
       else false
   | _ => false
@@ -469,6 +476,20 @@ Definition is_untapped_artifact (c : Card) : bool :=
       end
   | None => false
   end.
+
+Definition advance_phase (gs : GameState) : GameState :=
+  let new_phase := next_phase gs.(phase) in
+  let intermediate_gs := mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard)
+              gs.(exile) gs.(opponent) gs.(manapool) gs.(stack) gs.(passive_abilities) new_phase in
+  if phase_eqb new_phase EndingPhase then  
+  fold_left (fun gs' card =>
+  match card.(permanent) with
+    | Some perm_data => add_abilities_to_stack 2 perm_data gs'
+    | None => gs'
+    end
+  ) gs.(battlefield) intermediate_gs
+  else
+  intermediate_gs.
 
 Definition count_enchantments (cards : list Card) : nat :=
   fold_left (fun acc c =>
