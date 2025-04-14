@@ -151,6 +151,17 @@ Definition activate_ability
     else
       gs (* L'index n'est pas dans la liste des capacités activées *)
   end.
+  
+Definition Play_land (c : Card) (gs : GameState) : GameState :=
+  if card_in_list c gs.(hand) then
+    let new_battlefield := c :: gs.(battlefield) in
+    let new_hand := remove_card gs.(hand) c in
+    let new_gs := mkGameState new_battlefield new_hand gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) gs.(stack) (update_passive_ability_in_dict gs.(passive_abilities) LandPlayed (S (find_passive_ability_in_dict gs.(passive_abilities) LandPlayed))) gs.(phase) in
+    
+    new_gs
+  else
+    gs.
+    
 
 End game_action.
 Export game_action.
