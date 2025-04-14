@@ -244,8 +244,6 @@ Definition clock_of_omens_ability (target_cost : option (list Card)) (targets : 
   | _, _ => gs
   end.
 
-Definition freed_from_the_realm_ability_1 (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
-
 
 (* Ici on modifie légèrement l'abilité, on fixe la couleur du mana ajouté à bleue *)
 Definition sanctum_weaver_ability (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=

@@ -171,7 +171,7 @@ Definition fractured_realm (id : nat) : Card :=
     (Some AdditionalTrigger)
     nil
     None
-    (Some mkEnchantement)
+    (Some (mkEnchantement None))
     None
     None
     false
