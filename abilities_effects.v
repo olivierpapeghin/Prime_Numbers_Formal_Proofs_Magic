@@ -152,7 +152,7 @@ Definition narsets_reversal (targets : option (list Card)) (gs : GameState) : Ga
   end.
 
 
-Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability); (2,narsets_reversal)].
+Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability); (2, narsets_reversal)].
 
 (*-----------------------------------------Abilités déclenchées----------------------------------------------*)
 
@@ -244,9 +244,6 @@ Definition clock_of_omens_ability (target_cost : option (list Card)) (targets : 
   | _, _ => gs
   end.
 
-Definition freed_from_the_realm_ability_1 (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
-
-
 (* Ici on modifie légèrement l'abilité, on fixe la couleur du mana ajouté à bleue *)
 Definition sanctum_weaver_ability (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
   match target_cost with
@@ -267,7 +264,50 @@ Definition sanctum_weaver_ability (target_cost : option (list Card)) (targets : 
   | _ => gs
   end.
 
-Definition Dict_AA : list (nat * Activated_Ability) := [(1, siege_zombie_ability);(2, clock_of_omens_ability);(3, sanctum_weaver_ability)].
+Definition freed_from_the_realm_ability_1 (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
+match remove_card_costs gs [mkMana Blue 1] with
+| Some gs' =>
+  match targets with
+    | Some (c :: _) =>
+      match c.(permanent) with
+      | Some p =>
+        let new_card :=  tap c in
+        let new_battlefield := new_card :: remove_card gs.(battlefield) c in
+        mkGameState new_battlefield gs'.(hand) gs'.(library) gs'.(graveyard)
+                    gs'.(exile) gs'.(opponent) gs'.(manapool) gs'.(stack)
+                    gs'.(passive_abilities) gs'.(phase)
+      | None => gs
+      end
+    | _ => gs
+    end
+| None => gs
+end.
+
+Definition freed_from_the_realm_ability_2 (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
+match remove_card_costs gs [mkMana Blue 1] with
+| Some gs' =>
+  match targets with
+    | Some (c :: _) =>
+      match c.(permanent) with
+      | Some p =>
+        let new_card :=  untap c in
+        let new_battlefield := new_card :: remove_card gs.(battlefield) c in
+        mkGameState new_battlefield gs'.(hand) gs'.(library) gs'.(graveyard)
+                    gs'.(exile) gs'.(opponent) gs'.(manapool) gs'.(stack)
+                    gs'.(passive_abilities) gs'.(phase)
+      | None => gs
+      end
+    | _ => gs
+    end
+| None => gs
+end.
+
+Definition Dict_AA : list (nat * Activated_Ability) := [
+(1, siege_zombie_ability);
+(2, clock_of_omens_ability);
+(3, sanctum_weaver_ability);
+(4, freed_from_the_realm_ability_1);
+(5, freed_from_the_realm_ability_2)].
 
 
 End abilities_effects.

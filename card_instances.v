@@ -37,6 +37,16 @@ Definition colossal_dreadmaw (id : nat) : Card :=
   id
   ["Trample"].
 
+Definition abuelos_awakening (id : nat) : Card :=
+mkCard
+  None
+  None
+  (Some (mkSorcery [1]))
+  [mkMana White 1; mkMana Generic 2]
+  "Abuelo's Awakening"
+  id
+  nil.
+
 Definition birgi (id : nat) : Card := 
   mkCard 
   (Some (mkPermanent (* Est un permanent *)
@@ -208,8 +218,8 @@ Definition clock_of_omens (id : nat) : Card :=
 Definition sanctum_weaver (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
-    [(1,3)]
     nil
+    [3]
     None
     ["Dryad"]
     (Some (mkCreature 0 2))
@@ -226,15 +236,15 @@ Definition sanctum_weaver (id : nat) : Card :=
   id
   nil.
 
-Definition freed_from_the_realm (id : nat) : Card :=
+Definition freed_from_the_realm (id : nat) (id_card : nat) (card_name : string) : Card :=
   mkCard 
   (Some (mkPermanent
-    [(1,4);(1,5)]
     nil
+    [4;5]
     None
     nil
     None
-    (Some (mkEnchantement None))
+    (Some (mkEnchantement (Some (card_name, id_card))))
     None
     None
     false

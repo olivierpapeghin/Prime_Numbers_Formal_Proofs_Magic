@@ -356,7 +356,6 @@ Fixpoint beq_nat (n m : nat) : bool :=
   end.
 
 Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
- 
   let new_manapool :=
     map (fun m =>
       if eq_mana_color m.(color) mc then
@@ -481,6 +480,47 @@ Definition count_enchantments (cards : list Card) : nat :=
         end
     | None => acc
     end) cards 0.
+
+Definition is_aura (c : Card) : bool :=
+  match c.(permanent) with
+  | Some p =>
+      match p.(enchantement) with
+      | Some e =>
+          match e.(aura) with
+          | Some _ => true
+          | None => false
+          end
+      | None => false
+      end
+  | None => false
+  end.
+
+Definition is_valid_aura (gs : GameState) (c : Card) : bool :=
+  match c.(permanent) with
+  | Some p =>
+    match p.(enchantement) with
+    | Some e =>
+      match e.(aura) with
+      | Some (aura_name, aura_id) =>
+        (* Chercher une créature avec ce nom et cet id sur le champ de bataille *)
+        existsb
+          (fun c =>
+            match c.(permanent) with
+            | Some perm =>
+                match perm.(creature) with
+                | Some _ => String.eqb c.(name) aura_name && Nat.eqb c.(id) aura_id
+                | None => false
+                end
+            | None => false
+            end
+          )
+          gs.(battlefield)
+      | None => false (* Pas de cible d’aura indiquée *)
+      end
+    | None => false (* Ce permanent n’est pas un enchantement *)
+    end
+  | None => false
+  end.
 
 End utility_function.
 Export utility_function.
