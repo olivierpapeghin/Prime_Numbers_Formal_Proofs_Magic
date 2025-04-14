@@ -63,18 +63,6 @@ Definition next_phase (p : Phase) : Phase :=
   | EndingPhase => BeginningPhase 
   end.
 
-Definition phase_eqb (p1 p2 : Phase) : bool :=
-  match p1, p2 with
-  | BeginningPhase, BeginningPhase => true
-  | MainPhase1, MainPhase1 => true
-  | CombatPhase, CombatPhase => true
-  | MainPhase2, MainPhase2 => true
-  | EndingPhase, EndingPhase => true
-  | _, _ => false
-  end.
-
-
-
 
 Definition eq_mana (m1 m2 : Mana) : bool :=
   eq_mana_color m1.(color) m2.(color) && Nat.eqb m1.(quantity) m2.(quantity).
@@ -146,7 +134,6 @@ Definition phase_eqb (p1 p2 : Phase) : bool :=
   | EndingPhase, EndingPhase => true
   | _, _ => false
   end.
-
 
 (* Fonction principale de comparaison de deux base de cartes *)
 Definition eq_card_base (c1 c2 : Card) : bool :=
@@ -440,7 +427,9 @@ Definition add_abilities_to_stack (event_type : nat) (p : Permanent) (gs : GameS
       match pair with
       | (dict_id, ability_id) =>
         if beq_nat dict_id event_type then
-          let new_stack := (PairItem dict_id ability_id) :: gs'.(stack) in
+          let n := find_passive_ability_in_dict gs.(passive_abilities) AdditionalTrigger in
+          let repeated_items := repeat (PairItem dict_id ability_id) n in
+          let new_stack := repeated_items ++ gs'.(stack) in
           mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) new_stack gs.(passive_abilities) gs.(phase)
         else
           gs'

@@ -39,12 +39,12 @@ Definition gs3 : GameState := Resolve (Cast (life_and_limb 1) gs2) 0 None.
 Compute Resolve (Cast (colossal_dreadmaw 3) gs3) 0 None.
  *)
 
-(* Definition gs2 : GameState := Resolve (Cast (fractured_realm 1) initial_gamestate) 0 None.
+Definition gs2 : GameState := Resolve (Cast (fractured_realm 1) initial_gamestate) 0 None.
 Definition gs3 : GameState := Resolve (Cast (fractured_realm 2) gs2) 0 None.
-Definition gs4 : GameState := Resolve (Cast (fractured_realm 3) gs3) 0 None. *)
-Definition gs5 : GameState := Resolve (Cast (birgi 1) initial_gamestate) 0 None.
-Compute  Resolve (Resolve (Cast (colossal_dreadmaw 3) gs5) 0 None) 0 None.
-(* Compute Resolve (Resolve (Resolve (Resolve (Cast (colossal_dreadmaw 3) gs5) 0 None) 0 None) 0 None). *)
+Definition gs4 : GameState := Resolve (Cast (fractured_realm 3) gs3) 0 None.
+Definition gs5 : GameState := Resolve (Cast (birgi 1) gs4) 0 None.
+(* Compute  Resolve (Resolve (Cast (colossal_dreadmaw 3) gs5) 0 None) 0 None. *)
+Compute Resolve (Resolve (Resolve (Resolve (Cast (colossal_dreadmaw 3) gs5) 0 None) 0 None) 0 None).
 
 
 

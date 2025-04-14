@@ -168,7 +168,7 @@ match targets with
                         p.(enchantement)
                         p.(land)
                         (match p.(artifact) with
-                        | Some _ => Some mkArtifact
+                        | Some _ => Some (mkArtifact None)
                         | None => None
                         end)
                         true (* token := true *)
