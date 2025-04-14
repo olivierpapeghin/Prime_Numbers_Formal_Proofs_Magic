@@ -11,6 +11,8 @@ Require Import utility_functions.
 Import utility_function.
 Require Import card_instances.
 Import card_instance.
+Require Import passive_ability.
+Import passive_ability.
 Require Import abilities_effects.
 Import abilities_effects.
 
@@ -18,10 +20,14 @@ Local Open Scope string_scope.
 
 Module game_action.
 
+
+
   (* Fonction pour sacrifier des cartes et les déplacer vers le cimetière *)
 Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) : GameState :=
-  match last_option gs.(stack) with
-  | Some (CardItem c) => (* Si c'est une carte *)
+  let reverse_stack := rev gs.(stack) in  
+  match last_option reverse_stack with
+  | Some (CardItem c') => (* Si c'est une carte *)
+      let c := apply_passive_to_cast (get_active_passives (gs.(passive_abilities))) c' in
       match card_type c with
       | PermanentType => (* Si c'est un permanent *)
         let new_stack : list CardOrPair:= remove_last gs.(stack) in
@@ -37,7 +43,8 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
             match c_perm.(PassiveAbility) with
             | None => gs'
             | Some p_ability => 
-              mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) gs'.(stack) (update_passive_ability_in_dict gs'.(passive_abilities) p_ability true) gs'.(phase)
+              let _gs := mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) gs'.(stack) (update_passive_ability_in_dict gs'.(passive_abilities) p_ability (S (find_passive_ability_in_dict gs'.(passive_abilities) p_ability))) gs'.(phase) in
+              trigger_passive_effect _gs p_ability
             end
           end
         end
@@ -67,37 +74,40 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
 
 
 (* Fonction pour lancer une carte *)
-Definition Cast (c : Card) (gs : GameState) : GameState :=
-  let cost := c.(manacost) in
-  match remove_card_costs gs cost with
-  | None => gs (* Si les coûts ne peuvent pas être payés, retourne le GameState inchangé *)
-  | Some new_gs =>
-    if card_in_list c new_gs.(hand) && can_cast c new_gs.(phase) then
-      let new_hand := remove_card new_gs.(hand) c in
-      let new_stack := CardItem c :: new_gs.(stack) in
-      let intermediate_gs := mkGameState
-        new_gs.(battlefield)
-        new_hand
-        new_gs.(library)
-        new_gs.(graveyard)
-        new_gs.(exile)
-        new_gs.(opponent)
-        new_gs.(manapool)
-        new_stack
-        new_gs.(passive_abilities)
-        new_gs.(phase) in
-      (* Ajouter les abilities des permanents sur le battlefield au stack *)
-      let final_gs := fold_left (fun gs' perm =>
-        match perm.(permanent) with
-        | Some perm_data => add_abilities_to_stack 1 perm_data gs'
-        | None => gs'
-        end
-      ) new_gs.(battlefield) intermediate_gs in
-      final_gs
-    else
-      gs (* Si la carte ne peut pas être lancée, retourne le GameState inchangé *)
+Definition Cast (c' : Card) (gs : GameState) : GameState :=
+  match find_card_in_list c' gs.(hand) with
+  | None => gs
+  | Some c =>
+    let cost := c.(manacost) in
+    match remove_card_costs gs cost with
+    | None => gs (* Si les coûts ne peuvent pas être payés, retourne le GameState inchangé *)
+    | Some new_gs =>
+      if card_in_list c new_gs.(hand) && can_cast c new_gs.(phase) then
+        let new_hand := remove_card new_gs.(hand) c in
+        let new_stack := CardItem c :: new_gs.(stack) in
+        let intermediate_gs := mkGameState
+          new_gs.(battlefield)
+          new_hand
+          new_gs.(library)
+          new_gs.(graveyard)
+          new_gs.(exile)
+          new_gs.(opponent)
+          new_gs.(manapool)
+          new_stack
+          new_gs.(passive_abilities)
+          new_gs.(phase) in
+        (* Ajouter les abilities des permanents sur le battlefield au stack *)
+        let final_gs := fold_left (fun gs' perm =>
+          match perm.(permanent) with
+          | Some perm_data => add_abilities_to_stack 1 perm_data gs'
+          | None => gs'
+          end
+        ) new_gs.(battlefield) intermediate_gs in
+        final_gs
+      else
+        gs (* Si la carte ne peut pas être lancée, retourne le GameState inchangé *)
+    end
   end.
-
 
 (* Fonction pour activer une capacité *)
 Definition activate_ability

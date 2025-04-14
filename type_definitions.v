@@ -41,17 +41,25 @@ Inductive Phase :=
   | MainPhase2
   | EndingPhase.
 
+Record Sorcery := mkSorcery {
+  Spell : list nat;
+}.
+
+Record Instant := mkInstant {
+  spell : list nat;
+}.
+
 Record Creature := mkCreature {
   power : nat;
   toughness : nat
 }.
 
 Record Enchantement := mkEnchantement {
-  
+  aura : option (string * nat) (* On retrouve la carte à laquelle est rattachée l'aura via son nom et son id *)
 }.
 
 Record Artifact := mkArtifact {
-
+  isochron : option Instant
 }.
 
 Record Land := mkLand {
@@ -68,10 +76,10 @@ Inductive PassiveKey :=
   | SaprolingsLands.
 
 (* Définition du dict pour indiquer si les abilitées passives sont activées *)
-Definition PassiveAbilityDict := list (PassiveKey * bool).
+Definition PassiveAbilityDict := list (PassiveKey * nat).
 
 (* dict de base pour indiquer si les abilitées passives sont activées *)
-Definition DefaultListPassiveAbility : PassiveAbilityDict := [(AllSaprolings, false); (AllFlash, false); (DoubleToken, false); (AdditionalTrigger, false); (NoLegendaryRule, false)].
+Definition DefaultListPassiveAbility : PassiveAbilityDict := [(AllSaprolings, 0); (AllFlash, 0); (DoubleToken, 0); (AdditionalTrigger, 0); (NoLegendaryRule, 0);(SaprolingsLands, 0)].
 
 Record Permanent := mkPermanent {
   Abilities : list (nat * nat);
@@ -85,14 +93,6 @@ Record Permanent := mkPermanent {
   token : bool;
   legendary : bool;
   tapped : bool;
-}.
-
-Record Sorcery := mkSorcery {
-  Spell : list nat;
-}.
-
-Record Instant := mkInstant {
-  spell : list nat;
 }.
 
 Record Card := mkCard {

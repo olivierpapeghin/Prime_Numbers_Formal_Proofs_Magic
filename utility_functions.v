@@ -137,6 +137,16 @@ Definition eq_card (c1 c2 : Card) : bool :=
   String.eqb c1.(name) c2.(name) &&
   Nat.eqb c1.(id) c2.(id).
 
+Definition phase_eqb (p1 p2 : Phase) : bool :=
+  match p1, p2 with
+  | BeginningPhase, BeginningPhase => true
+  | MainPhase1, MainPhase1 => true
+  | CombatPhase, CombatPhase => true
+  | MainPhase2, MainPhase2 => true
+  | EndingPhase, EndingPhase => true
+  | _, _ => false
+  end.
+
 
 (* Fonction principale de comparaison de deux base de cartes *)
 Definition eq_card_base (c1 c2 : Card) : bool :=
@@ -215,17 +225,22 @@ Fixpoint remove_card_costs (game_state : GameState) (costs : list Mana) : option
   end.
 
 
+(* Définition d'une fonction pour vérifier la présence d'un élément dans une liste *)
+Fixpoint find_card_in_list (c : Card) (l : list Card) : option Card :=
+  match l with
+  | [] => None
+  | h :: t => if String.eqb c.(name) h.(name) && Nat.eqb c.(id) h.(id) then (Some h) else find_card_in_list c t
+  end.
 
 
-
-Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
+Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : nat :=
   match dict with
-  | nil => false
+  | nil => 0
   | (k, activated) :: rest =>
     if eq_passive_key k key then activated else find_passive_ability_in_dict  rest key
   end.
 
-Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : bool) : PassiveAbilityDict :=
+Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : nat) : PassiveAbilityDict :=
   match dict with
   | nil => nil
   | (k, activated) :: rest =>
@@ -277,7 +292,7 @@ Definition check_legendary_rule (gs: GameState) (c: Card) : bool :=
   match c.(permanent) with
   | None => true
   | Some perm =>
-    if (negb (find_passive_ability_in_dict gs.(passive_abilities) NoLegendaryRule)) && perm.(legendary) then
+    if (Nat.ltb (find_passive_ability_in_dict (passive_abilities gs) NoLegendaryRule) 1) && perm.(legendary) then
       is_card_base_in gs.(battlefield) c
     else 
       true
@@ -347,8 +362,6 @@ Fixpoint beq_nat (n m : nat) : bool :=
   | _, _ => false
   end.
 
-
-
 Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
  
   let new_manapool :=
@@ -360,8 +373,6 @@ Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
     ) gs.(manapool)
   in
   mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_abilities) gs.(phase).
-
-
 
 (* Vérifie si un élément est présent dans une liste d'entiers *)
 Fixpoint List_In_nat (x : nat) (l : list nat) : bool :=
@@ -481,6 +492,16 @@ Definition advance_phase (gs : GameState) : GameState :=
   else
   intermediate_gs.
 
+Definition count_enchantments (cards : list Card) : nat :=
+  fold_left (fun acc c =>
+    match c.(permanent) with
+    | Some p =>
+        match p.(enchantement) with
+        | Some _ => acc + 1
+        | None => acc
+        end
+    | None => acc
+    end) cards 0.
 
 End utility_function.
 Export utility_function.
