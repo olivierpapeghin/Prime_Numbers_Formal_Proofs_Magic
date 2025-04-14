@@ -63,10 +63,17 @@ Definition next_phase (p : Phase) : Phase :=
   | EndingPhase => BeginningPhase 
   end.
 
-Definition advance_phase (gs : GameState) : GameState :=
-  let new_phase := next_phase gs.(phase) in
-  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard)
-              gs.(exile) gs.(opponent) gs.(manapool) gs.(stack) gs.(passive_abilities) new_phase.
+Definition phase_eqb (p1 p2 : Phase) : bool :=
+  match p1, p2 with
+  | BeginningPhase, BeginningPhase => true
+  | MainPhase1, MainPhase1 => true
+  | CombatPhase, CombatPhase => true
+  | MainPhase2, MainPhase2 => true
+  | EndingPhase, EndingPhase => true
+  | _, _ => false
+  end.
+
+
 
 
 Definition eq_mana (m1 m2 : Mana) : bool :=
@@ -356,7 +363,6 @@ Fixpoint beq_nat (n m : nat) : bool :=
   end.
 
 Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
- 
   let new_manapool :=
     map (fun m =>
       if eq_mana_color m.(color) mc then
@@ -450,12 +456,12 @@ Definition has_keyword (kw : string) (c : Card) : bool :=
 Definition can_cast (c : Card) (p : Phase) : bool :=
   match c with
   | mkCard _ _ (Some _) _ _ _ _ => (* It's a Sorcery *)
-      if has_keyword "flash" c then true
+      if has_keyword "Flash" c then true
       else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
       else false
   | mkCard _ (Some _) _ _ _ _ _ => true (* An Instant can be played anytime *)
   | mkCard (Some _) _ _ _ _ _ _ => (* A Permanent *)
-      if has_keyword "flash" c then true
+      if has_keyword "Flash" c then true
       else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
       else false
   | _ => false
@@ -471,6 +477,20 @@ Definition is_untapped_artifact (c : Card) : bool :=
   | None => false
   end.
 
+Definition advance_phase (gs : GameState) : GameState :=
+  let new_phase := next_phase gs.(phase) in
+  let intermediate_gs := mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard)
+              gs.(exile) gs.(opponent) gs.(manapool) gs.(stack) gs.(passive_abilities) new_phase in
+  if phase_eqb new_phase EndingPhase then  
+  fold_left (fun gs' card =>
+  match card.(permanent) with
+    | Some perm_data => add_abilities_to_stack 2 perm_data gs'
+    | None => gs'
+    end
+  ) gs.(battlefield) intermediate_gs
+  else
+  intermediate_gs.
+
 Definition count_enchantments (cards : list Card) : nat :=
   fold_left (fun acc c =>
     match c.(permanent) with
@@ -481,6 +501,47 @@ Definition count_enchantments (cards : list Card) : nat :=
         end
     | None => acc
     end) cards 0.
+
+Definition is_aura (c : Card) : bool :=
+  match c.(permanent) with
+  | Some p =>
+      match p.(enchantement) with
+      | Some e =>
+          match e.(aura) with
+          | Some _ => true
+          | None => false
+          end
+      | None => false
+      end
+  | None => false
+  end.
+
+Definition is_valid_aura (gs : GameState) (c : Card) : bool :=
+  match c.(permanent) with
+  | Some p =>
+    match p.(enchantement) with
+    | Some e =>
+      match e.(aura) with
+      | Some (aura_name, aura_id) =>
+        (* Chercher une créature avec ce nom et cet id sur le champ de bataille *)
+        existsb
+          (fun c =>
+            match c.(permanent) with
+            | Some perm =>
+                match perm.(creature) with
+                | Some _ => String.eqb c.(name) aura_name && Nat.eqb c.(id) aura_id
+                | None => false
+                end
+            | None => false
+            end
+          )
+          gs.(battlefield)
+      | None => false (* Pas de cible d’aura indiquée *)
+      end
+    | None => false (* Ce permanent n’est pas un enchantement *)
+    end
+  | None => false
+  end.
 
 End utility_function.
 Export utility_function.

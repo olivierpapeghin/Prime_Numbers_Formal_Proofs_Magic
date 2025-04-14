@@ -30,33 +30,37 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
       let c := apply_passive_to_cast (get_active_passives (gs.(passive_abilities))) c' in
       match card_type c with
       | PermanentType => (* Si c'est un permanent *)
-        let new_stack : list CardOrPair:= remove_last gs.(stack) in
-        let new_battlefield : list Card := c :: gs.(battlefield) in
-        let gs' : GameState := mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack gs.(passive_abilities) gs.(phase) in
-        match check_legendary_rule gs c with
-        | false => (* Il y a déjà une instance de cette carte légendaire sur le champ de bataille *)
-        sacrifice gs' [c]
-        | true => (* Pas de problèmes de carte légendaire *)
-          match c.(permanent) with
-          | None => gs'
-          | Some c_perm =>
-            match c_perm.(PassiveAbility) with
+        let new_stack : list CardOrPair:= remove_last reverse_stack in
+        if is_aura c && negb (is_valid_aura gs c) then (* Si on essaie de resolve une aura invalide *)
+          let new_graveyard : list Card :=c :: gs.(graveyard) in
+          mkGameState gs.(battlefield) gs.(hand) gs.(library) new_graveyard gs.(exile) gs.(opponent) gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
+        else
+          let new_battlefield : list Card := c :: gs.(battlefield) in
+          let gs' : GameState := mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) gs.(manapool) new_stack gs.(passive_abilities) gs.(phase) in
+          match check_legendary_rule gs c with
+          | false => (* Il y a déjà une instance de cette carte légendaire sur le champ de bataille *)
+          sacrifice gs' [c]
+          | true => (* Pas de problèmes de carte légendaire *)
+            match c.(permanent) with
             | None => gs'
-            | Some p_ability => 
-              let _gs := mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) gs'.(stack) (update_passive_ability_in_dict gs'.(passive_abilities) p_ability (S (find_passive_ability_in_dict gs'.(passive_abilities) p_ability))) gs'.(phase) in
-              trigger_passive_effect _gs p_ability
+            | Some c_perm =>
+              match c_perm.(PassiveAbility) with
+              | None => gs'
+              | Some p_ability => 
+                let _gs := mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) gs'.(stack) (update_passive_ability_in_dict gs'.(passive_abilities) p_ability true) gs'.(phase) in
+                trigger_passive_effect _gs p_ability
+              end
             end
           end
-        end
       | InstantType => 
         let new_gs : GameState := activate_spell non_permanent_abilities key targets gs in
-        let new_stack : list CardOrPair:= remove_last gs.(stack) in
+        let new_stack : list CardOrPair:= remove_last reverse_stack in
         let new_graveyard : list Card := c :: new_gs.(graveyard) in
         mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_graveyard new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
 
         | SorceryType => 
         let new_gs : GameState := activate_spell non_permanent_abilities key targets gs in
-        let new_stack : list CardOrPair:= remove_last gs.(stack) in
+        let new_stack : list CardOrPair:= remove_last reverse_stack in
         let new_graveyard : list Card := c :: new_gs.(graveyard) in
         mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_graveyard new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
 
@@ -65,7 +69,7 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
   | Some (PairItem dict_id ability_id) =>
       (* Activer l'ability correspondante *)
       let new_gs := activate_triggered_ability Triggered_Abilities dict_id ability_id targets gs in
-      let new_stack : list CardOrPair:= remove_last gs.(stack) in
+      let new_stack : list CardOrPair:= remove_last reverse_stack in
       mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
 
   | None => gs (* Si la stack est vide, on ne fait rien *)
@@ -147,8 +151,6 @@ Definition activate_ability
     else
       gs (* L'index n'est pas dans la liste des capacités activées *)
   end.
-
-
 
 End game_action.
 Export game_action.
