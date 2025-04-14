@@ -76,10 +76,10 @@ Inductive PassiveKey :=
   | SaprolingsLands.
 
 (* Définition du dict pour indiquer si les abilitées passives sont activées *)
-Definition PassiveAbilityDict := list (PassiveKey * bool).
+Definition PassiveAbilityDict := list (PassiveKey * nat).
 
 (* dict de base pour indiquer si les abilitées passives sont activées *)
-Definition DefaultListPassiveAbility : PassiveAbilityDict := [(AllSaprolings, false); (AllFlash, false); (DoubleToken, false); (AdditionalTrigger, false); (NoLegendaryRule, false);(SaprolingsLands, false)].
+Definition DefaultListPassiveAbility : PassiveAbilityDict := [(AllSaprolings, 0); (AllFlash, 0); (DoubleToken, 0); (AdditionalTrigger, 0); (NoLegendaryRule, 0);(SaprolingsLands, 0)].
 
 Record Permanent := mkPermanent {
   Abilities : list (nat * nat);

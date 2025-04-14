@@ -162,6 +162,27 @@ Definition life_and_limb (id : nat) : Card :=
   "Life and Limb"
   id
   nil.
+  
+Definition fractured_realm (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    nil
+    (Some AdditionalTrigger)
+    nil
+    None
+    (Some mkEnchantement)
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Blue 2); (mkMana Generic 5) ]
+  "Fractured Realm"
+  id
+  nil.
 
 Definition desecration_elemental (id : nat) : Card :=
   mkCard 
