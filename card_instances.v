@@ -193,6 +193,27 @@ Definition fractured_realm (id : nat) : Card :=
   "Fractured Realm"
   id
   nil.
+  
+Definition parallel_lives (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    nil
+    (Some DoubleToken)
+    nil
+    None
+    (Some (mkEnchantement None))
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Blue 2); (mkMana Generic 5) ]
+  "Fractured Realm"
+  id
+  nil.
 
 Definition desecration_elemental (id : nat) : Card :=
   mkCard 
