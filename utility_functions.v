@@ -576,7 +576,7 @@ Fixpoint count_tokens (cards : list Card) : nat :=
     end
   end.
 
-Definition create_token (c : Card) (gs : GameState) : GameState :=
+Definition create_token (c : Card) (nb_land : nat) (gs : GameState) : GameState :=
   match c.(permanent) with
   |Some p => if check_token c then 
           let nb_token := count_tokens gs.(battlefield) +1 in
@@ -587,7 +587,7 @@ Definition create_token (c : Card) (gs : GameState) : GameState :=
                         p.(ListActivated)
                         p.(PassiveAbility)
                         p.(subtype)
-                        p.(creature)
+                        (Some (mkCreature nb_land nb_land))
                         p.(enchantement)
                         p.(land)
                         p.(artifact)
