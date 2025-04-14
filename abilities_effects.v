@@ -181,68 +181,53 @@ Definition sacrifice_end_step (targets : option (list Card)) (gs : GameState) : 
 Definition myrkul_ability (targets : option (list Card)) (gs : GameState) : GameState :=
   match targets with
   | None => gs (* Pas de cible, on ne fait rien *)
-  | Some target_list => 
-    (* On doit ensuite vérifier qu'on a qu'une seule cible *)
-    if Nat.eqb (List.length target_list) 1 then 
-      (* On crée un permanent token qui copie la cible et la transforme en enchantement *)
-      match hd_error target_list with
-      | Some target =>
-      if (match target.(permanent) with | Some _ => true | None => false end) then
-        let new_card : Card := mkCard 
-          (Some (mkPermanent (* Est un permanent *)
-            target.(permanent).Abilities
-            target.(permanent).ListActivated
-            target.(permanent).PassiveAbility
-            target.(permanent).subtype
-            None
-            (Some (mkEnchantement None))
-            None
-            None
-            true
-            target.(permanent).legendary
-            target.(permanent).tapped))
-          None (* N'est pas un instant *)
-          None (* N'est pas un sorcery *)
-          target.(manacost)
-          target.(name)
-          target.(id)
-          target.(keywords) in
-        (* On enlève la cible du cimetière pour la mettre dans l'exil et on ajoute la nouvelle carte au champ de bataille *)
-        let new_graveyard : list Card := remove_card gs target in
-        let new_exile : list Card := target :: gs.(exile) in
-        let new_battlefield : list Card := new_card :: gs.(battlefield) in
-        mkGameState new_battlefield gs.(hand) gs.(library) new_graveyard
-                      new_exile gs.(opponent) gs.(manapool) gs.(stack)
-                      gs.(passive_abilities) gs.(phase)
-      else
-        gs
-      | None => gs
-      end
-    else
-    gs
+  | Some target_list =>
+      if Nat.eqb (List.length target_list) 1 then
+        match hd_error target_list with
+        | Some target =>
+            match target.(permanent) with
+            | Some p =>
+                let new_perm := mkPermanent
+                  p.(Abilities)
+                  p.(ListActivated)
+                  p.(PassiveAbility)
+                  p.(subtype)
+                  None (* On retire le type créature *)
+                  (Some (mkEnchantement None)) (* Devient un enchantement *)
+                  None
+                  None
+                  true (* Est un jeton *)
+                  p.(legendary)
+                  p.(tapped) in
+
+                let new_card := mkCard
+                  (Some new_perm)
+                  None
+                  None
+                  target.(manacost)
+                  target.(name)
+                  target.(id)
+                  target.(keywords) in
+
+                let new_graveyard := remove_card gs.(graveyard) target in
+                let new_exile := target :: gs.(exile) in
+                let new_battlefield := new_card :: gs.(battlefield) in
+
+                mkGameState new_battlefield gs.(hand) gs.(library) new_graveyard
+                            new_exile gs.(opponent) gs.(manapool) gs.(stack)
+                            gs.(passive_abilities) gs.(phase)
+            | None => gs
+            end
+        | None => gs
+        end
+      else gs
   end.
+
 
 
 Definition isochron_scepter_enter (targets : option (list Card)) (gs : GameState) : GameState :=
   gs.
 
-(* Définition des sous-dictionnaires *)
-Definition OnCast : Dict := [(1,birgi_ability); (2, desecration_elemental)].
-Definition OnPhase : Dict := [(1,sacrifice_end_step)].
-Definition zimone_ability (targets : option (list Card)) (gs : GameState) : GameState := 
-  match targets with
-  | Some t => gs
-  | None => let nb_lands := count_lands gs.(battlefield) in
-            if is_prime nb_lands then create_token (primo 0) gs
-            else gs
-  end.
-
-Definition isochron_scepter_enter (targets : option (list Card)) (gs : GameState) : GameState :=
-  gs.
-
-(* Définition des sous-dictionnaires *)
-Definition OnCast : Dict := [(1,birgi_ability); (2, desecration_elemental)].
-Definition OnPhase : Dict := [(1,sacrifice_end_step)].
 Definition zimone_ability (targets : option (list Card)) (gs : GameState) : GameState := 
   match targets with
   | Some t => gs
