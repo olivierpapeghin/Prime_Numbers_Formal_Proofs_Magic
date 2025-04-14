@@ -41,17 +41,25 @@ Inductive Phase :=
   | MainPhase2
   | EndingPhase.
 
+Record Sorcery := mkSorcery {
+  Spell : list nat;
+}.
+
+Record Instant := mkInstant {
+  spell : list nat;
+}.
+
 Record Creature := mkCreature {
   power : nat;
   toughness : nat
 }.
 
 Record Enchantement := mkEnchantement {
-  
+  aura : option (string * nat) (* On retrouve la carte à laquelle est rattachée l'aura via son nom et son id *)
 }.
 
 Record Artifact := mkArtifact {
-
+  isochron : option Instant
 }.
 
 Record Land := mkLand {
@@ -85,14 +93,6 @@ Record Permanent := mkPermanent {
   token : bool;
   legendary : bool;
   tapped : bool;
-}.
-
-Record Sorcery := mkSorcery {
-  Spell : list nat;
-}.
-
-Record Instant := mkInstant {
-  spell : list nat;
 }.
 
 Record Card := mkCard {

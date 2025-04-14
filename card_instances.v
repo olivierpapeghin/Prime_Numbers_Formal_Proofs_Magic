@@ -89,7 +89,7 @@ Definition mirror_gallery (id : nat) : Card :=
     None
     None
     None
-    (Some mkArtifact)
+    (Some (mkArtifact None))
     false
     false
     false))
@@ -108,7 +108,7 @@ Definition leyline_of_transformation (id : nat) : Card :=
     (Some AllSaprolings)
     nil
     None
-    (Some mkEnchantement)
+    (Some (mkEnchantement None))
     None
     None
     false
@@ -129,7 +129,7 @@ Definition leyline_of_anticipation (id : nat) : Card :=
     (Some AllFlash)
     nil
     None
-    (Some mkEnchantement)
+    (Some (mkEnchantement None))
     None
     None
     false
@@ -150,7 +150,7 @@ Definition life_and_limb (id : nat) : Card :=
     (Some SaprolingsLands)
     nil
     None
-    (Some mkEnchantement)
+    (Some (mkEnchantement None))
     None
     None
     false
@@ -194,14 +194,56 @@ Definition clock_of_omens (id : nat) : Card :=
     None
     None
     None
-    (Some (mkArtifact))
+    (Some (mkArtifact None))
     false
     false
     false))
   None
   None
-  [(mkMana Generic 4) ]
+  [(mkMana Generic 4)]
   "Clock of Omens"
+  id
+  nil.
+
+Definition sanctum_weaver (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    [(1,3)]
+    nil
+    None
+    ["Dryad"]
+    (Some (mkCreature 0 2))
+    (Some (mkEnchantement None))
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Green 1);(mkMana Generic 1) ]
+  "Sanctum Weaver"
+  id
+  nil.
+
+Definition freed_from_the_realm (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    [(1,4);(1,5)]
+    nil
+    None
+    nil
+    None
+    (Some (mkEnchantement None))
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Blue 1);(mkMana Generic 2) ]
+  "Freed from the realm"
   id
   nil.
 

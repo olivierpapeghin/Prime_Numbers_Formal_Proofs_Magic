@@ -350,8 +350,6 @@ Fixpoint beq_nat (n m : nat) : bool :=
   | _, _ => false
   end.
 
-
-
 Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
  
   let new_manapool :=
@@ -363,8 +361,6 @@ Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
     ) gs.(manapool)
   in
   mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_abilities) gs.(phase).
-
-
 
 (* Vérifie si un élément est présent dans une liste d'entiers *)
 Fixpoint List_In_nat (x : nat) (l : list nat) : bool :=
@@ -469,6 +465,17 @@ Definition is_untapped_artifact (c : Card) : bool :=
       end
   | None => false
   end.
+
+Definition count_enchantments (cards : list Card) : nat :=
+  fold_left (fun acc c =>
+    match c.(permanent) with
+    | Some p =>
+        match p.(enchantement) with
+        | Some _ => acc + 1
+        | None => acc
+        end
+    | None => acc
+    end) cards 0.
 
 End utility_function.
 Export utility_function.

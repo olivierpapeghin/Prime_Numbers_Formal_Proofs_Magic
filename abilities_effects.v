@@ -244,7 +244,30 @@ Definition clock_of_omens_ability (target_cost : option (list Card)) (targets : 
   | _, _ => gs
   end.
 
-Definition Dict_AA : list (nat * Activated_Ability) := [(1, siege_zombie_ability);(2, clock_of_omens_ability)].
+Definition freed_from_the_realm_ability_1 (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
+
+
+(* Ici on modifie légèrement l'abilité, on fixe la couleur du mana ajouté à bleue *)
+Definition sanctum_weaver_ability (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
+  match target_cost with
+  | Some [card] =>
+      match card.(permanent) with
+      | Some _ =>
+          let nb_enchantements := count_enchantments gs.(battlefield) in
+          let new_mana :=  (add_mana gs Blue nb_enchantements).(manapool) in
+          let new_battlefield := 
+          map (fun c =>
+             if eq_card c card then tap c else c
+          ) gs.(battlefield) in
+          mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard)
+                      gs.(exile) gs.(opponent) new_mana gs.(stack)
+                      gs.(passive_abilities) gs.(phase)
+      | None => gs
+      end
+  | _ => gs
+  end.
+
+Definition Dict_AA : list (nat * Activated_Ability) := [(1, siege_zombie_ability);(2, clock_of_omens_ability);(3, sanctum_weaver_ability)].
 
 
 End abilities_effects.
