@@ -7,6 +7,8 @@ Require Import type_definitions.
 Import type_definition.
 Require Import utility_functions.
 Import utility_function.
+Require Import card_instances.
+Import card_instance.
 
 Local Open Scope string_scope.
 
@@ -219,9 +221,17 @@ Definition sacrifice_end_step (targets : option (list Card)) (gs : GameState) : 
   | None => gs
   end.
 
+Definition zimone_ability (targets : option (list Card)) (gs : GameState) : GameState := 
+  match targets with
+  | Some t => gs
+  | None => let nb_lands := count_lands gs.(battlefield) in
+            if is_prime nb_lands then create_token (primo 0) gs
+            else gs
+  end.
+
 (* Définition des sous-dictionnaires *)
 Definition OnCast : Dict := [(1,birgi_ability)].
-Definition OnPhase : Dict := [(1,sacrifice_end_step)].
+Definition OnPhase : Dict := [(1,sacrifice_end_step);(2,zimone_ability)].
 Definition OnDeath : Dict := nil.
 Definition OnEnter : Dict := nil.
 
