@@ -151,6 +151,7 @@ Definition eq_passive_key (c1 c2 : PassiveKey) : bool :=
   | AdditionalTrigger, AdditionalTrigger => true
   | NoLegendaryRule, NoLegendaryRule => true
   | SaprolingsLands, SaprolingsLands => true
+  | LandPlayed, LandPlayed => true
   | _, _ => false
   end.
 
