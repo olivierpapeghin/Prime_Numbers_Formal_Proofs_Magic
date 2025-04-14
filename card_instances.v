@@ -241,7 +241,7 @@ Definition narsets_reversal (id : nat) : Card :=
     None 
     (Some (mkInstant [2]))
     None
-    [(mkMana Blue 1); (mkMana Blue 1) ]
+    [(mkMana Blue 2)]
     "Narset's Reversal"
     id
     nil.
@@ -255,6 +255,7 @@ Definition molten_duplication (id : nat) : Card :=
   "Molten Duplication"
   id
   nil.
+
 Definition sanctum_weaver (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
@@ -294,6 +295,68 @@ Definition freed_from_the_realm (id : nat) (id_card : nat) (card_name : string) 
   None
   [(mkMana Blue 1);(mkMana Generic 2) ]
   "Freed from the realm"
+  id
+  nil.
+
+Definition isochron_scepter (id: nat) : Card :=
+  mkCard
+  (Some (mkPermanent
+  [(4,1)]
+  [6]
+  None
+  nil
+  None
+  None
+  None
+  (Some (mkArtifact ( None)))
+  false
+  false
+  false))
+  None
+  None
+  [ (mkMana Generic 2)]
+  "Isochron Scepter"
+  id
+  ["Imprint"].
+Definition zimone (id : nat) : Card := 
+  mkCard 
+  (Some (mkPermanent (* Est un permanent *)
+    [(2,1)] (* La liste des capacités déclenchées *)
+    nil
+    None
+    ["Human Wizard"]
+    (Some (mkCreature 1 1)) (* Est une créature 6/6*)
+    None (* N'est pas un enchantement *)
+    None (* N'est pas un artifact *)
+    None (* N'est pas une land *)
+    false (* N'est pas un token *)
+    true (* Est légendaire *)
+    false)) (* N'est pas tapped *)
+  None (* N'est pas un instant *)
+  None (* N'est pas un sorcery *)
+  [mkMana Green 1; mkMana Generic 1; mkMana Blue 1]
+  "Zimone, All-Questioning"
+  id
+  nil.
+
+Definition primo (id : nat) : Card := 
+  mkCard 
+  (Some (mkPermanent (* Est un permanent *)
+    nil (* La liste des capacités déclenchées *)
+    nil
+    None
+    ["Fractal"]
+    (Some (mkCreature 0 0)) (* Est une créature 6/6*)
+    None (* N'est pas un enchantement *)
+    None (* N'est pas un artifact *)
+    None (* N'est pas une land *)
+    true (* Est un token *)
+    false (* N'est pas légendaire *)
+    false)) (* N'est pas tapped *)
+  None (* N'est pas un instant *)
+  None (* N'est pas un sorcery *)
+  []
+  "Primo, The Indivisible"
   id
   nil.
 

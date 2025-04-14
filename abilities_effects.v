@@ -7,6 +7,8 @@ Require Import type_definitions.
 Import type_definition.
 Require Import utility_functions.
 Import utility_function.
+Require Import card_instances.
+Import card_instance.
 
 Local Open Scope string_scope.
 
@@ -170,6 +172,12 @@ Definition desecration_elemental (targets : option (list Card)) (gs : GameState)
     gs
   end.
 
+Definition sacrifice_end_step (targets : option (list Card)) (gs : GameState) : GameState :=
+  match targets with
+  | Some target_list => sacrifice gs target_list
+  | None => gs
+  end.
+
 Definition myrkul_ability (targets : option (list Card)) (gs : GameState) : GameState :=
   match targets with
   | None => gs (* Pas de cible, on ne fait rien *)
@@ -214,11 +222,40 @@ Definition myrkul_ability (targets : option (list Card)) (gs : GameState) : Game
     gs
   end.
 
+
+Definition isochron_scepter_enter (targets : option (list Card)) (gs : GameState) : GameState :=
+  gs.
+
+(* Définition des sous-dictionnaires *)
+Definition OnCast : Dict := [(1,birgi_ability); (2, desecration_elemental)].
+Definition OnPhase : Dict := [(1,sacrifice_end_step)].
+Definition zimone_ability (targets : option (list Card)) (gs : GameState) : GameState := 
+  match targets with
+  | Some t => gs
+  | None => let nb_lands := count_lands gs.(battlefield) in
+            if is_prime nb_lands then create_token (primo 0) gs
+            else gs
+  end.
+
+Definition isochron_scepter_enter (targets : option (list Card)) (gs : GameState) : GameState :=
+  gs.
+
+(* Définition des sous-dictionnaires *)
+Definition OnCast : Dict := [(1,birgi_ability); (2, desecration_elemental)].
+Definition OnPhase : Dict := [(1,sacrifice_end_step)].
+Definition zimone_ability (targets : option (list Card)) (gs : GameState) : GameState := 
+  match targets with
+  | Some t => gs
+  | None => let nb_lands := count_lands gs.(battlefield) in
+            if is_prime nb_lands then create_token (primo 0) gs
+            else gs
+  end.
+
 (* Définition des sous-dictionnaires *)
 Definition OnCast : Dict := [(1,birgi_ability)].
-Definition OnPhase : Dict := nil.
+Definition OnPhase : Dict := [(1,sacrifice_end_step);(2,zimone_ability)].
 Definition OnDeath : Dict := nil.
-Definition OnEnter : Dict := nil.
+Definition OnEnter : Dict := [(1,isochron_scepter_enter)].
 
 
 (* Définition du dictionnaire principal avec des clés de type string *)
@@ -346,12 +383,18 @@ match remove_card_costs gs [mkMana Blue 1] with
 | None => gs
 end.
 
+Definition isochron_scepter_ability (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
+gs.
+
+
+
 Definition Dict_AA : list (nat * Activated_Ability) := [
 (1, siege_zombie_ability);
 (2, clock_of_omens_ability);
 (3, sanctum_weaver_ability);
 (4, freed_from_the_realm_ability_1);
-(5, freed_from_the_realm_ability_2)].
+(5, freed_from_the_realm_ability_2);
+(6, isochron_scepter_ability)].
 
 
 End abilities_effects.
