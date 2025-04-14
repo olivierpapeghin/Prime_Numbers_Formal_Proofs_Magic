@@ -120,6 +120,11 @@ Definition Swamp (id : nat) : Card :=
   id
   nil.
 
+Definition lands_gs : GameState := mkGameState [Forest 1; Forest 2; Forest 3] nil nil nil nil 20 [mkMana Green 0; mkMana Red 0; mkMana Blue 0 ;mkMana White 0 ; mkMana Black 0 ;mkMana Generic 0] nil DefaultListPassiveAbility BeginningPhase.
+
+
+
+
 End Land_cards.
 
 Export Land_cards.

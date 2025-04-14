@@ -15,6 +15,8 @@ Require Import passive_ability.
 Import passive_ability.
 Require Import abilities_effects.
 Import abilities_effects.
+Require Import Land_cards_def.
+Import Land_cards.
 
 Local Open Scope string_scope.
 
@@ -162,6 +164,10 @@ Definition Play_land (c : Card) (gs : GameState) : GameState :=
   else
     gs.
     
+
+Definition Initial_GS : GameState := mkGameState [zimone 1; Forest 3; Forest 4; Forest 5] [Forest 2] nil nil nil 20 [mkMana Green 0; mkMana Red 0; mkMana Blue 0 ;mkMana White 0 ; mkMana Black 0 ;mkMana Generic 0] nil DefaultListPassiveAbility MainPhase2.
+Definition test := Play_land (Forest 2) Initial_GS.
+Compute activate_triggered_ability Triggered_Abilities 2 2 None test.
 
 End game_action.
 Export game_action.

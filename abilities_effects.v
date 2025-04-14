@@ -2,6 +2,7 @@ From Coq Require Import Strings.String.
 From Coq Require Import Lists.List.
 Require Import List String.
 Require Import Bool.Bool.
+Require Import Coq.Arith.Arith.
 Import ListNotations.
 Require Import type_definitions.
 Import type_definition.
@@ -9,6 +10,8 @@ Require Import utility_functions.
 Import utility_function.
 Require Import card_instances.
 Import card_instance.
+Require Import passive_ability.
+Import passive_ability.
 
 Local Open Scope string_scope.
 
@@ -224,8 +227,9 @@ Definition sacrifice_end_step (targets : option (list Card)) (gs : GameState) : 
 Definition zimone_ability (targets : option (list Card)) (gs : GameState) : GameState := 
   match targets with
   | Some t => gs
-  | None => let nb_lands := count_lands gs.(battlefield) in
-            if is_prime nb_lands then create_token (primo 0) gs
+  | None => let nb_lands := count_lands gs.(battlefield) in 
+            let is_land_played := find_passive_ability_in_dict gs.(passive_abilities) LandPlayed in
+            if is_prime nb_lands && Nat.ltb 0 is_land_played then create_token (primo 0) nb_lands gs
             else gs
   end.
 
@@ -367,6 +371,7 @@ Definition Dict_AA : list (nat * Activated_Ability) := [
 (3, sanctum_weaver_ability);
 (4, freed_from_the_realm_ability_1);
 (5, freed_from_the_realm_ability_2)].
+
 
 
 End abilities_effects.
