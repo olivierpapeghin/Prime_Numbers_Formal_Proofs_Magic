@@ -218,8 +218,8 @@ Definition desecration_elemental (id : nat) : Card :=
 Definition clock_of_omens (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
-    [(1,2)]
     nil
+    [2]
     None
     nil
     None

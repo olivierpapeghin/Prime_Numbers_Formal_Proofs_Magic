@@ -100,7 +100,7 @@ Definition abuelos_awakening_ability (targets : option (list Card)) (gs : GameSt
       gs
     end.
 
-Definition narsets_reversal_ability (targets : option (list Card)) (gs : GameState) : GameState :=
+Definition narsets_reversal (targets : option (list Card)) (gs : GameState) : GameState :=
   match targets with
   | Some [target] =>  (* exactement une cible *)
       match target.(instant), target.(sorcery) with
@@ -151,50 +151,8 @@ Definition narsets_reversal_ability (targets : option (list Card)) (gs : GameSta
   | _ => gs
   end.
 
-Definition molten_duplication_ability (targets : option (list Card)) (gs : GameState) : GameState :=
-match targets with
-  | Some [target] =>
-      match target.(permanent) with
-      | Some p =>
-          if (isSome p.(creature)) || (isSome p.(artifact)) then
-            let new_token :=
-              mkCard
-                (Some (mkPermanent
-                        ((2, 1) :: p.(Abilities))
-                        p.(ListActivated)
-                        p.(PassiveAbility)
-                        p.(subtype)
-                        p.(creature)
-                        p.(enchantement)
-                        p.(land)
-                        (match p.(artifact) with
-                        | Some _ => Some (mkArtifact None)
-                        | None => None
-                        end)
-                        true (* token := true *)
-                        p.(legendary)
-                        false)) (* tapped := false *)
-                None
-                None
-                [] (* Pas de coût de mana, c’est un token *)
-                (String.append "Molten Copy of " target.(name))
-                999 (* ID fictif temporaire *)
-                ["Haste"]
-            in
-            let new_battlefield := new_token :: gs.(battlefield) in
-            let updated_gs := mkGameState
-              new_battlefield gs.(hand) gs.(library) gs.(graveyard)
-              gs.(exile) gs.(opponent) gs.(manapool)
-              gs.(stack) gs.(passive_abilities) gs.(phase)
-            in updated_gs
-          else gs
-      | None => gs
-      end
-  | _ => gs
-  end.
 
-
-Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability); (2,narsets_reversal_ability); (3,molten_duplication_ability)].
+Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability); (2, narsets_reversal)].
 
 (*-----------------------------------------Abilités déclenchées----------------------------------------------*)
 
@@ -212,16 +170,53 @@ Definition desecration_elemental (targets : option (list Card)) (gs : GameState)
     gs
   end.
 
-
-Definition sacrifice_end_step (targets : option (list Card)) (gs : GameState) : GameState :=
+Definition myrkul_ability (targets : option (list Card)) (gs : GameState) : GameState :=
   match targets with
-  | Some target_list => sacrifice gs target_list
-  | None => gs
+  | None => gs (* Pas de cible, on ne fait rien *)
+  | Some target_list => 
+    (* On doit ensuite vérifier qu'on a qu'une seule cible *)
+    if Nat.eqb (List.length target_list) 1 then 
+      (* On crée un permanent token qui copie la cible et la transforme en enchantement *)
+      match hd_error target_list with
+      | Some target =>
+      if (match target.(permanent) with | Some _ => true | None => false end) then
+        let new_card : Card := mkCard 
+          (Some (mkPermanent (* Est un permanent *)
+            target.(permanent).Abilities
+            target.(permanent).ListActivated
+            target.(permanent).PassiveAbility
+            target.(permanent).subtype
+            None
+            (Some (mkEnchantement None))
+            None
+            None
+            true
+            target.(permanent).legendary
+            target.(permanent).tapped))
+          None (* N'est pas un instant *)
+          None (* N'est pas un sorcery *)
+          target.(manacost)
+          target.(name)
+          target.(id)
+          target.(keywords) in
+        (* On enlève la cible du cimetière pour la mettre dans l'exil et on ajoute la nouvelle carte au champ de bataille *)
+        let new_graveyard : list Card := remove_card gs target in
+        let new_exile : list Card := target :: gs.(exile) in
+        let new_battlefield : list Card := new_card :: gs.(battlefield) in
+        mkGameState new_battlefield gs.(hand) gs.(library) new_graveyard
+                      new_exile gs.(opponent) gs.(manapool) gs.(stack)
+                      gs.(passive_abilities) gs.(phase)
+      else
+        gs
+      | None => gs
+      end
+    else
+    gs
   end.
 
 (* Définition des sous-dictionnaires *)
 Definition OnCast : Dict := [(1,birgi_ability)].
-Definition OnPhase : Dict := [(1,sacrifice_end_step)].
+Definition OnPhase : Dict := nil.
 Definition OnDeath : Dict := nil.
 Definition OnEnter : Dict := nil.
 
