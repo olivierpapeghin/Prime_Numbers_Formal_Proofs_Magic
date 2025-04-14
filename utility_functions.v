@@ -226,14 +226,14 @@ Fixpoint find_card_in_list (c : Card) (l : list Card) : option Card :=
   end.
 
 
-Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : bool :=
+Fixpoint find_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) : nat :=
   match dict with
-  | nil => false
+  | nil => 0
   | (k, activated) :: rest =>
     if eq_passive_key k key then activated else find_passive_ability_in_dict  rest key
   end.
 
-Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : bool) : PassiveAbilityDict :=
+Fixpoint update_passive_ability_in_dict (dict : PassiveAbilityDict) (key : PassiveKey) (new_value : nat) : PassiveAbilityDict :=
   match dict with
   | nil => nil
   | (k, activated) :: rest =>
@@ -285,7 +285,7 @@ Definition check_legendary_rule (gs: GameState) (c: Card) : bool :=
   match c.(permanent) with
   | None => true
   | Some perm =>
-    if (negb (find_passive_ability_in_dict gs.(passive_abilities) NoLegendaryRule)) && perm.(legendary) then
+    if (Nat.ltb (find_passive_ability_in_dict (passive_abilities gs) NoLegendaryRule) 1) && perm.(legendary) then
       is_card_base_in gs.(battlefield) c
     else 
       true

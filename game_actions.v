@@ -40,7 +40,7 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
             match c_perm.(PassiveAbility) with
             | None => gs'
             | Some p_ability => 
-              let _gs := mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) gs'.(stack) (update_passive_ability_in_dict gs'.(passive_abilities) p_ability true) gs'.(phase) in
+              let _gs := mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) gs'.(stack) (update_passive_ability_in_dict gs'.(passive_abilities) p_ability (S (find_passive_ability_in_dict gs'.(passive_abilities) p_ability))) gs'.(phase) in
               trigger_passive_effect _gs p_ability
             end
           end
