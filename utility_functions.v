@@ -39,7 +39,7 @@ Definition get_token_default (c : Card) (default : bool) : bool :=
   end.
 
 Definition check_token (c : Card) : bool :=
-  let token_value := get_token_default c true in
+  let token_value := get_token_default c false in
   if token_value then true else false.
 
 Definition eq_mana_color (c1 c2 : ManaColor) : bool :=
@@ -286,6 +286,17 @@ Definition check_legendary_rule (gs: GameState) (c: Card) : bool :=
       true
   end.
 
+Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
+  let new_manapool :=
+    map (fun m =>
+      if eq_mana_color m.(color) mc then
+        mkMana mc (m.(quantity) + q)
+      else
+        m
+    ) gs.(manapool)
+  in
+  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_abilities) gs.(phase).
+
 (* Fonction pour tap une Land et produire du mana, en mettant à jour le GameState *)
 Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
   match target_card.(permanent) with
@@ -295,11 +306,9 @@ Definition tap_land (target_card : Card) (gs : GameState) : GameState :=
     | None => gs (* Si la carte n'est pas un Land, ne rien faire *)
     | Some target_land =>
       if card_in_list target_card gs.(battlefield) then
-        let new_mana := target_land.(producing) in
+        
         let new_battlefield := update_tapped_land target_land gs.(battlefield) in
-        mkGameState new_battlefield gs.(hand) gs.(library)
-                    gs.(graveyard) gs.(exile) gs.(opponent)
-                    (new_mana :: gs.(manapool)) gs.(stack) gs.(passive_abilities) gs.(phase)
+          add_mana gs target_land.(producing).(color) target_land.(producing).(quantity)
       else
         gs (* Si la Land n'est pas dans le battlefield, ne rien faire *)
     end
@@ -350,16 +359,6 @@ Fixpoint beq_nat (n m : nat) : bool :=
   | _, _ => false
   end.
 
-Definition add_mana (gs : GameState) (mc : ManaColor) (q : nat) : GameState :=
-  let new_manapool :=
-    map (fun m =>
-      if eq_mana_color m.(color) mc then
-        mkMana mc (m.(quantity) + q)
-      else
-        m
-    ) gs.(manapool)
-  in
-  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard) gs.(exile) gs.(opponent) new_manapool gs.(stack) gs.(passive_abilities) gs.(phase).
 
 (* Vérifie si un élément est présent dans une liste d'entiers *)
 Fixpoint List_In_nat (x : nat) (l : list nat) : bool :=
@@ -532,6 +531,86 @@ Definition is_valid_aura (gs : GameState) (c : Card) : bool :=
     end
   | None => false
   end.
+
+Definition divides (n d : nat) : bool := Nat.eqb (n mod d) 0.
+
+Fixpoint check_divisors (n d : nat) : bool :=
+  match d with
+  | 0 => false
+  | 1 => true  (* Si on a testé jusqu'à 1 sans trouver de diviseur, c'est premier *)
+  | S d' =>
+      if n mod d =? 0 then false (* Si n est divisible par d, alors ce n'est pas premier *)
+      else check_divisors n d'
+  end.
+
+Definition is_prime (n : nat) : bool :=
+  match n with
+  | 0 | 1 => false (* 0 et 1 ne sont pas premiers *)
+  | 2 => true (* 2 est premier *)
+  | _ => check_divisors n (n - 1) (* Vérifie les diviseurs de n jusqu'à n-1 *)
+  end.
+
+Definition is_land (p : Permanent) : bool :=
+  match p.(land) with
+  | Some _ => true
+  | None => false
+  end.
+
+Fixpoint count_lands (cards : list Card) : nat :=
+  match cards with
+  | nil => 0
+  | card :: rest =>
+    match card.(permanent) with
+    | Some p => if is_land p then 1 + count_lands rest else count_lands rest
+    | None => count_lands rest
+    end
+  end.
+
+Fixpoint count_tokens (cards : list Card) : nat :=
+  match cards with
+  | nil => 0
+  | card :: rest =>
+    match card.(permanent) with
+    | Some p => if check_token card then 1 + count_tokens rest else count_tokens rest
+    | None => count_tokens rest
+    end
+  end.
+
+Definition create_token (c : Card) (nb_land : nat) (gs : GameState) : GameState :=
+  match c.(permanent) with
+  |Some p => if check_token c then 
+          let nb_token := count_tokens gs.(battlefield) +1 in
+          let new_token :=
+              mkCard
+                (Some (mkPermanent
+                        nil
+                        p.(ListActivated)
+                        p.(PassiveAbility)
+                        p.(subtype)
+                        (Some (mkCreature nb_land nb_land))
+                        p.(enchantement)
+                        p.(land)
+                        p.(artifact)
+                        true (* token := true *)
+                        p.(legendary)
+                        false)) (* tapped := false *)
+                None
+                None
+                [] (* Pas de coût de mana, c’est un token *)
+                c.(name)
+                nb_token
+                []
+            in
+            let new_battlefield := new_token :: gs.(battlefield) in
+            let updated_gs := mkGameState
+              new_battlefield gs.(hand) gs.(library) gs.(graveyard)
+              gs.(exile) gs.(opponent) gs.(manapool)
+              gs.(stack) gs.(passive_abilities) gs.(phase)
+            in updated_gs
+  else gs
+  |None => gs
+  end. 
+
 
 End utility_function.
 Export utility_function.
