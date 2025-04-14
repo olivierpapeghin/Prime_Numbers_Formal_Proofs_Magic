@@ -163,6 +163,25 @@ Definition clock_of_omens (id : nat) : Card :=
   id
   nil.
 
+Definition narsets_reversal (id : nat) : Card :=
+  mkCard
+    None 
+    (Some (mkInstant [2]))
+    None
+    [(mkMana Blue 1); (mkMana Blue 1) ]
+    "Narset's Reversal"
+    id
+    nil.
+
+Definition molten_duplication (id : nat) : Card :=
+  mkCard
+  None
+  None
+  (Some (mkSorcery[3]))
+  [(mkMana Red 1)]
+  "Molten Duplication"
+  id
+  nil.
 
 End card_instance.
 Export card_instance.

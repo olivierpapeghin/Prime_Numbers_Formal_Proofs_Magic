@@ -63,10 +63,17 @@ Definition next_phase (p : Phase) : Phase :=
   | EndingPhase => BeginningPhase 
   end.
 
-Definition advance_phase (gs : GameState) : GameState :=
-  let new_phase := next_phase gs.(phase) in
-  mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard)
-              gs.(exile) gs.(opponent) gs.(manapool) gs.(stack) gs.(passive_abilities) new_phase.
+Definition phase_eqb (p1 p2 : Phase) : bool :=
+  match p1, p2 with
+  | BeginningPhase, BeginningPhase => true
+  | MainPhase1, MainPhase1 => true
+  | CombatPhase, CombatPhase => true
+  | MainPhase2, MainPhase2 => true
+  | EndingPhase, EndingPhase => true
+  | _, _ => false
+  end.
+
+
 
 
 Definition eq_mana (m1 m2 : Mana) : bool :=
@@ -129,18 +136,6 @@ Definition eq_card (c1 c2 : Card) : bool :=
   eq_list_mana c1.(manacost) c2.(manacost) &&
   String.eqb c1.(name) c2.(name) &&
   Nat.eqb c1.(id) c2.(id).
-
-
-
-Definition phase_eqb (p1 p2 : Phase) : bool :=
-  match p1, p2 with
-  | BeginningPhase, BeginningPhase => true
-  | MainPhase1, MainPhase1 => true
-  | CombatPhase, CombatPhase => true
-  | MainPhase2, MainPhase2 => true
-  | EndingPhase, EndingPhase => true
-  | _, _ => false
-  end.
 
 
 (* Fonction principale de comparaison de deux base de cartes *)
@@ -451,12 +446,12 @@ Definition has_keyword (kw : string) (c : Card) : bool :=
 Definition can_cast (c : Card) (p : Phase) : bool :=
   match c with
   | mkCard _ _ (Some _) _ _ _ _ => (* It's a Sorcery *)
-      if has_keyword "flash" c then true
+      if has_keyword "Flash" c then true
       else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
       else false
   | mkCard _ (Some _) _ _ _ _ _ => true (* An Instant can be played anytime *)
   | mkCard (Some _) _ _ _ _ _ _ => (* A Permanent *)
-      if has_keyword "flash" c then true
+      if has_keyword "Flash" c then true
       else if (phase_eqb p MainPhase1) || (phase_eqb p MainPhase2) then true
       else false
   | _ => false
@@ -471,6 +466,21 @@ Definition is_untapped_artifact (c : Card) : bool :=
       end
   | None => false
   end.
+
+Definition advance_phase (gs : GameState) : GameState :=
+  let new_phase := next_phase gs.(phase) in
+  let intermediate_gs := mkGameState gs.(battlefield) gs.(hand) gs.(library) gs.(graveyard)
+              gs.(exile) gs.(opponent) gs.(manapool) gs.(stack) gs.(passive_abilities) new_phase in
+  if phase_eqb new_phase EndingPhase then  
+  fold_left (fun gs' card =>
+  match card.(permanent) with
+    | Some perm_data => add_abilities_to_stack 2 perm_data gs'
+    | None => gs'
+    end
+  ) gs.(battlefield) intermediate_gs
+  else
+  intermediate_gs.
+
 
 End utility_function.
 Export utility_function.
