@@ -161,7 +161,6 @@ Definition Play_land (c : Card) (gs : GameState) : GameState :=
     new_gs
   else
     gs.
-    
 
 End game_action.
 Export game_action.

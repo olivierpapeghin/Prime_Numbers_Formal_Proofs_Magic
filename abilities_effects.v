@@ -239,7 +239,7 @@ Definition zimone_ability (targets : option (list Card)) (gs : GameState) : Game
 (* Définition des sous-dictionnaires *)
 Definition OnCast : Dict := [(1,birgi_ability)].
 Definition OnPhase : Dict := [(1,sacrifice_end_step);(2,zimone_ability)].
-Definition OnDeath : Dict := nil.
+Definition OnDeath : Dict := [(1,myrkul_ability)].
 Definition OnEnter : Dict := [(1,isochron_scepter_enter)].
 
 
