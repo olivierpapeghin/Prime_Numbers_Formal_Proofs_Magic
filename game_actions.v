@@ -20,9 +20,12 @@ Local Open Scope string_scope.
 
 Module game_action.
 
+
+
   (* Fonction pour sacrifier des cartes et les déplacer vers le cimetière *)
 Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) : GameState :=
-  match last_option gs.(stack) with
+  let reverse_stack := rev gs.(stack) in  
+  match last_option reverse_stack with
   | Some (CardItem c') => (* Si c'est une carte *)
       let c := apply_passive_to_cast (get_active_passives (gs.(passive_abilities))) c' in
       match card_type c with
