@@ -219,11 +219,14 @@ Definition sacrifice_end_step (targets : option (list Card)) (gs : GameState) : 
   | None => gs
   end.
 
+Definition isochron_scepter_enter (targets : option (list Card)) (gs : GameState) : GameState :=
+  gs.
+
 (* Définition des sous-dictionnaires *)
-Definition OnCast : Dict := [(1,birgi_ability)].
+Definition OnCast : Dict := [(1,birgi_ability); (2, desecration_elemental)].
 Definition OnPhase : Dict := [(1,sacrifice_end_step)].
 Definition OnDeath : Dict := nil.
-Definition OnEnter : Dict := nil.
+Definition OnEnter : Dict := [(1,isochron_scepter_enter)].
 
 
 (* Définition du dictionnaire principal avec des clés de type string *)
@@ -351,12 +354,18 @@ match remove_card_costs gs [mkMana Blue 1] with
 | None => gs
 end.
 
+Definition isochron_scepter_ability (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
+gs.
+
+
+
 Definition Dict_AA : list (nat * Activated_Ability) := [
 (1, siege_zombie_ability);
 (2, clock_of_omens_ability);
 (3, sanctum_weaver_ability);
 (4, freed_from_the_realm_ability_1);
-(5, freed_from_the_realm_ability_2)].
+(5, freed_from_the_realm_ability_2);
+(6, isochron_scepter_ability)].
 
 
 End abilities_effects.
