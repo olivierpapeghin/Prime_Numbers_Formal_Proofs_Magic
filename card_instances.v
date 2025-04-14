@@ -218,8 +218,8 @@ Definition desecration_elemental (id : nat) : Card :=
 Definition clock_of_omens (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
-    [(1,2)]
     nil
+    [2]
     None
     nil
     None
@@ -241,7 +241,7 @@ Definition narsets_reversal (id : nat) : Card :=
     None 
     (Some (mkInstant [2]))
     None
-    [(mkMana Blue 1); (mkMana Blue 1) ]
+    [(mkMana Blue 2)]
     "Narset's Reversal"
     id
     nil.
@@ -255,6 +255,7 @@ Definition molten_duplication (id : nat) : Card :=
   "Molten Duplication"
   id
   nil.
+
 Definition sanctum_weaver (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
@@ -297,6 +298,26 @@ Definition freed_from_the_realm (id : nat) (id_card : nat) (card_name : string) 
   id
   nil.
 
+Definition isochron_scepter (id: nat) : Card :=
+  mkCard
+  (Some (mkPermanent
+  [(4,1)]
+  [6]
+  None
+  nil
+  None
+  None
+  None
+  (Some (mkArtifact ( None)))
+  false
+  false
+  false))
+  None
+  None
+  [ (mkMana Generic 2)]
+  "Isochron Scepter"
+  id
+  ["Imprint"].
 Definition zimone (id : nat) : Card := 
   mkCard 
   (Some (mkPermanent (* Est un permanent *)
