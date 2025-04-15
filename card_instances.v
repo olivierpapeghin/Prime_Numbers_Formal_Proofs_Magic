@@ -211,7 +211,7 @@ Definition parallel_lives (id : nat) : Card :=
   None
   None
   [(mkMana Blue 2); (mkMana Generic 5) ]
-  "Fractured Realm"
+  "Parallel Lives"
   id
   nil.
 
