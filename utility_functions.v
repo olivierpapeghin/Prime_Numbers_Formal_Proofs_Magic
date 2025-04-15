@@ -427,7 +427,7 @@ Definition add_abilities_to_stack (event_type : nat) (p : Permanent) (gs : GameS
       match pair with
       | (dict_id, ability_id) =>
         if beq_nat dict_id event_type then
-          let n := find_passive_ability_in_dict gs.(passive_abilities) AdditionalTrigger in
+          let n := S (find_passive_ability_in_dict gs.(passive_abilities) AdditionalTrigger) in
           let repeated_items := repeat (PairItem dict_id ability_id) n in
           let new_stack := repeated_items ++ gs'.(stack) in
           mkGameState gs'.(battlefield) gs'.(hand) gs'.(library) gs'.(graveyard) gs'.(exile) gs'.(opponent) gs'.(manapool) new_stack gs.(passive_abilities) gs.(phase)
@@ -579,38 +579,88 @@ Fixpoint count_tokens (cards : list Card) : nat :=
 Definition create_token (c : Card) (nb_land : nat) (gs : GameState) : GameState :=
   match c.(permanent) with
   |Some p => if check_token c then 
-          let nb_token := count_tokens gs.(battlefield) +1 in
-          let new_token :=
-              mkCard
-                (Some (mkPermanent
-                        nil
-                        p.(ListActivated)
-                        p.(PassiveAbility)
-                        p.(subtype)
-                        (Some (mkCreature nb_land nb_land))
-                        p.(enchantement)
-                        p.(land)
-                        p.(artifact)
-                        true (* token := true *)
-                        p.(legendary)
-                        false)) (* tapped := false *)
-                None
-                None
-                [] (* Pas de coût de mana, c’est un token *)
-                c.(name)
-                nb_token
-                []
-            in
-            let new_battlefield := new_token :: gs.(battlefield) in
-            let updated_gs := mkGameState
-              new_battlefield gs.(hand) gs.(library) gs.(graveyard)
-              gs.(exile) gs.(opponent) gs.(manapool)
-              gs.(stack) gs.(passive_abilities) gs.(phase)
-            in updated_gs
+          if Nat.ltb 0 (find_passive_ability_in_dict gs.(passive_abilities) DoubleToken) then
+            let nb_token := count_tokens gs.(battlefield) +2 in
+            let new_token :=[
+                mkCard
+                  (Some (mkPermanent
+                          nil
+                          p.(ListActivated)
+                          p.(PassiveAbility)
+                          p.(subtype)
+                          (Some (mkCreature nb_land nb_land))
+                          p.(enchantement)
+                          p.(land)
+                          p.(artifact)
+                          true (* token := true *)
+                          p.(legendary)
+                          false)) (* tapped := false *)
+                  None
+                  None
+                  [] (* Pas de coût de mana, c’est un token *)
+                  c.(name)
+                  (nb_token - 1)
+                  [];
+                  
+                mkCard
+                  (Some (mkPermanent
+                          nil
+                          p.(ListActivated)
+                          p.(PassiveAbility)
+                          p.(subtype)
+                          (Some (mkCreature nb_land nb_land))
+                          p.(enchantement)
+                          p.(land)
+                          p.(artifact)
+                          true (* token := true *)
+                          p.(legendary)
+                          false)) (* tapped := false *)
+                  None
+                  None
+                  [] (* Pas de coût de mana, c’est un token *)
+                  c.(name)
+                  nb_token
+                  []
+                  ]
+              in
+              let new_battlefield := new_token ++ gs.(battlefield) in
+              let updated_gs := mkGameState
+                new_battlefield gs.(hand) gs.(library) gs.(graveyard)
+                gs.(exile) gs.(opponent) gs.(manapool)
+                gs.(stack) gs.(passive_abilities) gs.(phase)
+              in updated_gs
+          else
+            let nb_token := count_tokens gs.(battlefield) +1 in
+            let new_token :=
+                mkCard
+                  (Some (mkPermanent
+                          nil
+                          p.(ListActivated)
+                          p.(PassiveAbility)
+                          p.(subtype)
+                          (Some (mkCreature nb_land nb_land))
+                          p.(enchantement)
+                          p.(land)
+                          p.(artifact)
+                          true (* token := true *)
+                          p.(legendary)
+                          false)) (* tapped := false *)
+                  None
+                  None
+                  [] (* Pas de coût de mana, c’est un token *)
+                  c.(name)
+                  nb_token
+                  []
+              in
+              let new_battlefield := new_token :: gs.(battlefield) in
+              let updated_gs := mkGameState
+                new_battlefield gs.(hand) gs.(library) gs.(graveyard)
+                gs.(exile) gs.(opponent) gs.(manapool)
+                gs.(stack) gs.(passive_abilities) gs.(phase)
+              in updated_gs
   else gs
   |None => gs
   end. 
-
 
 End utility_function.
 Export utility_function.

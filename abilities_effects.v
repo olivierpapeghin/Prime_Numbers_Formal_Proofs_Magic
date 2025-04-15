@@ -105,7 +105,7 @@ Definition abuelos_awakening_ability (targets : option (list Card)) (gs : GameSt
       gs
     end.
 
-Definition narsets_reversal (targets : option (list Card)) (gs : GameState) : GameState :=
+Definition narsets_reversal_ability (targets : option (list Card)) (gs : GameState) : GameState :=
   match targets with
   | Some [target] =>  (* exactement une cible *)
       match target.(instant), target.(sorcery) with
@@ -156,8 +156,50 @@ Definition narsets_reversal (targets : option (list Card)) (gs : GameState) : Ga
   | _ => gs
   end.
 
+Definition molten_duplication_ability (targets : option (list Card)) (gs : GameState) : GameState :=
+match targets with
+  | Some [target] =>
+      match target.(permanent) with
+      | Some p =>
+          if (isSome p.(creature)) || (isSome p.(artifact)) then
+            let new_token :=
+              mkCard
+                (Some (mkPermanent
+                        ((2, 1) :: p.(Abilities))
+                        p.(ListActivated)
+                        p.(PassiveAbility)
+                        p.(subtype)
+                        p.(creature)
+                        p.(enchantement)
+                        p.(land)
+                        (match p.(artifact) with
+                        | Some _ => Some (mkArtifact None)
+                        | None => None
+                        end)
+                        true (* token := true *)
+                        p.(legendary)
+                        false)) (* tapped := false *)
+                None
+                None
+                [] (* Pas de coût de mana, c’est un token *)
+                (String.append "Molten Copy of " target.(name))
+                999 (* ID fictif temporaire *)
+                ["Haste"]
+            in
+            let new_battlefield := new_token :: gs.(battlefield) in
+            let updated_gs := mkGameState
+              new_battlefield gs.(hand) gs.(library) gs.(graveyard)
+              gs.(exile) gs.(opponent) gs.(manapool)
+              gs.(stack) gs.(passive_abilities) gs.(phase)
+            in updated_gs
+          else gs
+      | None => gs
+      end
+  | _ => gs
+  end.
 
-Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability); (2, narsets_reversal)].
+
+Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability); (2,narsets_reversal_ability); (3,molten_duplication_ability)].
 
 (*-----------------------------------------Abilités déclenchées----------------------------------------------*)
 
@@ -227,9 +269,64 @@ Definition myrkul_ability (targets : option (list Card)) (gs : GameState) : Game
   end.
 
 
-
 Definition isochron_scepter_enter (targets : option (list Card)) (gs : GameState) : GameState :=
-  gs.
+  match targets with
+  | Some [imprinted_card; scepter_card] =>
+      match imprinted_card.(instant), scepter_card.(permanent) with
+      | Some inst, Some perm =>
+          let new_exile := imprinted_card :: gs.(exile) in
+          let new_hand := remove_card gs.(hand) imprinted_card in
+
+          let updated_battlefield := map (fun c =>
+            if Nat.eqb c.(id) scepter_card.(id) then
+              match c.(permanent) with
+              | Some p =>
+                  let updated_artifact := Some (mkArtifact (Some inst)) in
+                  let updated_permanent := mkPermanent
+                    p.(Abilities)
+                    p.(ListActivated)
+                    p.(PassiveAbility)
+                    p.(subtype)
+                    p.(creature)
+                    p.(enchantement)
+                    p.(land)
+                    updated_artifact
+                    p.(token)
+                    p.(legendary)
+                    p.(tapped) in
+                  mkCard
+                    (Some updated_permanent)
+                    c.(instant)
+                    c.(sorcery)
+                    c.(manacost)
+                    c.(name)
+                    c.(id)
+                    c.(keywords)
+              | None => c
+              end
+            else c
+          ) gs.(battlefield) in
+
+          mkGameState
+            updated_battlefield
+            new_hand
+            gs.(library)
+            gs.(graveyard)
+            new_exile
+            gs.(opponent)
+            gs.(manapool)
+            gs.(stack)
+            gs.(passive_abilities)
+            gs.(phase)
+      | _, _ => gs
+      end
+  | _ => gs
+  end.
+
+
+
+
+
 
 Definition zimone_ability (targets : option (list Card)) (gs : GameState) : GameState := 
   match targets with
@@ -373,9 +470,45 @@ match remove_card_costs gs [mkMana Blue 1] with
 end.
 
 Definition isochron_scepter_ability (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
-gs.
-
-
+  match remove_card_costs gs [mkMana Generic 2] with
+  | Some gs_after_payment =>
+      match targets with
+      | Some (target :: _) =>
+          (* On récupère l’artefact sur le champ de bataille *)
+          let updated_scepter := find (fun c => Nat.eqb c.(id) target.(id)) gs_after_payment.(battlefield) in
+          match updated_scepter with
+          | Some scepter_card =>
+              match scepter_card.(permanent) with
+              | Some perm =>
+                  match perm.(artifact) with
+                  | Some art =>
+                      match art.(isochron) with
+                      | Some inst =>
+                          let copied_card := mkCard None (Some inst) None [] "Isochron ability" 999 [] in
+                          let new_stack := CardItem copied_card :: gs_after_payment.(stack) in
+                          mkGameState
+                            gs_after_payment.(battlefield)
+                            gs_after_payment.(hand)
+                            gs_after_payment.(library)
+                            gs_after_payment.(graveyard)
+                            gs_after_payment.(exile)
+                            gs_after_payment.(opponent)
+                            gs_after_payment.(manapool)
+                            new_stack
+                            gs_after_payment.(passive_abilities)
+                            gs_after_payment.(phase)
+                      | None => gs
+                      end
+                  | None => gs
+                  end
+              | None => gs
+              end
+          | None => gs
+          end
+      | _ => gs
+      end
+  | None => gs
+  end.
 
 Definition Dict_AA : list (nat * Activated_Ability) := [
 (1, siege_zombie_ability);
@@ -384,8 +517,6 @@ Definition Dict_AA : list (nat * Activated_Ability) := [
 (4, freed_from_the_realm_ability_1);
 (5, freed_from_the_realm_ability_2);
 (6, isochron_scepter_ability)].
-
-
 
 End abilities_effects.
 Export abilities_effects.

@@ -30,7 +30,8 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
       let c := apply_passive_to_cast (get_active_passives (gs.(passive_abilities))) c' in
       match card_type c with
       | PermanentType => (* Si c'est un permanent *)
-        let new_stack : list CardOrPair:= remove_last reverse_stack in
+        let new_rev_stack : list CardOrPair:= remove_last reverse_stack in
+        let new_stack : list CardOrPair := rev new_rev_stack in
         if is_aura c && negb (is_valid_aura gs c) then (* Si on essaie de resolve une aura invalide *)
           let new_graveyard : list Card :=c :: gs.(graveyard) in
           mkGameState gs.(battlefield) gs.(hand) gs.(library) new_graveyard gs.(exile) gs.(opponent) gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
@@ -54,13 +55,15 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
           end
       | InstantType => 
         let new_gs : GameState := activate_spell non_permanent_abilities key targets gs in
-        let new_stack : list CardOrPair:= remove_last reverse_stack in
+        let new_rev_stack : list CardOrPair:= remove_last reverse_stack in
+        let new_stack : list CardOrPair := rev new_rev_stack in
         let new_graveyard : list Card := c :: new_gs.(graveyard) in
         mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_graveyard new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
 
         | SorceryType => 
         let new_gs : GameState := activate_spell non_permanent_abilities key targets gs in
-        let new_stack : list CardOrPair:= remove_last reverse_stack in
+        let new_rev_stack : list CardOrPair:= remove_last reverse_stack in
+        let new_stack : list CardOrPair := rev new_rev_stack in
         let new_graveyard : list Card := c :: new_gs.(graveyard) in
         mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_graveyard new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
 
@@ -69,7 +72,8 @@ Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) :
   | Some (PairItem dict_id ability_id) =>
       (* Activer l'ability correspondante *)
       let new_gs := activate_triggered_ability Triggered_Abilities dict_id ability_id targets gs in
-      let new_stack : list CardOrPair:= remove_last reverse_stack in
+      let new_rev_stack : list CardOrPair:= remove_last reverse_stack in
+        let new_stack : list CardOrPair := rev new_rev_stack in
       mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs.(manapool) new_stack gs.(passive_abilities) gs.(phase)
 
   | None => gs (* Si la stack est vide, on ne fait rien *)
@@ -162,9 +166,7 @@ Definition Play_land (c : Card) (gs : GameState) : GameState :=
   else
     gs.
 
-Definition Initial_GS : GameState := mkGameState [zimone 1; Forest 3; Forest 4; Forest 5] [Forest 2] nil nil nil 20 [mkMana Green 0; mkMana Red 0; mkMana Blue 0 ;mkMana White 0 ; mkMana Black 0 ;mkMana Generic 0] nil DefaultListPassiveAbility MainPhase2.
-Definition test := Play_land (Forest 2) Initial_GS.
-Compute activate_triggered_ability Triggered_Abilities 2 2 None test.
+
 
 End game_actions.
 Export game_actions.
