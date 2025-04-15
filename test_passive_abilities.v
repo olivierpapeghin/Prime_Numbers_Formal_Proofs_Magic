@@ -22,8 +22,8 @@ Import Land_cards.
 
 Definition initial_gamestate : GameState := 
   mkGameState
-  [(colossal_dreadmaw 1)]
-  [(colossal_dreadmaw 3);(birgi 1); (leyline_of_transformation 1); (life_and_limb 1); (fractured_realm 1); (fractured_realm 2); (fractured_realm 3)]
+  [(colossal_dreadmaw 1); (zimone 1)]
+  [(parallel_lives 1); (Swamp 1); (Swamp 2)]
   nil (* La bibliothèque est vide *)
   [] (* Le cimetière est vide *)
   nil (* L'exil est vide *)
@@ -39,12 +39,12 @@ Definition gs3 : GameState := Resolve (Cast (life_and_limb 1) gs2) 0 None.
 Compute Resolve (Cast (colossal_dreadmaw 3) gs3) 0 None.
  *)
 
-Definition gs2 : GameState := Resolve (Cast (fractured_realm 1) initial_gamestate) 0 None.
-Definition gs3 : GameState := Resolve (Cast (fractured_realm 2) gs2) 0 None.
-Definition gs4 : GameState := Resolve (Cast (fractured_realm 3) gs3) 0 None.
-Definition gs5 : GameState := Resolve (Cast (birgi 1) gs4) 0 None.
+Definition gs2 : GameState := Play_land (Swamp 1) initial_gamestate.
+Definition gs3 : GameState := Play_land (Swamp 2) gs2.
+Definition gs4 : GameState := Resolve (Cast (parallel_lives 1) gs3) 0 None.
+(* Definition gs5 : GameState := Resolve (Cast (birgi 1) gs4) 0 None. *)
 (* Compute  Resolve (Resolve (Cast (colossal_dreadmaw 3) gs5) 0 None) 0 None. *)
-Compute Resolve (Resolve (Resolve (Resolve (Cast (colossal_dreadmaw 3) gs5) 0 None) 0 None) 0 None).
+Compute activate_triggered_ability Triggered_Abilities 2 2 None gs4.
 
 
 
