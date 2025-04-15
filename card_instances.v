@@ -318,6 +318,7 @@ Definition isochron_scepter (id: nat) : Card :=
   "Isochron Scepter"
   id
   ["Imprint"].
+
 Definition zimone (id : nat) : Card := 
   mkCard 
   (Some (mkPermanent (* Est un permanent *)

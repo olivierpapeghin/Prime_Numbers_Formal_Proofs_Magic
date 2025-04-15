@@ -611,6 +611,5 @@ Definition create_token (c : Card) (gs : GameState) : GameState :=
   |None => gs
   end. 
 
-
 End utility_function.
 Export utility_function.
