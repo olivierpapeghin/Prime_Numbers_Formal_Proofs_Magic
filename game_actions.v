@@ -20,9 +20,7 @@ Import Land_cards.
 
 Local Open Scope string_scope.
 
-Module game_action.
-
-
+Module game_actions.
 
   (* Fonction pour sacrifier des cartes et les déplacer vers le cimetière *)
 Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) : GameState :=
@@ -168,5 +166,5 @@ Definition Initial_GS : GameState := mkGameState [zimone 1; Forest 3; Forest 4; 
 Definition test := Play_land (Forest 2) Initial_GS.
 Compute activate_triggered_ability Triggered_Abilities 2 2 None test.
 
-End game_action.
-Export game_action.
+End game_actions.
+Export game_actions.
