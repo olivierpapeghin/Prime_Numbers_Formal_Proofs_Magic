@@ -193,6 +193,27 @@ Definition fractured_realm (id : nat) : Card :=
   "Fractured Realm"
   id
   nil.
+  
+Definition parallel_lives (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    nil
+    (Some DoubleToken)
+    nil
+    None
+    (Some (mkEnchantement None))
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Blue 2); (mkMana Generic 5) ]
+  "Parallel Lives"
+  id
+  nil.
 
 Definition desecration_elemental (id : nat) : Card :=
   mkCard 
@@ -322,7 +343,7 @@ Definition isochron_scepter (id: nat) : Card :=
 Definition zimone (id : nat) : Card := 
   mkCard 
   (Some (mkPermanent (* Est un permanent *)
-    [(2,1)] (* La liste des capacités déclenchées *)
+    [(2,2)] (* La liste des capacités déclenchées *)
     nil
     None
     ["Human Wizard"]
