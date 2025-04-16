@@ -20,9 +20,7 @@ Import Land_cards.
 
 Local Open Scope string_scope.
 
-Module game_action.
-
-
+Module game_actions.
 
   (* Fonction pour sacrifier des cartes et les déplacer vers le cimetière *)
 Definition Resolve (gs : GameState) (key : nat) (targets : option (list Card)) : GameState :=
@@ -170,5 +168,5 @@ Definition Play_land (c : Card) (gs : GameState) : GameState :=
 
 
 
-End game_action.
-Export game_action.
+End game_actions.
+Export game_actions.

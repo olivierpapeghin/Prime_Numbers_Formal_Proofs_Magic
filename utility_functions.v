@@ -662,6 +662,5 @@ Definition create_token (c : Card) (nb_land : nat) (gs : GameState) : GameState 
   |None => gs
   end. 
 
-
 End utility_function.
 Export utility_function.
