@@ -402,6 +402,28 @@ Definition Darksteel_citadel (id : nat) : Card :=
   "Darksteel Citadel"
   id  
   ["Indestructible"].
+  
+Definition myrkul (id : nat) : Card := 
+  mkCard 
+  (Some (mkPermanent
+    [(3,1)]
+    nil
+    None
+    ["God"]
+    (Some (mkCreature 7 5))
+    None
+    None
+    None
+    false
+    true
+    false))
+  None
+  None
+  [mkMana Green 1; mkMana White 1; mkMana Black 1; mkMana Generic 4]
+  "Myrkul, Lord of Bones"
+  id
+  nil.
+
 
 End card_instance.
 Export card_instance.
