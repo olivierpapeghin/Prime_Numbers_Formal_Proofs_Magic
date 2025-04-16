@@ -23,7 +23,7 @@ Import Land_cards.
 Definition initial_gamestate : GameState := 
   mkGameState
   [(colossal_dreadmaw 1)]
-  [(colossal_dreadmaw 2); (fractured_realm 1); (fractured_realm 2); (birgi 1)]
+  [(colossal_dreadmaw 2); (parallel_lives 1); (molten_duplication 1)]
   nil (* La bibliothèque est vide *)
   [] (* Le cimetière est vide *)
   nil (* L'exil est vide *)
@@ -33,12 +33,11 @@ Definition initial_gamestate : GameState :=
   DefaultListPassiveAbility  
   MainPhase1.
 
-Definition gs2 : GameState := Resolve (Cast (fractured_realm 1) initial_gamestate) 0 None.
-Definition gs3 : GameState := Resolve (Cast (fractured_realm 2) gs2) 0 None.
-Definition gs4 : GameState := Resolve (Cast (birgi 1) gs3) 0 None.
+Definition gs2 : GameState := Resolve (Cast (parallel_lives 1) initial_gamestate) 0 None.
+Definition gs3 : GameState := Resolve (Cast (molten_duplication 1) gs2) 3 (Some [(colossal_dreadmaw 1)]).
 
 (* Compute  Resolve (Resolve (Cast (colossal_dreadmaw 3) gs5) 0 None) 0 None. *)
-Compute Resolve (Resolve (Resolve (Resolve (Cast (colossal_dreadmaw 2) gs4) 0 None) 0 None) 0 None) 0 None.
-
+Compute gs3.
+Compute Nat.ltb 0 (find_passive_ability_in_dict gs3.(passive_abilities) DoubleToken).
 
 

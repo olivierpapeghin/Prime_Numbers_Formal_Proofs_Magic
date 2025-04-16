@@ -183,11 +183,43 @@ match targets with
                 None
                 [] (* Pas de coût de mana, c’est un token *)
                 (String.append "Molten Copy of " target.(name))
+                998 (* ID fictif temporaire *)
+                ["Haste"]
+            in
+            let new_token1 :=
+              mkCard
+                (Some (mkPermanent
+                        ((2, 1) :: p.(Abilities))
+                        p.(ListActivated)
+                        p.(PassiveAbility)
+                        p.(subtype)
+                        p.(creature)
+                        p.(enchantement)
+                        p.(land)
+                        (match p.(artifact) with
+                        | Some _ => Some (mkArtifact None)
+                        | None => None
+                        end)
+                        true (* token := true *)
+                        p.(legendary)
+                        false)) (* tapped := false *)
+                None
+                None
+                [] (* Pas de coût de mana, c’est un token *)
+                (String.append "Molten Copy of " target.(name))
                 999 (* ID fictif temporaire *)
                 ["Haste"]
             in
-            let new_battlefield := new_token :: gs.(battlefield) in
-            let updated_gs := mkGameState
+            if Nat.ltb 0 (find_passive_ability_in_dict gs.(passive_abilities) DoubleToken) then
+              let new_battlefield := new_token1 :: new_token :: gs.(battlefield) in
+              let updated_gs := mkGameState
+              new_battlefield gs.(hand) gs.(library) gs.(graveyard)
+              gs.(exile) gs.(opponent) gs.(manapool)
+              gs.(stack) gs.(passive_abilities) gs.(phase)
+            in updated_gs
+            else 
+              let new_battlefield := new_token :: gs.(battlefield) in  
+              let updated_gs := mkGameState
               new_battlefield gs.(hand) gs.(library) gs.(graveyard)
               gs.(exile) gs.(opponent) gs.(manapool)
               gs.(stack) gs.(passive_abilities) gs.(phase)
