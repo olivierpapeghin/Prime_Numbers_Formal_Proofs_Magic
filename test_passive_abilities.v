@@ -16,14 +16,14 @@ Import abilities_effects.
 Require Import passive_ability.
 Import passive_ability.
 Require Import game_actions.
-Import game_action.
+Import game_actions.
 Require Import Land_cards_def.
 Import Land_cards.
 
 Definition initial_gamestate : GameState := 
   mkGameState
-  [(colossal_dreadmaw 1); (zimone 1)]
-  [(parallel_lives 1); (Swamp 1); (Swamp 2)]
+  [(colossal_dreadmaw 1)]
+  [(colossal_dreadmaw 2); (parallel_lives 1); (molten_duplication 1)]
   nil (* La bibliothèque est vide *)
   [] (* Le cimetière est vide *)
   nil (* L'exil est vide *)
@@ -33,18 +33,11 @@ Definition initial_gamestate : GameState :=
   DefaultListPassiveAbility  
   MainPhase1.
 
-(* Definition gs2 : GameState := Resolve (Cast (leyline_of_transformation 1) initial_gamestate) 0 None.
+Definition gs2 : GameState := Resolve (Cast (parallel_lives 1) initial_gamestate) 0 None.
+Definition gs3 : GameState := Resolve (Cast (molten_duplication 1) gs2) 3 (Some [(colossal_dreadmaw 1)]).
 
-Definition gs3 : GameState := Resolve (Cast (life_and_limb 1) gs2) 0 None.
-Compute Resolve (Cast (colossal_dreadmaw 3) gs3) 0 None.
- *)
-
-Definition gs2 : GameState := Play_land (Swamp 1) initial_gamestate.
-Definition gs3 : GameState := Play_land (Swamp 2) gs2.
-Definition gs4 : GameState := Resolve (Cast (parallel_lives 1) gs3) 0 None.
-(* Definition gs5 : GameState := Resolve (Cast (birgi 1) gs4) 0 None. *)
 (* Compute  Resolve (Resolve (Cast (colossal_dreadmaw 3) gs5) 0 None) 0 None. *)
-Compute activate_triggered_ability Triggered_Abilities 2 2 None gs4.
-
+Compute gs3.
+Compute Nat.ltb 0 (find_passive_ability_in_dict gs3.(passive_abilities) DoubleToken).
 
 
