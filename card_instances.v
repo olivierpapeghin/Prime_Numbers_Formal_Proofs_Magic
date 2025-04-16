@@ -382,6 +382,26 @@ Definition primo (id : nat) : Card :=
   id
   nil.
 
+Definition Darksteel_citadel (id : nat) : Card :=
+  mkCard
+  (Some (mkPermanent
+    nil
+    nil
+    None
+    nil
+    None
+    None
+    (Some (mkLand (mkMana Generic 1)))
+    (Some (mkArtifact ( None)))
+    false
+    false
+    false))
+  None
+  None
+  []
+  "Darksteel Citadel"
+  id  
+  ["Indestructible"].
 
 End card_instance.
 Export card_instance.
