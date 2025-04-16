@@ -16,7 +16,7 @@ Import abilities_effects.
 Require Import passive_ability.
 Import passive_ability.
 Require Import game_actions.
-Import game_action.
+Import game_actions.
 Require Import Land_cards_def.
 Import Land_cards.
 

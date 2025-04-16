@@ -155,6 +155,14 @@ Definition eq_passive_key (c1 c2 : PassiveKey) : bool :=
   | _, _ => false
   end.
 
+Definition name_eqb (s1 s2 : option string) : bool :=
+  match s1, s2 with
+  | Some a, Some b => String.eqb a b
+  | None, None => true
+  | _, _ => false
+  end.
+
+
 (* Définition d'une fonction pour vérifier la présence d'un élément dans une liste *)
 Fixpoint card_in_list (c : Card) (l : list Card) : bool :=
   match l with
@@ -661,6 +669,8 @@ Definition create_token (c : Card) (nb_land : nat) (gs : GameState) : GameState 
   else gs
   |None => gs
   end. 
+
+
 
 End utility_function.
 Export utility_function.
