@@ -402,6 +402,27 @@ Definition primo (id : nat) : Card :=
   id
   nil.
 
+Definition Darksteel_citadel (id : nat) : Card :=
+  mkCard
+  (Some (mkPermanent
+    nil
+    nil
+    None
+    nil
+    None
+    None
+    (Some (mkLand (mkMana Generic 1)))
+    (Some (mkArtifact ( None)))
+    false
+    false
+    false))
+  None
+  None
+  []
+  "Darksteel Citadel"
+  id  
+  ["Indestructible"].
+  
 Definition get_base_card (c : Card) (id : nat) : option Card :=
   match c.(name) with
   | "Colossal Dreadmaw" => Some (colossal_dreadmaw id)

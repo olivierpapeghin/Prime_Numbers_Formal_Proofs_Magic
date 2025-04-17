@@ -162,7 +162,13 @@ match targets with
       match target.(permanent) with
       | Some p =>
           if (isSome p.(creature)) || (isSome p.(artifact)) then
-            let new_token :=
+            let count_existing_copies :=
+              count_occ (option string) name_eqb
+                (map (fun c => Some c.(name)) (List.app gs.(battlefield) gs.(hand)))
+                (Some target.(name))
+            in
+            let base_id := 1 + count_existing_copies in
+            let make_token id :=
               mkCard
                 (Some (mkPermanent
                         ((2, 1) :: p.(Abilities))
@@ -173,52 +179,30 @@ match targets with
                         p.(enchantement)
                         p.(land)
                         (match p.(artifact) with
-                        | Some _ => Some (mkArtifact None)
-                        | None => None
-                        end)
-                        true (* token := true *)
+                         | Some _ => Some (mkArtifact None)
+                         | None => None
+                         end)
+                        true 
                         p.(legendary)
-                        false)) (* tapped := false *)
+                        false)) 
                 None
                 None
-                [] (* Pas de coût de mana, c’est un token *)
-                (String.append "Molten Copy of " target.(name))
-                998 (* ID fictif temporaire *)
+                [] 
+                target.(name) 
+                id
                 ["Haste"]
             in
-            let new_token1 :=
-              mkCard
-                (Some (mkPermanent
-                        ((2, 1) :: p.(Abilities))
-                        p.(ListActivated)
-                        p.(PassiveAbility)
-                        p.(subtype)
-                        p.(creature)
-                        p.(enchantement)
-                        p.(land)
-                        (match p.(artifact) with
-                        | Some _ => Some (mkArtifact None)
-                        | None => None
-                        end)
-                        true (* token := true *)
-                        p.(legendary)
-                        false)) (* tapped := false *)
-                None
-                None
-                [] (* Pas de coût de mana, c’est un token *)
-                (String.append "Molten Copy of " target.(name))
-                999 (* ID fictif temporaire *)
-                ["Haste"]
-            in
+            let new_token1 := make_token base_id in
+            let new_token2 := make_token (base_id + 1) in
             if Nat.ltb 0 (find_passive_ability_in_dict gs.(passive_abilities) DoubleToken) then
-              let new_battlefield := new_token1 :: new_token :: gs.(battlefield) in
+              let new_battlefield := new_token1 :: new_token2 :: gs.(battlefield) in
               let updated_gs := mkGameState
               new_battlefield gs.(hand) gs.(library) gs.(graveyard)
               gs.(exile) gs.(opponent) gs.(manapool)
               gs.(stack) gs.(passive_abilities) gs.(phase)
             in updated_gs
             else 
-              let new_battlefield := new_token :: gs.(battlefield) in  
+              let new_battlefield := new_token1 :: gs.(battlefield) in  
               let updated_gs := mkGameState
               new_battlefield gs.(hand) gs.(library) gs.(graveyard)
               gs.(exile) gs.(opponent) gs.(manapool)
