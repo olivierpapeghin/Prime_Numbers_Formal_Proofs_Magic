@@ -155,6 +155,14 @@ Definition eq_passive_key (c1 c2 : PassiveKey) : bool :=
   | _, _ => false
   end.
 
+Definition name_eqb (s1 s2 : option string) : bool :=
+  match s1, s2 with
+  | Some a, Some b => String.eqb a b
+  | None, None => true
+  | _, _ => false
+  end.
+
+
 (* Définition d'une fonction pour vérifier la présence d'un élément dans une liste *)
 Fixpoint card_in_list (c : Card) (l : list Card) : bool :=
   match l with
@@ -534,6 +542,13 @@ Definition is_valid_aura (gs : GameState) (c : Card) : bool :=
 
 Definition divides (n d : nat) : bool := Nat.eqb (n mod d) 0.
 
+Definition is_1_or_5_mod_6 (n : nat) : bool :=
+  match n mod 6 with
+  | 1 => true
+  | 5 => true
+  | _ => false
+  end.
+
 Fixpoint check_divisors (n d : nat) : bool :=
   match d with
   | 0 => false
@@ -543,12 +558,20 @@ Fixpoint check_divisors (n d : nat) : bool :=
       else check_divisors n d'
   end.
 
+Definition isqrt (n : nat) : nat :=
+  Nat.sqrt n.
+
 Definition is_prime (n : nat) : bool :=
   match n with
   | 0 | 1 => false (* 0 et 1 ne sont pas premiers *)
   | 2 => true (* 2 est premier *)
-  | _ => check_divisors n (n - 1) (* Vérifie les diviseurs de n jusqu'à n-1 *)
+  | _ =>
+    let sqrt_n := isqrt n in
+    if is_1_or_5_mod_6 n then check_divisors n sqrt_n
+    else false
   end.
+
+
 
 Definition is_land (p : Permanent) : bool :=
   match p.(land) with
@@ -661,6 +684,8 @@ Definition create_token (c : Card) (nb_land : nat) (gs : GameState) : GameState 
   else gs
   |None => gs
   end. 
+
+
 
 End utility_function.
 Export utility_function.
