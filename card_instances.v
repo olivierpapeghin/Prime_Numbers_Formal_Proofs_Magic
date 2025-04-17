@@ -193,7 +193,28 @@ Definition fractured_realm (id : nat) : Card :=
   "Fractured Realm"
   id
   nil.
-  
+
+Definition mirror_room (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    [(4,2)]
+    nil
+    None
+    nil
+    None
+    (Some (mkEnchantement None))
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  [(mkMana Blue 1); (mkMana Generic 2)]
+  "Mirror Room"
+  id
+  nil.
+
 Definition parallel_lives (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
@@ -339,7 +360,6 @@ Definition isochron_scepter (id: nat) : Card :=
   "Isochron Scepter"
   id
   ["Imprint"].
-
 Definition zimone (id : nat) : Card := 
   mkCard 
   (Some (mkPermanent (* Est un permanent *)
@@ -382,27 +402,12 @@ Definition primo (id : nat) : Card :=
   id
   nil.
 
-Definition myrkul (id : nat) : Card := 
-  mkCard 
-  (Some (mkPermanent
-    [(3,1)]
-    nil
-    None
-    ["God"]
-    (Some (mkCreature 7 5))
-    None
-    None
-    None
-    false
-    true
-    false))
-  None
-  None
-  [mkMana Green 1; mkMana White 1; mkMana Black 1; mkMana Generic 4]
-  "Myrkul, Lord of Bones"
-  id
-  nil.
-
+Definition get_base_card (c : Card) (id : nat) : option Card :=
+  match c.(name) with
+  | "Colossal Dreadmaw" => Some (colossal_dreadmaw id)
+  | "Mirror Room" => Some (mirror_room id)
+  | _ => None
+  end.
 
 End card_instance.
 Export card_instance.
