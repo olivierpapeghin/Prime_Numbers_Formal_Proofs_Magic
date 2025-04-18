@@ -598,6 +598,204 @@ Fixpoint count_tokens (cards : list Card) : nat :=
     | None => count_tokens rest
     end
   end.
+  
+Definition get_active_passives (dict : PassiveAbilityDict) : list PassiveKey :=
+  fold_right (fun (p : PassiveKey * nat) (acc : list PassiveKey) =>
+                let (k, b) := p in if Nat.ltb 0 b then k :: acc else acc)
+             []
+             dict.
+
+Fixpoint Transform_all_creature_in (l : list Card) (new_type : string) : list Card :=
+  match l with
+  | [] => []
+  | c :: rest =>
+    match c.(permanent) with
+    | None => c :: Transform_all_creature_in rest new_type
+    | Some perm =>
+      match perm.(creature) with
+      | None => c :: Transform_all_creature_in rest new_type
+      | Some _ =>
+        let new_perm := mkPermanent
+          perm.(Abilities)
+          perm.(ListActivated)
+          perm.(PassiveAbility)
+          (new_type :: perm.(subtype))
+          perm.(creature)
+          perm.(enchantement)
+          perm.(land)
+          perm.(artifact)
+          perm.(token)
+          perm.(legendary)
+          perm.(tapped)
+        in
+        let new_card := mkCard
+          (Some new_perm)
+          c.(instant)
+          c.(sorcery)
+          c.(manacost)
+          c.(name)
+          c.(id)
+          c.(keywords)
+        in
+        new_card :: Transform_all_creature_in rest new_type
+      end
+    end
+  end.
+
+Fixpoint Add_key_word_to (l : list Card) (new_key_word : string) : list Card :=
+  match l with
+  | [] => []
+  | c :: rest =>
+      let new_card := mkCard
+        c.(permanent)
+        c.(instant)
+        c.(sorcery)
+        c.(manacost)
+        c.(name)
+        c.(id)
+        (new_key_word :: c.(keywords)) in
+      new_card :: Add_key_word_to rest new_key_word
+  end.
+
+Definition Leyline_of_transformation_passive (gs : GameState) : GameState :=
+  let new_battlefield := Transform_all_creature_in gs.(battlefield) "Saproling" in
+  let new_hand := Transform_all_creature_in gs.(hand) "Saproling" in
+  let new_library := Transform_all_creature_in gs.(library) "Saproling" in
+  let new_grave := Transform_all_creature_in gs.(graveyard) "Saproling" in
+  let new_exile := Transform_all_creature_in gs.(exile) "Saproling" in
+  let new_gs := mkGameState
+    new_battlefield
+    new_hand
+    new_library
+    new_grave
+    new_exile
+    gs.(opponent)
+    gs.(manapool)
+    gs.(stack)
+    gs.(passive_abilities)
+    gs.(phase) in
+  new_gs
+  .
+  
+Definition Leyline_of_anticipation_passive (gs : GameState) : GameState :=
+  let new_battlefield := Add_key_word_to gs.(battlefield) "Flash" in
+  let new_hand := Add_key_word_to gs.(hand) "Flash" in
+  let new_library := Add_key_word_to gs.(library) "Flash" in
+  let new_grave := Add_key_word_to gs.(graveyard) "Flash" in
+  let new_exile := Add_key_word_to gs.(exile) "Flash" in
+  let new_gs := mkGameState
+    new_battlefield
+    new_hand
+    new_library
+    new_grave
+    new_exile
+    gs.(opponent)
+    gs.(manapool)
+    gs.(stack)
+    gs.(passive_abilities)
+    gs.(phase) in
+  new_gs
+  .
+
+Definition Life_and_limb_passive (c : Card) : Card :=
+  match c.(permanent) with
+  | None => c
+  | Some perm =>
+    match perm.(creature) with
+    | Some creature =>
+      if existsb (fun s => String.eqb s "Saproling") (subtype perm) then
+        let new_perm := mkPermanent
+          perm.(Abilities)
+          perm.(ListActivated)
+          perm.(PassiveAbility)
+          perm.(subtype)
+          (Some (mkCreature 1 1))
+          perm.(enchantement)
+          (Some (mkLand (mkMana Green 1)))
+          perm.(artifact)
+          perm.(token)
+          perm.(legendary)
+          perm.(tapped) in
+        mkCard
+          (Some new_perm)
+          c.(instant)
+          c.(sorcery)
+          c.(manacost)
+          c.(name)
+          c.(id)
+          c.(keywords)
+      else
+        c
+    | None =>
+      match perm.(land) with
+      | None => c
+      | Some land =>
+        if eq_mana land.(producing) (mkMana Green 1) then
+          let new_perm := mkPermanent
+            perm.(Abilities)
+            perm.(ListActivated)
+            perm.(PassiveAbility)
+            ("Saproling"%string :: perm.(subtype))
+            (Some (mkCreature 1 1))
+            perm.(enchantement)
+            (Some (mkLand (mkMana Green 1)))
+            perm.(artifact)
+            perm.(token)
+            perm.(legendary)
+            perm.(tapped) in
+          mkCard
+            (Some new_perm)
+            c.(instant)
+            c.(sorcery)
+            c.(manacost)
+            c.(name)
+            c.(id)
+            c.(keywords)
+        else
+          c
+      end
+    end
+  end.
+  
+Fixpoint apply_life_and_limb_to (l : list Card) : list Card :=
+  match l with
+  | [] => []
+  | c :: rest =>
+      let new_card := Life_and_limb_passive c in
+      new_card :: apply_life_and_limb_to rest
+  end.
+
+Definition when_life_and_limb_enters (gs : GameState) : GameState :=
+  let new_battlefield := apply_life_and_limb_to gs.(battlefield) in
+  let new_gs := mkGameState 
+    new_battlefield
+    gs.(hand)
+    gs.(library)
+    gs.(graveyard)
+    gs.(exile)
+    gs.(opponent)
+    gs.(manapool)
+    gs.(stack)
+    gs.(passive_abilities)
+    gs.(phase) in
+  new_gs.
+
+Definition apply_keypassive (kp : PassiveKey) (c : Card) : Card :=
+  match kp with
+  | SaprolingsLands => Life_and_limb_passive c
+  | _ => c
+  end.
+
+Definition apply_passive_to_cast (kps : list PassiveKey) (c : Card) : Card :=
+  fold_left (fun acc kp => apply_keypassive kp acc) kps c.
+
+Definition trigger_passive_effect (gs : GameState) (key : PassiveKey) : GameState :=
+  match key with
+  | AllSaprolings => Leyline_of_transformation_passive gs
+  | AllFlash => Leyline_of_anticipation_passive gs
+  | SaprolingsLands => when_life_and_limb_enters gs
+  | _ => gs
+  end.
 
 Definition create_token (c : Card) (nb_land : nat) (gs : GameState) : GameState :=
   match c.(permanent) with
@@ -605,6 +803,7 @@ Definition create_token (c : Card) (nb_land : nat) (gs : GameState) : GameState 
           if Nat.ltb 0 (find_passive_ability_in_dict gs.(passive_abilities) DoubleToken) then
             let nb_token := count_tokens gs.(battlefield) +2 in
             let new_token :=[
+                apply_passive_to_cast (get_active_passives (gs.(passive_abilities))) (
                 mkCard
                   (Some (mkPermanent
                           nil
@@ -623,8 +822,8 @@ Definition create_token (c : Card) (nb_land : nat) (gs : GameState) : GameState 
                   [] (* Pas de coût de mana, c’est un token *)
                   c.(name)
                   (nb_token - 1)
-                  [];
-                  
+                  []);
+                apply_passive_to_cast (get_active_passives (gs.(passive_abilities))) (
                 mkCard
                   (Some (mkPermanent
                           nil
@@ -643,7 +842,7 @@ Definition create_token (c : Card) (nb_land : nat) (gs : GameState) : GameState 
                   [] (* Pas de coût de mana, c’est un token *)
                   c.(name)
                   nb_token
-                  []
+                  [])
                   ]
               in
               let new_battlefield := new_token ++ gs.(battlefield) in
