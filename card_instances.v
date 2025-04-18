@@ -393,7 +393,7 @@ Definition primo (id : nat) : Card :=
     None (* N'est pas un artifact *)
     None (* N'est pas une land *)
     true (* Est un token *)
-    false (* N'est pas légendaire *)
+    true (* Est légendaire *)
     false)) (* N'est pas tapped *)
   None (* N'est pas un instant *)
   None (* N'est pas un sorcery *)
