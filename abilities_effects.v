@@ -532,45 +532,57 @@ match remove_card_costs gs [mkMana Blue 1] with
 end.
 
 Definition isochron_scepter_ability (target_cost : option (list Card)) (targets : option (list Card)) (manacost : option (list Mana)) (gs : GameState) : GameState :=
-  match remove_card_costs gs [mkMana Generic 2] with
-  | Some gs_after_payment =>
-      match targets with
-      | Some (target :: _) =>
-          (* On récupère l’artefact sur le champ de bataille *)
-          let updated_scepter := find (fun c => Nat.eqb c.(id) target.(id)) gs_after_payment.(battlefield) in
-          match updated_scepter with
-          | Some scepter_card =>
-              match scepter_card.(permanent) with
-              | Some perm =>
-                  match perm.(artifact) with
-                  | Some art =>
-                      match art.(isochron) with
-                      | Some inst =>
-                          let copied_card := mkCard None (Some inst) None [] "Isochron ability" 999 [] in
-                          let new_stack := CardItem copied_card :: gs_after_payment.(stack) in
-                          mkGameState
-                            gs_after_payment.(battlefield)
-                            gs_after_payment.(hand)
-                            gs_after_payment.(library)
-                            gs_after_payment.(graveyard)
-                            gs_after_payment.(exile)
-                            gs_after_payment.(opponent)
-                            gs_after_payment.(manapool)
-                            new_stack
-                            gs_after_payment.(passive_abilities)
-                            gs_after_payment.(phase)
+  match manacost with
+  | Some cost =>
+      match remove_card_costs gs cost with
+      | Some gs_after_payment =>
+          match target_cost with
+          | Some [cost_card] =>
+              match targets with
+              | Some [target] =>
+                  match target.(permanent) with
+                  | Some p =>
+                      match p.(artifact) with
+                      | Some art =>
+                          match art.(isochron) with
+                          | Some inst =>
+                              (* Taper la carte utilisée comme coût *)
+                              let battlefield_after_cost :=
+                                map (fun c => if eq_card c cost_card then tap c else c)
+                                    gs_after_payment.(battlefield) in
+
+                              (* Créer la copie et l’ajouter à la pile *)
+                              let copied_card := mkCard None (Some inst) None [] "Isochron ability" 999 [] in
+                              let new_stack := CardItem copied_card :: gs_after_payment.(stack) in
+
+                              (* Créer le nouvel état du jeu *)
+                              mkGameState
+                                battlefield_after_cost
+                                gs_after_payment.(hand)
+                                gs_after_payment.(library)
+                                gs_after_payment.(graveyard)
+                                gs_after_payment.(exile)
+                                gs_after_payment.(opponent)
+                                gs_after_payment.(manapool)
+                                new_stack
+                                gs_after_payment.(passive_abilities)
+                                gs_after_payment.(phase)
+                          | None => gs
+                          end
                       | None => gs
                       end
                   | None => gs
                   end
-              | None => gs
+              | _ => gs
               end
-          | None => gs
+          | _ => gs
           end
-      | _ => gs
+      | None => gs (* Impossible de payer le coût en mana *)
       end
-  | None => gs
+  | None => gs (* Pas de coût en mana fourni *)
   end.
+
+
 
 
 

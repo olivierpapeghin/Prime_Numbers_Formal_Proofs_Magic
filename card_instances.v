@@ -293,7 +293,7 @@ Definition molten_duplication (id : nat) : Card :=
   None
   None
   (Some (mkSorcery[3]))
-  [(mkMana Red 1)]
+  [(mkMana Red 1); (mkMana Generic 1)]
   "Molten Duplication"
   id
   nil.
@@ -360,6 +360,7 @@ Definition isochron_scepter (id: nat) : Card :=
   "Isochron Scepter"
   id
   ["Imprint"].
+
 Definition zimone (id : nat) : Card := 
   mkCard 
   (Some (mkPermanent (* Est un permanent *)
