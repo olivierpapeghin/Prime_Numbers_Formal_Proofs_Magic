@@ -11,8 +11,6 @@ Require Import utility_functions.
 Import utility_function.
 Require Import card_instances.
 Import card_instance.
-Require Import passive_ability.
-Import passive_ability.
 Require Import abilities_effects.
 Import abilities_effects.
 Require Import Land_cards_def.

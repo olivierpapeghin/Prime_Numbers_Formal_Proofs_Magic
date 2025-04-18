@@ -13,8 +13,6 @@ Require Import card_instances.
 Import card_instance.
 Require Import abilities_effects.
 Import abilities_effects.
-Require Import passive_ability.
-Import passive_ability.
 Require Import game_actions.
 Import game_action.
 Require Import Land_cards_def.
