@@ -764,6 +764,17 @@ Fixpoint apply_life_and_limb_to (l : list Card) : list Card :=
       let new_card := Life_and_limb_passive c in
       new_card :: apply_life_and_limb_to rest
   end.
+  
+Definition apply_transformation_saprolings_to (l : list Card) : Card :=
+  match l with 
+  | [c] => 
+    match Transform_all_creature_in [c] "Saproling" with
+      | [c'] => c'
+      | _ => mkCard None None None nil "" 0 nil (* sécurité si la fonction bug *)
+      end
+  | _ => mkCard None None None nil "" 0 nil
+  end
+.
 
 Definition when_life_and_limb_enters (gs : GameState) : GameState :=
   let new_battlefield := apply_life_and_limb_to gs.(battlefield) in
@@ -783,6 +794,7 @@ Definition when_life_and_limb_enters (gs : GameState) : GameState :=
 Definition apply_keypassive (kp : PassiveKey) (c : Card) : Card :=
   match kp with
   | SaprolingsLands => Life_and_limb_passive c
+  | AllSaprolings => apply_transformation_saprolings_to [c]
   | _ => c
   end.
 
@@ -845,6 +857,7 @@ Definition create_token (c : Card) (nb_land : nat) (gs : GameState) : GameState 
                   [])
                   ]
               in
+              
               let new_battlefield := new_token ++ gs.(battlefield) in
               let updated_gs := mkGameState
                 new_battlefield gs.(hand) gs.(library) gs.(graveyard)
