@@ -45,7 +45,43 @@ Definition gs2 := Resolve (Resolve gs1 0 None) 0 None.
 
 Definition gs3 := activate_ability 1 (Some [primo 1; primo 2; primo 3]) None None (siege_zombie 1) Dict_AA gs2.
 
-Compute gs3.
+(* Maintenant nous allons prouver ce qu'on vient de faire *)
 
+Definition is_zimone_trigger (cop : CardOrPair) : bool :=
+  match cop with
+  | CardItem _ => false
+  | PairItem a b =>
+    if Nat.eqb a 2 && Nat.eqb b 2 then true else false
+  end.
 
+Definition count_zimone_triggers (l : list CardOrPair) : nat :=
+  length (filter is_zimone_trigger l).
+
+(* On vérifie qu'il y a bien 2 triggers de Zimone sur la stack au passage à l'endstep *)
+Theorem two_zimone_triggers : 
+  Nat.eqb 2 (count_zimone_triggers gs1.(stack)) = true.
+Proof.
+  simpl. reflexivity.
+Qed.
+
+(* Prédicat qui dit si une carte donnée est primo ou non *)
+Definition is_primo (c : Card) : bool :=
+  String.eqb c.(name) "Primo, The Indivisible".
+
+(* Fonction qui compte le nombre de primos dans une liste *)
+Definition count_primos (l : list Card) : nat :=
+  length (filter is_primo l).
+
+(* On vérifie qu'il y a bien 4 primos sur le champ de bataille *)
+Theorem four_primos_on_battlefield : 
+  Nat.eqb 4 (count_primos gs2.(battlefield)) = true.
+Proof.
+  simpl. reflexivity.
+Qed.
+
+Theorem one_damage_dealt :
+  Nat.eqb gs2.(opponent) (gs3.(opponent)+1) = true.
+Proof.
+  simpl. reflexivity.
+Qed.
 
