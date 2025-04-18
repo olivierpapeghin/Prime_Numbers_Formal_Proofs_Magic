@@ -335,7 +335,7 @@ Definition molten_duplication (id : nat) : Card :=
   None
   None
   (Some (mkSorcery[3]))
-  [(mkMana Red 1)]
+  [(mkMana Red 1); (mkMana Generic 1)]
   "Molten Duplication"
   id
   nil.
