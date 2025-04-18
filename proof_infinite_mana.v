@@ -17,27 +17,15 @@ Require Import Land_cards_def.
 Import Land_cards.
 Require Import game_actions.
 Import game_actions.
+Require Import setup_combo.
+Import setup_combo.
 
 Local Open Scope string_scope.
 
 (* L'objectif est de prouver qu'on peut générer une infinité de mana avec les deux cartes
   Sanctum Weaver et Freed From the Realm (une aura attachée au Sanctum Weaver) *)
 
-(* On définit l'état initial du jeu *)
-Definition initial_state : GameState :=
-  mkGameState
-    [sanctum_weaver 1; freed_from_the_realm 1 1 "Sanctum Weaver"]
-    []
-    []
-    []
-    []
-    20
-    []
-    []
-    []
-    MainPhase1.
-
-(* On définit ensuite l'étape qu'on doit répéter indéfiniment, ici tapper le Sanctum Weaver pour du mana
+(* On définit l'étape qu'on doit répéter indéfiniment, ici tapper le Sanctum Weaver pour du mana
   et le détaper avec un mana bleu grace à Freed From the Realm *)
 Inductive step : GameState -> GameState -> Prop :=
 | step_mana :
@@ -63,9 +51,9 @@ CoFixpoint infinite_loop (gs : GameState) : can_loop_infinitely gs :=
 
 (* Il ne reste plus qu'à savoir si l'état initial défini plus haut peut boucler à l'infini *)
 Theorem infinite_blue_mana_possible :
-  can_loop_infinitely initial_state.
+  can_loop_infinitely gs_sanctum_weaver.
 Proof.
-  exact (infinite_loop initial_state).
+  exact (infinite_loop gs_sanctum_weaver).
 Qed.
 
 

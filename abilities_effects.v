@@ -220,7 +220,7 @@ Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability); (2
 Definition birgi_ability (targets : option (list Card)) (gs : GameState) : GameState :=
   add_mana gs Red 1.
 
-Definition desecration_elemental (targets : option (list Card)) (gs : GameState) : GameState :=
+Definition desecration_elemental_ability (targets : option (list Card)) (gs : GameState) : GameState :=
     match targets with
   | None => gs (* Pas de cible, on ne fait rien *)
   | Some target_list => 
@@ -421,7 +421,7 @@ Definition mirror_room_enter (targets : option (list Card)) (gs : GameState) : G
 
 
 (* Définition des sous-dictionnaires *)
-Definition OnCast : Dict := [(1,birgi_ability)].
+Definition OnCast : Dict := [(1,birgi_ability);(2, desecration_elemental_ability)].
 Definition OnPhase : Dict := [(1,sacrifice_end_step);(2,zimone_ability)].
 Definition OnDeath : Dict := [(1,myrkul_ability)].
 Definition OnEnter : Dict := [(1,isochron_scepter_enter); (2, mirror_room_enter)].

@@ -402,6 +402,7 @@ Definition isochron_scepter (id: nat) : Card :=
   "Isochron Scepter"
   id
   ["Imprint"].
+
 Definition zimone (id : nat) : Card := 
   mkCard 
   (Some (mkPermanent (* Est un permanent *)
@@ -464,7 +465,28 @@ Definition Darksteel_citadel (id : nat) : Card :=
   "Darksteel Citadel"
   id  
   ["Indestructible"].
-  
+
+Definition myrkul (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    [(3,1)]
+    nil
+    None
+    ["God"]
+    (Some (mkCreature 7 5))
+    None
+    None
+    None
+    false
+    true
+    false))
+  None
+  None
+  [mkMana Green 1; mkMana Generic 4; mkMana Black 1; mkMana White 1]
+  "Myrkul, Lord of Bones"
+  id
+  nil.
+
 Definition get_base_card (c : Card) (id : nat) : option Card :=
   match c.(name) with
   | "Colossal Dreadmaw" => Some (colossal_dreadmaw id)
