@@ -10,8 +10,6 @@ Require Import utility_functions.
 Import utility_function.
 Require Import card_instances.
 Import card_instance.
-Require Import passive_ability.
-Import passive_ability.
 
 Local Open Scope string_scope.
 
