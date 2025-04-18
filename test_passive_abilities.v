@@ -25,7 +25,7 @@ Definition initial_gamestate : GameState :=
   []
   [(abuelos_awakening 1)]
   nil (* La bibliothèque est vide *)
-  [(mirror_room 1)] (* Le cimetière est vide *)
+  [(mirror_room_fractured_realm_locked 1)] (* Le cimetière est vide *)
   nil (* L'exil est vide *)
   20 (* L'opposant est à 20 PV *)
   [mkMana White 20; mkMana Blue 100; mkMana Black 20; mkMana Red 20; mkMana Green 200; mkMana Generic 200] (* On se donne assez de mana pour pouvoir lancer le sort *)
@@ -33,8 +33,22 @@ Definition initial_gamestate : GameState :=
   DefaultListPassiveAbility  
   MainPhase1.
 
-Definition gs2 : GameState := Resolve (Cast (abuelos_awakening 1) initial_gamestate) 1 (Some [mirror_room 1]).
-(* Compute  Resolve (Resolve (Cast (colossal_dreadmaw 3) gs5) 0 None) 0 None. *)
-Compute activate_triggered_ability Triggered_Abilities 4 2 (Some [(mirror_room 1)]) gs2.
-Compute get_base_card (mirror_room 1) 99.
+(* Definition gs1 : GameState := Resolve (Cast (abuelos_awakening 1) initial_gamestate) 1 (Some [mirror_room_fractured_realm_locked 1]).
 
+Compute gs1.
+
+Definition gs2 : GameState := activate_ability 7 None (Some [(mkMana Generic 1)]) ( Some [(mirror_room_fractured_realm_locked 1); (mirror_room_fractured_realm_locked 1)]) (mirror_room_fractured_realm_locked 1) Dict_AA gs1.
+
+Compute gs2.
+
+Definition gs3 : GameState := activate_ability 8 None (Some [(mkMana Generic 1)]) ( Some [(mirror_room 1)]) (mirror_room 1) Dict_AA gs2.
+
+Compute gs3.
+
+Definition gs4 : GameState := activate_ability 7 None (Some [(mkMana Generic 1)]) ( Some [(mirror_room_fractured_realm_locked 2); (mirror_room_fractured_realm_unlocked 1)]) (mirror_room_fractured_realm_locked 2) Dict_AA gs3.
+
+Compute gs4.
+
+Definition gs5 : GameState := activate_ability 8 None (Some [(mkMana Generic 1)]) ( Some [(mirror_room 2)]) (mirror_room 2) Dict_AA gs4.
+
+Compute gs5. *)
