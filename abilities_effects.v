@@ -10,8 +10,6 @@ Require Import utility_functions.
 Import utility_function.
 Require Import card_instances.
 Import card_instance.
-Require Import passive_ability.
-Import passive_ability.
 
 Local Open Scope string_scope.
 
@@ -222,7 +220,7 @@ Definition non_permanent_abilities : Dict := [(1, abuelos_awakening_ability); (2
 Definition birgi_ability (targets : option (list Card)) (gs : GameState) : GameState :=
   add_mana gs Red 1.
 
-Definition desecration_elemental (targets : option (list Card)) (gs : GameState) : GameState :=
+Definition desecration_elemental_ability (targets : option (list Card)) (gs : GameState) : GameState :=
     match targets with
   | None => gs (* Pas de cible, on ne fait rien *)
   | Some target_list => 
@@ -347,50 +345,71 @@ Definition zimone_ability (targets : option (list Card)) (gs : GameState) : Game
             if is_prime nb_lands && Nat.ltb 0 is_land_played then create_token (primo 0) nb_lands gs
             else gs
   end.
+  
 
 Definition mirror_room_enter (targets : option (list Card)) (gs : GameState) : GameState :=
   match targets with
-  | Some [c'] =>
+  | Some [c'; to_copy'] =>
     match find_card_in_list c' gs.(battlefield) with
     | None => gs
     | Some c =>
-      match c.(permanent) with
+      match find_card_in_list to_copy' gs.(battlefield) with
       | None => gs
-      | Some perm =>
-        match perm.(creature) with
+      | Some to_copy =>
+        match to_copy.(permanent) with
         | None => gs
-        | Some crea =>
-          match get_base_card c 99 with
+        | Some to_copy_perm =>
+          match c.(permanent) with
           | None => gs
-          | Some copy =>
-            match copy.(permanent) with
+          | Some perm =>
+            match to_copy_perm.(creature) with
             | None => gs
-            | Some copy_perm =>
-              let new_subtype := "Reflection" :: copy_perm.(subtype) in
-              let copy1 := mkCard
-                      (Some (mkPermanent
-                          (copy_perm.(Abilities))
-                          (copy_perm.(ListActivated))
-                          (copy_perm.(PassiveAbility))
-                          (copy_perm.(subtype))
-                          (copy_perm.(creature))
-                          (copy_perm.(enchantement))
-                          (copy_perm.(land))
-                          (copy_perm.(artifact))
-                          true (* token := true *)
-                          (copy_perm.(legendary))
-                          false))
-                      None
-                      None
-                      copy.(manacost)
-                      copy.(name)
-                      copy.(id)
-                      copy.(keywords) in
-              let new_battlefield := copy1 :: gs.(battlefield) in
-              let new_gs := mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard)
-                                gs.(exile) gs.(opponent) gs.(manapool) gs.(stack)
-                                gs.(passive_abilities) gs.(phase) in
-              new_gs
+            | Some crea =>
+              let is_mirror_realm_card (n : string) : bool :=
+                String.eqb n "Mirror Room // Fractured Realm (full locked)" ||
+                String.eqb n "Mirror Room // Fractured Realm (full unlocked)" ||
+                String.eqb n "Mirror Room" ||
+                String.eqb n "Fractured Realm" in
+
+              let cards : list string :=
+                map (fun c => c.(name)) (List.app gs.(battlefield) gs.(hand)) in
+
+              let count_existing_copies : nat :=
+                List.length (filter is_mirror_realm_card cards) in
+              match get_base_card c (count_existing_copies + 1) with
+              | None => gs
+              | Some copy =>
+                match copy.(permanent) with
+                | None => gs
+                | Some copy_perm =>
+                  let new_subtype := "Reflection" :: copy_perm.(subtype) in
+                  let copy1 := mkCard
+                          (Some (mkPermanent
+                              (copy_perm.(Abilities))
+                              (copy_perm.(ListActivated))
+                              (copy_perm.(PassiveAbility))
+                              (copy_perm.(subtype))
+                              (copy_perm.(creature))
+                              (copy_perm.(enchantement))
+                              (copy_perm.(land))
+                              (copy_perm.(artifact))
+                              true (* token := true *)
+                              (copy_perm.(legendary))
+                              false))
+                          None
+                          None
+                          copy.(manacost)
+                          copy.(name)
+                          copy.(id)
+                          copy.(keywords) in
+                  let new_battlefield := copy1 :: gs.(battlefield) in
+                  
+                  let new_gs := mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard)
+                                    gs.(exile) gs.(opponent) gs.(manapool) gs.(stack)
+                                    gs.(passive_abilities) gs.(phase) in
+                  add_abilities_to_stack 4 copy_perm new_gs
+                end
+              end
             end
           end
         end
@@ -398,9 +417,11 @@ Definition mirror_room_enter (targets : option (list Card)) (gs : GameState) : G
     end
   | _ => gs
   end. 
+  
+
 
 (* Définition des sous-dictionnaires *)
-Definition OnCast : Dict := [(1,birgi_ability)].
+Definition OnCast : Dict := [(1,birgi_ability);(2, desecration_elemental_ability)].
 Definition OnPhase : Dict := [(1,sacrifice_end_step);(2,zimone_ability)].
 Definition OnDeath : Dict := [(1,myrkul_ability)].
 Definition OnEnter : Dict := [(1,isochron_scepter_enter); (2, mirror_room_enter)].
@@ -582,7 +603,96 @@ Definition isochron_scepter_ability (target_cost : option (list Card)) (targets 
   | None => gs (* Pas de coût en mana fourni *)
   end.
 
-
+Definition unlock_mirror_room (target_cost : option (list Card)) 
+                              (targets : option (list Card)) 
+                              (manacost : option (list Mana)) 
+                              (gs : GameState) : GameState :=
+  match remove_card_costs gs [(mkMana Blue 1); (mkMana Generic 2)] with
+  | None => gs
+  | Some gs' =>
+    match targets with
+    | None => gs
+    | Some [c'; to_copy'] =>
+      match find_card_in_list c' gs.(battlefield) with
+      | Some c =>
+        match c.(permanent) with
+        | None => gs
+        | Some perm =>
+          let unlocked := mkCard
+                            (Some (mkPermanent
+                              (perm.(Abilities))
+                              [8]
+                              (perm.(PassiveAbility))
+                              (perm.(subtype))
+                              (perm.(creature))
+                              (perm.(enchantement))
+                              (perm.(land))
+                              (perm.(artifact))
+                              (perm.(token))
+                              (perm.(legendary))
+                              false))
+                            None
+                            None
+                            nil
+                            "Mirror Room"
+                            c.(id)
+                            c.(keywords) in
+          let gs1 := mirror_room_enter (Some [c; to_copy']) gs in
+          let new_battlefield := unlocked :: (remove_card gs1.(battlefield) c) in
+          mkGameState new_battlefield gs1.(hand) gs1.(library) gs1.(graveyard)
+                    gs1.(exile) gs1.(opponent) gs1.(manapool) gs1.(stack)
+                    gs1.(passive_abilities) gs1.(phase)
+        end
+      | _ => gs
+      end
+    | _ => gs
+    end
+  end.
+  
+Definition unlock_fractured_realm_room (target_cost : option (list Card)) 
+                              (targets : option (list Card)) 
+                              (manacost : option (list Mana)) 
+                              (gs : GameState) : GameState :=
+  match remove_card_costs gs [(mkMana Blue 1); (mkMana Generic 2)] with
+  | None => gs
+  | Some gs' =>
+    match targets with
+    | None => gs
+    | Some [c'] =>
+      match find_card_in_list c' gs.(battlefield) with
+      | Some c =>
+        match c.(permanent) with
+        | None => gs
+        | Some perm =>
+          let unlocked := mkCard
+                            (Some (mkPermanent
+                              (perm.(Abilities))
+                              nil
+                              (Some AdditionalTrigger)
+                              (perm.(subtype))
+                              (perm.(creature))
+                              (perm.(enchantement))
+                              (perm.(land))
+                              (perm.(artifact))
+                              (perm.(token))
+                              (perm.(legendary))
+                              false))
+                            None
+                            None
+                            nil
+                            "Mirror Room // Fractured Realm (full unlocked)"
+                            c.(id)
+                            c.(keywords) in
+          let new_battlefield := unlocked :: (remove_card gs.(battlefield) c) in
+          mkGameState new_battlefield gs.(hand) gs.(library) gs.(graveyard)
+                    gs.(exile) gs.(opponent) gs.(manapool) gs.(stack)
+                    (update_passive_ability_in_dict gs.(passive_abilities) AdditionalTrigger (S (find_passive_ability_in_dict gs.(passive_abilities) AdditionalTrigger)))gs.(phase)
+        end
+      | _ => gs
+      end
+    | _ => gs
+    end
+  end.
 
 
 
@@ -592,7 +702,9 @@ Definition Dict_AA : list (nat * Activated_Ability) := [
 (3, sanctum_weaver_ability);
 (4, freed_from_the_realm_ability_1);
 (5, freed_from_the_realm_ability_2);
-(6, isochron_scepter_ability)].
+(6, isochron_scepter_ability);
+(7, unlock_mirror_room);
+(8, unlock_fractured_realm_room)].
 
 
 

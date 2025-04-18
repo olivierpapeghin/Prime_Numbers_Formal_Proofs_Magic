@@ -11,8 +11,6 @@ Require Import utility_functions.
 Import utility_function.
 Require Import card_instances.
 Import card_instance.
-Require Import passive_ability.
-Import passive_ability.
 Require Import abilities_effects.
 Import abilities_effects.
 Require Import Land_cards_def.
@@ -147,7 +145,7 @@ Definition activate_ability
             (* Appliquer l'effet de la capacité *)
             let new_gs := ability targets_cost targets_ability (Some mana_list) new_gs_with_pool in
             (* Mettre à jour l'état du jeu *)
-            mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs_with_pool.(manapool) new_gs.(stack) gs.(passive_abilities) gs.(phase)
+            mkGameState new_gs.(battlefield) new_gs.(hand) new_gs.(library) new_gs.(graveyard) new_gs.(exile) new_gs.(opponent) new_gs_with_pool.(manapool) new_gs.(stack) new_gs.(passive_abilities) gs.(phase)
           end
         end
       | None => gs (* L'index n'est pas dans le dictionnaire *)

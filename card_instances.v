@@ -197,8 +197,8 @@ Definition fractured_realm (id : nat) : Card :=
 Definition mirror_room (id : nat) : Card :=
   mkCard 
   (Some (mkPermanent
-    [(4,2)]
-    nil
+    []
+    [8]
     None
     nil
     None
@@ -212,6 +212,48 @@ Definition mirror_room (id : nat) : Card :=
   None
   [(mkMana Blue 1); (mkMana Generic 2)]
   "Mirror Room"
+  id
+  nil.
+
+Definition mirror_room_fractured_realm_locked (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    [7]
+    None
+    nil
+    None
+    (Some (mkEnchantement None))
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  []
+  "Mirror Room // Fractured Realm (full locked)"
+  id
+  nil.
+  
+Definition mirror_room_fractured_realm_unlocked  (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    nil
+    nil
+    (Some AdditionalTrigger)
+    nil
+    None
+    (Some (mkEnchantement None))
+    None
+    None
+    false
+    false
+    false))
+  None
+  None
+  []
+  "Mirror Room // Fractured Realm (full unlocked)"
   id
   nil.
 
@@ -394,7 +436,7 @@ Definition primo (id : nat) : Card :=
     None (* N'est pas un artifact *)
     None (* N'est pas une land *)
     true (* Est un token *)
-    false (* N'est pas légendaire *)
+    true (* Est légendaire *)
     false)) (* N'est pas tapped *)
   None (* N'est pas un instant *)
   None (* N'est pas un sorcery *)
@@ -423,13 +465,37 @@ Definition Darksteel_citadel (id : nat) : Card :=
   "Darksteel Citadel"
   id  
   ["Indestructible"].
-  
+
+Definition myrkul (id : nat) : Card :=
+  mkCard 
+  (Some (mkPermanent
+    [(3,1)]
+    nil
+    None
+    ["God"]
+    (Some (mkCreature 7 5))
+    None
+    None
+    None
+    false
+    true
+    false))
+  None
+  None
+  [mkMana Green 1; mkMana Generic 4; mkMana Black 1; mkMana White 1]
+  "Myrkul, Lord of Bones"
+  id
+  nil.
+
 Definition get_base_card (c : Card) (id : nat) : option Card :=
   match c.(name) with
   | "Colossal Dreadmaw" => Some (colossal_dreadmaw id)
   | "Mirror Room" => Some (mirror_room id)
+  | "Mirror Room // Fractured Realm (full locked)" => Some (mirror_room_fractured_realm_locked id)
   | _ => None
   end.
+  
+
 
 End card_instance.
 Export card_instance.
