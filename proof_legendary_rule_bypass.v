@@ -21,6 +21,7 @@ Require Import Coq.Arith.Arith.
 
 Local Open Scope string_scope.
 
+Module proof_legendary_rule_bypass.
 (* Prédicat qui dit si une carte donnée est primo et légendaire ou non *)
 Definition is_primo_legendary (c : Card) : bool :=
   andb (String.eqb c.(name) "Primo, The Indivisible")
@@ -57,8 +58,6 @@ Definition gs_forest := Play_land (Forest 1) initial_state.
 (* On résout les deux triggers de Zimone avec toutes les conditions réunies pour créer deux token primos légendaires *)
 Definition gs_primos := Resolve (Resolve gs_forest 0 None) 0 None.
 
-Compute gs_primos.
-
 (* L'objectif est de prouver qu'on peut bypass la règle légendaire quand la mirror gallery est sur le champ de bataille *)
 (* Pour ce théorème on va admettre que les fonctions Resolve et check_legendary_rule fonctionnent 
    comme prévu *)
@@ -68,3 +67,5 @@ Proof.
   simpl. reflexivity.
 Qed.
 
+End proof_legendary_rule_bypass.
+Export proof_legendary_rule_bypass.

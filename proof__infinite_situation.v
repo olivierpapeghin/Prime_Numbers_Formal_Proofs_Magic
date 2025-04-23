@@ -11,8 +11,6 @@ Require Import utility_functions.
 Import utility_function.
 Require Import card_instances.
 Import card_instance.
-Require Import passive_ability.
-Import passive_ability.
 Require Import abilities_effects.
 Import abilities_effects.
 Require Import Land_cards_def.
@@ -21,6 +19,8 @@ Require Import game_actions.
 Import game_actions.
 
 Local Open Scope string_scope.
+
+Module proof__infinite_situation.
 
 (* Darksteel Citadel *)
 Definition darksteel : Card := Darksteel_citadel 5.
@@ -149,3 +149,6 @@ Proof.
     (* Ex: count_darksteel end_state.(battlefield) = ... *)
     reflexivity.
 Qed.
+
+End proof__infinite_situation.
+Export proof__infinite_situation.

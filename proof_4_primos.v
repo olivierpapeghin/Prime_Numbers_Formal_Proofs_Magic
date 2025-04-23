@@ -20,6 +20,7 @@ Import game_actions.
 
 Local Open Scope string_scope.
 
+Module proof_4_primos.
 (* On va prouver que l'on génère 4 tokens primos en en résolvant deux trigger de Zimone si le nombre de land est
    la première partie d'une paire de nombre premiers jumeaux, et que ainsi on peut faire 1 dégât à l'opposant avec 
    l'abilité du siege zombie *)
@@ -163,5 +164,7 @@ Proof.
     simpl. reflexivity.
 Qed.
 
+End proof_4_primos.
+Export proof_4_primos.
 
 
