@@ -31,7 +31,7 @@ Definition initial_gamestate : GameState :=
   DefaultListPassiveAbility  
   MainPhase1.
 
-(* Definition gs1 : GameState := Resolve (Cast (abuelos_awakening 1) initial_gamestate) 1 (Some [mirror_room_fractured_realm_locked 1]).
+ Definition gs1 : GameState := Resolve (Cast (abuelos_awakening 1) initial_gamestate) 1 (Some [mirror_room_fractured_realm_locked 1]).
 
 Compute gs1.
 
@@ -39,7 +39,7 @@ Definition gs2 : GameState := activate_ability 7 None (Some [(mkMana Generic 1)]
 
 Compute gs2.
 
-Definition gs3 : GameState := activate_ability 8 None (Some [(mkMana Generic 1)]) ( Some [(mirror_room 1)]) (mirror_room 1) Dict_AA gs2.
+(* Definition gs3 : GameState := activate_ability 8 None (Some [(mkMana Generic 1)]) ( Some [(mirror_room 1)]) (mirror_room 1) Dict_AA gs2.
 
 Compute gs3.
 
