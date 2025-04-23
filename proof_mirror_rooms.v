@@ -20,6 +20,8 @@ Import game_actions.
 
 Local Open Scope string_scope.
 
+Module proof_mirror_room.
+
 Definition initial_gamestate : GameState := 
   mkGameState
   []
@@ -120,4 +122,8 @@ Theorem infinite_mirror_room_possible :
 Proof.
   exact (infinite_loop gs2).
 Qed.
+
+End proof_mirror_room.
+Export proof_mirror_room.
+
 
