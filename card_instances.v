@@ -32,7 +32,7 @@ Definition colossal_dreadmaw (id : nat) : Card :=
     false)) (* N'est pas légendaire *)
   None (* N'est pas un instant *)
   None (* N'est pas un sorcery *)
-  [mkMana Green 1; mkMana Generic 5]
+  []
   "Colossal Dreadmaw"
   id
   ["Trample"].
@@ -42,7 +42,7 @@ mkCard
   None
   None
   (Some (mkSorcery [1]))
-  [mkMana White 1; mkMana Generic 2]
+  []
   "Abuelo's Awakening"
   id
   nil.
@@ -63,7 +63,7 @@ Definition birgi (id : nat) : Card :=
     false)) (* N'est pas tapped *)
   None (* N'est pas un instant *)
   None (* N'est pas un sorcery *)
-  [mkMana Red 1; mkMana Generic 2]
+  []
   "Birgi, God of Storytelling"
   id
   nil.
@@ -84,7 +84,7 @@ Definition siege_zombie (id : nat): Card :=
     false))
   None
   None
-  [mkMana Black 1; mkMana Generic 1 ]
+  []
   "Siege Zombie"
   id
   nil.
@@ -105,7 +105,7 @@ Definition mirror_gallery (id : nat) : Card :=
     false))
   None
   None
-  [mkMana Generic 5]
+  []
   "Mirror Gallery"
   id
   nil.
@@ -126,7 +126,7 @@ Definition leyline_of_transformation (id : nat) : Card :=
     false))
   None
   None
-  [(mkMana Blue 2); (mkMana Generic 2) ]
+  []
   "Leyline of Transformation"
   id
   nil.
@@ -147,7 +147,7 @@ Definition leyline_of_anticipation (id : nat) : Card :=
     false))
   None
   None
-  [(mkMana Blue 2); (mkMana Generic 2) ]
+  []
   "Leyline of Anticipation"
   id
   nil.
@@ -168,7 +168,7 @@ Definition life_and_limb (id : nat) : Card :=
     false))
   None
   None
-  [(mkMana Green 1); (mkMana Generic 3) ]
+  []
   "Life and Limb"
   id
   nil.
@@ -189,7 +189,7 @@ Definition fractured_realm (id : nat) : Card :=
     false))
   None
   None
-  [(mkMana Blue 2); (mkMana Generic 5) ]
+  []
   "Fractured Realm"
   id
   nil.
@@ -210,7 +210,7 @@ Definition mirror_room (id : nat) : Card :=
     false))
   None
   None
-  [(mkMana Blue 1); (mkMana Generic 2)]
+  []
   "Mirror Room"
   id
   nil.
@@ -273,7 +273,7 @@ Definition parallel_lives (id : nat) : Card :=
     false))
   None
   None
-  [(mkMana Blue 2); (mkMana Generic 5) ]
+  []
   "Parallel Lives"
   id
   nil.
@@ -294,7 +294,7 @@ Definition desecration_elemental (id : nat) : Card :=
     false))
   None
   None
-  [(mkMana Black 1); (mkMana Generic 3) ]
+  []
   "Desecreation Elemental"
   id
   ["Fear"].
@@ -315,7 +315,7 @@ Definition clock_of_omens (id : nat) : Card :=
     false))
   None
   None
-  [(mkMana Generic 4)]
+  []
   "Clock of Omens"
   id
   nil.
@@ -335,7 +335,7 @@ Definition molten_duplication (id : nat) : Card :=
   None
   None
   (Some (mkSorcery[3]))
-  [(mkMana Red 1); (mkMana Generic 1)]
+  []
   "Molten Duplication"
   id
   nil.
@@ -356,7 +356,7 @@ Definition sanctum_weaver (id : nat) : Card :=
     false))
   None
   None
-  [(mkMana Green 1);(mkMana Generic 1) ]
+  []
   "Sanctum Weaver"
   id
   nil.
@@ -377,7 +377,7 @@ Definition freed_from_the_realm (id : nat) (id_card : nat) (card_name : string) 
     false))
   None
   None
-  [(mkMana Blue 1);(mkMana Generic 2) ]
+  []
   "Freed from the realm"
   id
   nil.
@@ -398,7 +398,7 @@ Definition isochron_scepter (id: nat) : Card :=
   false))
   None
   None
-  [ (mkMana Generic 2)]
+  []
   "Isochron Scepter"
   id
   ["Imprint"].
@@ -419,7 +419,7 @@ Definition zimone (id : nat) : Card :=
     false)) (* N'est pas tapped *)
   None (* N'est pas un instant *)
   None (* N'est pas un sorcery *)
-  [mkMana Green 1; mkMana Generic 1; mkMana Blue 1]
+  []
   "Zimone, All-Questioning"
   id
   nil.
@@ -482,7 +482,7 @@ Definition myrkul (id : nat) : Card :=
     false))
   None
   None
-  [mkMana Green 1; mkMana Generic 4; mkMana Black 1; mkMana White 1]
+  []
   "Myrkul, Lord of Bones"
   id
   nil.

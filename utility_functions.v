@@ -16,6 +16,8 @@ Require Import type_definitions.
 Import type_definition.
 Module utility_function.
 
+Definition has_card_named (card_name : string) (bf : list Card) : bool :=
+  existsb (fun (c : Card) => String.eqb c.(name) card_name) bf.
 
 Definition isSome {A : Type} (o : option A) : bool :=
   match o with

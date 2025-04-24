@@ -87,9 +87,9 @@ Definition after_duplication :=
 
 Definition after_isochron_activation : GameState :=
   isochron_scepter_ability
-    (Some [isochron_card]) 
-    (Some [isochron_card])        
-    (Some [mkMana Generic 2]) 
+    (Some [isochron_card])
+    (Some [isochron_card])
+    (Some [mkMana Generic 2])
     after_duplication.
 
 (* Trouver deux tokens artefacts non engagés *)
@@ -109,7 +109,6 @@ Definition after_first_resolve : GameState :=
 Definition after_second_resolve : GameState :=
   Resolve after_first_resolve 3 (Some([darksteel])).
 
-
 Definition after_clock_activation : GameState :=
   let candidates := find_untapped_artifact_tokens after_second_resolve in
   match candidates with
@@ -121,8 +120,6 @@ Definition after_clock_activation : GameState :=
         after_second_resolve
   | _ => after_second_resolve (* pas assez de tokens disponibles *)
   end.
-
-Compute after_clock_activation.
 
 Definition state_eq_ignoring_mana_graveyard (s1 s2 : GameState) : Prop :=
   s1.(hand) = s2.(hand) /\
@@ -136,8 +133,6 @@ Definition state_eq_ignoring_mana_graveyard (s1 s2 : GameState) : Prop :=
 Definition count_darksteel (battlefield : list Card) : nat :=
   count_occ string String.eqb (map (fun c => c.(name)) battlefield) "Darksteel Citadel".
 
-
-
 Theorem combo_preserves_state_with_two_darksteel_more :
   state_eq_ignoring_mana_graveyard test_state after_clock_activation /\
   count_darksteel after_clock_activation.(battlefield) = count_darksteel test_state.(battlefield) + 2.
@@ -149,6 +144,63 @@ Proof.
     (* Ex: count_darksteel end_state.(battlefield) = ... *)
     reflexivity.
 Qed.
+
+Definition add_darksteel_citadel_pair (gs : GameState) : GameState :=
+  let gs1 := Cast (molten_duplication 1) gs in
+  let gs2 := isochron_scepter_ability (Some [isochron_card]) (Some [isochron_card]) None gs1 in
+  let gs3 := Resolve gs2 2 (Some [molten_duplication 1]) in
+  let gs4 := Resolve gs3 3 (Some [Darksteel_citadel 1]) in
+  match find_untapped_artifact_tokens gs4 with
+  | a :: b :: _ =>
+      clock_of_omens_ability
+        (Some [a; b])           (* coût : deux artefacts non engagés *)
+        (Some [isochron_card]) (* cible à dégager : Isochron Scepter *)
+        None
+        gs4
+  | _ => gs4
+  end.
+
+
+Inductive step_add_citadels : GameState -> GameState -> Prop :=
+| add_citadels_step :
+    forall gs gs1,
+      add_darksteel_citadel_pair gs = gs1 ->
+      step_add_citadels gs gs1.
+
+CoInductive can_loop_infinitely_citadels : GameState -> Prop :=
+| loop_step :
+    forall gs gs',
+      step_add_citadels gs gs' ->
+      can_loop_infinitely_citadels gs' ->
+      can_loop_infinitely_citadels gs.
+
+CoFixpoint infinite_darksteel_citadels (gs : GameState) : can_loop_infinitely_citadels gs :=
+  let gs1 := add_darksteel_citadel_pair gs in
+  loop_step gs gs1 (add_citadels_step gs gs1 eq_refl) (infinite_darksteel_citadels gs1).
+
+Theorem infinite_darksteel_citadels_possible :
+  can_loop_infinitely_citadels test_state.
+Proof.
+  exact (infinite_darksteel_citadels test_state).
+Qed.
+
+Inductive reachable_via_land_modification : GameState -> GameState -> Prop :=
+| rv_refl :
+    forall gs,
+      reachable_via_land_modification gs gs
+| rv_add_darksteel_pair :
+    forall gs gs' gs'',
+      add_darksteel_citadel_pair gs = gs' ->
+      reachable_via_land_modification gs' gs'' ->
+      reachable_via_land_modification gs gs''.
+
+Definition is_twin_prime_land_count (gs : GameState) : Prop :=
+  let n := count_lands gs.(battlefield) in
+  is_prime n = true /\ is_prime (n + 2) = true.
+
+Definition can_reach_twin_prime_land_count (gs : GameState) : Prop :=
+  exists gs', reachable_via_land_modification gs gs' /\ is_twin_prime_land_count gs'.
+
 
 End proof__infinite_situation.
 Export proof__infinite_situation.

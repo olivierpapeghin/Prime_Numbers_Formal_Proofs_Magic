@@ -65,8 +65,6 @@ Definition mirr_token (id : nat) :=
     id
     [].
 
-Compute gs2.
-Compute (mirror_room_fractured_realm_locked 2).
 
 (* activate_ability 7 None (Some [(mkMana Generic 1)]) ( Some [(mirror_room_fractured_realm_locked 1); (mirror_room_fractured_realm_locked 1)]) (mirror_room_fractured_realm_locked 1) Dict_AA gs1.
 activate_ability 8 None (Some [(mkMana Generic 1)]) ( Some [(mirror_room 1)]) (mirror_room 1) Dict_AA gs2. *)
@@ -100,27 +98,26 @@ Inductive step : GameState -> GameState -> Prop :=
       step gs gs_1.
 
 (* On peut maintenant définir la boucle infinie *)
-CoInductive can_loop_infinitely : GameState -> Prop :=
+CoInductive can_loop_infinitely_room : GameState -> Prop :=
 | loop_step :
     forall gs gs',
       step gs gs' ->
-      can_loop_infinitely gs' ->
-      can_loop_infinitely gs.
+      can_loop_infinitely_room gs' ->
+      can_loop_infinitely_room gs.
 
 (* On définit une proposition récursive qui va vérifier qu'on peut générer des mirrors_rooms*)
-CoFixpoint infinite_loop (gs : GameState) : can_loop_infinitely gs :=
-  
+CoFixpoint infinite_loop_room (gs : GameState) : can_loop_infinitely_room gs :=
   let card := (mirror_room_fractured_realm_locked (count_mirror_room gs))  in
   let gs_1 := activate_ability 7 None None
       (Some [card; mirror_room 1])
       (card) Dict_AA gs in
-  loop_step gs gs_1 (step_mirror gs gs_1 card eq_refl) (infinite_loop gs_1).
+  loop_step gs gs_1 (step_mirror gs gs_1 card eq_refl) (infinite_loop_room gs_1).
 
 (* Il ne reste plus qu'à savoir si l'état initial défini plus haut peut boucler à l'infini *)
 Theorem infinite_mirror_room_possible :
-  can_loop_infinitely gs2.
+  can_loop_infinitely_room gs2.
 Proof.
-  exact (infinite_loop gs2).
+  exact (infinite_loop_room gs2).
 Qed.
 
 End proof_mirror_room.
