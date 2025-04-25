@@ -140,7 +140,6 @@ Theorem two_zimone_triggers :
 Proof.
   simpl. reflexivity.
 Qed.
-Admitted.
 
 (* On vérifie qu'il y a bien 4 primos sur le champ de bataille
   Pour pouvoir avoir 4 tokens primos qui arrivent sur le champ de bataille en résolvant les deux triggers
