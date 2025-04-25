@@ -22,6 +22,7 @@ Import setup_combo.
 
 Local Open Scope string_scope.
 
+Module proof_infinite_mana.
 (* L'objectif est de prouver qu'on peut générer une infinité de mana avec les deux cartes
   Sanctum Weaver et Freed From the Realm (une aura attachée au Sanctum Weaver) *)
 
@@ -56,5 +57,7 @@ Proof.
   exact (infinite_loop gs_sanctum_weaver).
 Qed.
 
+End proof_infinite_mana.
+Export proof_infinite_mana.
 
 
