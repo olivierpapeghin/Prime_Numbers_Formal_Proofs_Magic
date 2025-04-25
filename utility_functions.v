@@ -600,13 +600,15 @@ Fixpoint count_tokens (cards : list Card) : nat :=
     | None => count_tokens rest
     end
   end.
-  
+
+(* Récup la valeur lié a une clé passive d'un dict *)
 Definition get_active_passives (dict : PassiveAbilityDict) : list PassiveKey :=
   fold_right (fun (p : PassiveKey * nat) (acc : list PassiveKey) =>
                 let (k, b) := p in if Nat.ltb 0 b then k :: acc else acc)
              []
              dict.
 
+(* Ajoute un sous type a toute les créature d'une liste de carte *)
 Fixpoint Transform_all_creature_in (l : list Card) (new_type : string) : list Card :=
   match l with
   | [] => []
@@ -659,6 +661,7 @@ Fixpoint Add_key_word_to (l : list Card) (new_key_word : string) : list Card :=
       new_card :: Add_key_word_to rest new_key_word
   end.
 
+(* effet passive de la Leyline of Transformation *)
 Definition Leyline_of_transformation_passive (gs : GameState) : GameState :=
   let new_battlefield := Transform_all_creature_in gs.(battlefield) "Saproling" in
   let new_hand := Transform_all_creature_in gs.(hand) "Saproling" in
@@ -678,7 +681,8 @@ Definition Leyline_of_transformation_passive (gs : GameState) : GameState :=
     gs.(phase) in
   new_gs
   .
-  
+
+(* effet passive de la Leyline of Anticipation *)
 Definition Leyline_of_anticipation_passive (gs : GameState) : GameState :=
   let new_battlefield := Add_key_word_to gs.(battlefield) "Flash" in
   let new_hand := Add_key_word_to gs.(hand) "Flash" in
@@ -699,6 +703,7 @@ Definition Leyline_of_anticipation_passive (gs : GameState) : GameState :=
   new_gs
   .
 
+(* Effet passif de life and limb sur une carte *)
 Definition Life_and_limb_passive (c : Card) : Card :=
   match c.(permanent) with
   | None => c
@@ -758,7 +763,8 @@ Definition Life_and_limb_passive (c : Card) : Card :=
       end
     end
   end.
-  
+
+(* Applique effet life and limb à une liste de carte *)
 Fixpoint apply_life_and_limb_to (l : list Card) : list Card :=
   match l with
   | [] => []
@@ -767,6 +773,7 @@ Fixpoint apply_life_and_limb_to (l : list Card) : list Card :=
       new_card :: apply_life_and_limb_to rest
   end.
   
+(* Applique effet transformation saprolings à une liste de carte *)
 Definition apply_transformation_saprolings_to (l : list Card) : Card :=
   match l with 
   | [c] => 
@@ -778,6 +785,7 @@ Definition apply_transformation_saprolings_to (l : list Card) : Card :=
   end
 .
 
+(* Effet de life and limb passive effect *)
 Definition when_life_and_limb_enters (gs : GameState) : GameState :=
   let new_battlefield := apply_life_and_limb_to gs.(battlefield) in
   let new_gs := mkGameState 
@@ -793,16 +801,18 @@ Definition when_life_and_limb_enters (gs : GameState) : GameState :=
     gs.(phase) in
   new_gs.
 
+(* lie une clé de passive effect a un effet *)
 Definition apply_keypassive (kp : PassiveKey) (c : Card) : Card :=
   match kp with
   | SaprolingsLands => Life_and_limb_passive c
   | AllSaprolings => apply_transformation_saprolings_to [c]
   | _ => c
   end.
-
+(* Ajoute l'effet d'une passive effect à une carte *)
 Definition apply_passive_to_cast (kps : list PassiveKey) (c : Card) : Card :=
   fold_left (fun acc kp => apply_keypassive kp acc) kps c.
 
+(* Ajoute l'effet d'un effet passive au game state*)
 Definition trigger_passive_effect (gs : GameState) (key : PassiveKey) : GameState :=
   match key with
   | AllSaprolings => Leyline_of_transformation_passive gs
